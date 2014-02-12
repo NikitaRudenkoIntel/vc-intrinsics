@@ -1,0 +1,185 @@
+//===- IntrinsicsGenX.td - Defines GenX intrinsics -----------*- tablegen -*-===//
+//
+//      Copyright (c) 2014 Intel Corporation.
+//      All rights reserved.
+//
+//        INTEL CORPORATION PROPRIETARY INFORMATION
+//
+// This software is supplied under the terms of a license
+// agreement or nondisclosure agreement with Intel Corp.
+// and may not be copied or disclosed except in accordance
+// with the terms of that agreement.
+//
+//===----------------------------------------------------------------------===//
+//
+// This file defines all of the GenX-specific intrinsics, which correspond to
+// vISA instructions.
+//
+//===----------------------------------------------------------------------===//
+
+let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
+
+  def int_genx_add_sat : GCCBuiltin<"__builtin_genx_add_sat">,
+              Intrinsic<[llvm_anyvector_ty], [LLVMMatchType<0>, LLVMMatchType<0>], [IntrNoMem]>;
+
+
+  // llvm.genx.rdregion : read a region, direct or single-indirect
+  //
+  // arg0: vector to read region out of
+  // arg1: i32 vstride in elements, constant
+  // arg2: i32 width in elements, constant
+  // arg3: i32 stride in elements, constant
+  // arg4: i16 offset in bytes
+  //
+  // Return value: the region extracted
+  //
+  // The return type must be a vector with the same element type as the input
+  // vector, and number of elements giving the total size of the region.
+  // The width must be non-zero and must divide the total size evenly.
+  //
+  // There is no requirement on vstride, width, stride or total size being
+  // a power of two or having any maximum.
+  //
+  def int_genx_rdregion :
+              Intrinsic<[llvm_anyvector_ty], [llvm_anyvector_ty, llvm_i32_ty,
+                  llvm_i32_ty, llvm_i32_ty, llvm_i16_ty], [IntrNoMem]>;
+
+  // llvm.genx.rdelementi : read an element, direct or single-indirect
+  // llvm.genx.rdelementf : read an element, direct or single-indirect
+  //
+  // arg0: vector to read region out of
+  // arg1: i16 offset in bytes
+  //
+  // Return value: the value extracted
+  //
+  // The return type must be the same scalar type as the element type of the
+  // input vector.
+  //
+  // There are separate int and fp variants simply because LLVM does not
+  // provide a type specification to allow either.
+  //
+  // These intrinsics perform the same function as the ExtractElement
+  // instruction, but the index is expressed in bytes rather than
+  // elements to match the GenX architecture. ExtractElement gets
+  // lowered to this in GenXLowering.
+  //
+  def int_genx_rdelementi :
+            Intrinsic<[llvm_anyint_ty], [llvm_anyvector_ty, llvm_i16_ty], [IntrNoMem]>;
+  def int_genx_rdelementf :
+            Intrinsic<[llvm_anyfloat_ty], [llvm_anyvector_ty, llvm_i16_ty], [IntrNoMem]>;
+
+  // llvm.genx.wrregion : write a region, direct or single-indirect
+  //
+  // arg0: vector to write region in to
+  // arg1: subvector to write into the region
+  // arg2: i32 vstride in elements, constant
+  // arg3: i32 width in elements, constant
+  // arg4: i32 stride in elements, constant
+  // arg5: i16 offset in bytes
+  // arg6: vector of i1 mask
+  //
+  // Return value: the updated vector with the region modified
+  //
+  // The return type must be a vector with the same type as the arg0 vector.
+  // The arg1 subvector must have the same element type as the arg0 vector
+  // and be no larger.
+  // The width must be non-zero and must divide the total size evenly.
+  //
+  // The arg6 mask is a vector of booleans, at least as wide as the
+  // arg1 subvector, such that an element of the subvector is written into
+  // its place in the vector only if the corresponding element of the mask
+  // is true.
+  //
+  // There is no requirement on vstride, width, stride or total size being
+  // a power of two or having any maximum.
+  //
+  def int_genx_wrregion :
+              Intrinsic<[llvm_anyvector_ty], [LLVMMatchType<0>,
+                  llvm_anyvector_ty, llvm_i32_ty,
+                  llvm_i32_ty, llvm_i32_ty, llvm_i16_ty,
+                  llvm_anyvector_ty], [IntrNoMem]>;
+
+  // llvm.genx.wrelementi : write an element, direct or single-indirect
+  // llvm.genx.wrelementf : write an element, direct or single-indirect
+  //
+  // arg0: vector to write element in to
+  // arg1: scalar value to write into the vector
+  // arg2: i16 offset in bytes
+  //
+  // Return value: the updated vector with the element modified
+  //
+  // The return type must be a vector with the same type as the arg0 vector.
+  // The arg1 must have a scalar type the same as the element type of the arg0
+  // vector.
+  //
+  // These intrinsics perform the same function as the InsertElement
+  // instruction, but the index is expressed in bytes rather than
+  // elements to match the GenX architecture. InsertElement gets
+  // lowered to this in GenXLowering.
+  //
+  def int_genx_wrelementi :
+              Intrinsic<[llvm_anyvector_ty], [LLVMMatchType<0>,
+                  llvm_anyint_ty, llvm_i16_ty], [IntrNoMem]>;
+  def int_genx_wrelementf :
+              Intrinsic<[llvm_anyvector_ty], [LLVMMatchType<0>,
+                  llvm_anyfloat_ty, llvm_i16_ty], [IntrNoMem]>;
+
+  // llvm.genx.media_ld : vISA MEDIA_LD instruction
+  //
+  // arg0: i32 modifiers, constant
+  // arg1: i32 surface index
+  // arg2: i32 plane, constant
+  // arg3: i32 block width in bytes, constant
+  // arg4: i32 block height, constant
+  // arg5: i32 x byte offset
+  // arg6: i32 y byte offset
+  // arg7: ignored (type same as return value, used for Clang intrinsic resolving)
+  //
+  // Return value: the data read.
+  //
+  // The return type must be of the size that the instruction reads, that is,
+  // stride * height bytes, where stride is block width * elementsize rounded
+  // up to the next power of 2 but no less than 4. If block height is 1, it is
+  // valid to have a size calculated without the rounding up.
+  //
+  def int_genx_media_ld : GCCBuiltin<"__builtin_genx_media_ld">,
+              Intrinsic<[llvm_anyvector_ty], [llvm_i32_ty, llvm_i32_ty, llvm_i32_ty,
+                  llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, LLVMMatchType<0>], []>;
+
+  // llvm.genx.media_st : vISA MEDIA_ST instruction
+  //
+  // arg0: i32 modifiers, constant
+  // arg1: i32 surface index
+  // arg2: i32 plane, constant
+  // arg3: i32 block width in bytes, constant
+  // arg4: i32 block height, constant
+  // arg5: i32 x byte offset
+  // arg6: i32 y byte offset
+  // arg7: data to write
+  //
+  // The data to write type must be at least the size that the instruction
+  // writes, that is, stride * height bytes, where stride is block width *
+  // elementsize rounded up to the next power of 2 but no less than 4. If block
+  // height is 1, it is valid to have a size calculated without the rounding
+  // up.
+  //
+  def int_genx_media_st : GCCBuiltin<"__builtin_genx_media_st">,
+              Intrinsic<[], [llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty,
+                  llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_anyvector_ty], []>;
+
+  // llvm.genx.oword_st : vISA OWORD_ST instruction
+  //
+  // arg0: i32 size (log2 number of owords, 0..3)
+  // arg1: i32 surface index
+  // arg2: i32 offset (in owords)
+  // arg3: data to write
+  //
+  // The data to write type must be at least the size that the instruction
+  // writes.
+  //
+  def int_genx_oword_st : GCCBuiltin<"__builtin_genx_oword_st">,
+              Intrinsic<[], [llvm_i32_ty, llvm_i32_ty, llvm_i32_ty,
+                  llvm_anyvector_ty], []>;
+
+}
+
