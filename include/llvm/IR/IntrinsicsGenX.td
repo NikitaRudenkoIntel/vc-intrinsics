@@ -22,6 +22,9 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   def int_genx_add_sat : GCCBuiltin<"__builtin_genx_add_sat">,
               Intrinsic<[llvm_anyvector_ty], [LLVMMatchType<0>, LLVMMatchType<0>], [IntrNoMem]>;
 
+  //--------------------------------------------------------------------
+  // Region/element access intrinsics
+
 
   // llvm.genx.rdregion : read a region, direct or single-indirect
   //
@@ -123,6 +126,53 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   def int_genx_wrelementf :
               Intrinsic<[llvm_anyvector_ty], [LLVMMatchType<0>,
                   llvm_anyfloat_ty, llvm_i16_ty], [IntrNoMem]>;
+
+  //--------------------------------------------------------------------
+  // ALU intrinsics
+
+  // llvm.genx.sat : floating point saturate
+  //
+  // arg0: value to saturate, any scalar or vector floating point type
+  //
+  // Return value: saturated value, same type as arg0
+  //
+  // We represent floating point saturation by simply calling this intrinsic
+  // on the result of a floating point operation. This works because the
+  // value before saturation fits in the same type.
+  //
+  // We do not have an equivalent for integer saturation, because the
+  // before-saturation value needs a bigger integer type than the result.
+  // Instead, any integer operation that supports saturation needs an
+  // intrinsic for the saturating variant.
+  //
+  def int_genx_sat :
+              Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>], [IntrNoMem]>;
+
+  // llvm.genx.fptoui.sat : convert floating point to integer with saturate
+  //
+  // arg0: value to saturate, any scalar or vector floating point type
+  //
+  // Return value: converted value, any scalar or vector type (treated as
+  //               unsigned) with same vector width as arg0
+  //
+  def int_genx_fptoui_sat :
+              Intrinsic<[llvm_anyint_ty], [llvm_anyfloat_ty], [IntrNoMem]>;
+
+  // llvm.genx.dp4 : dp4 instruction (dot product on groups of 4 elements)
+  //
+  // arg0: first input value, any vector floating point with a multiple of 4 elements
+  // arg1: second input value, same type as arg0
+  //
+  // Return value: result, same type
+  //
+  def int_genx_dp4 :
+              Intrinsic<[llvm_anyfloat_ty],
+                    [LLVMMatchType<0>, LLVMMatchType<0>], [IntrNoMem]>;
+
+
+  //--------------------------------------------------------------------
+  // Shared function intrinsics
+
 
   // llvm.genx.media_ld : vISA MEDIA_LD instruction
   //
