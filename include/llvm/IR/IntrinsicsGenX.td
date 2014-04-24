@@ -79,7 +79,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   // arg3: i32 width in elements, constant
   // arg4: i32 stride in elements, constant
   // arg5: i16 offset in bytes
-  // arg6: vector of i1 mask
+  // arg6: vector of i1 mask, or scalar i1
   //
   // Return value: the updated vector with the region modified
   //
@@ -88,10 +88,12 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   // and be no larger.
   // The width must be non-zero and must divide the total size evenly.
   //
-  // The arg6 mask is a vector of booleans, at least as wide as the
+  // The arg6 mask is a vector of booleans, exactly as wide as the
   // arg1 subvector, such that an element of the subvector is written into
   // its place in the vector only if the corresponding element of the mask
   // is true.
+  // Alternatively, arg6 can be a single i1 whose value is considered to be
+  // the value of every element of the mask.
   //
   // There is no requirement on vstride, width, stride or total size being
   // a power of two or having any maximum.
@@ -100,7 +102,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
               Intrinsic<[llvm_anyvector_ty], [LLVMMatchType<0>,
                   llvm_anyvector_ty, llvm_i32_ty,
                   llvm_i32_ty, llvm_i32_ty, llvm_i16_ty,
-                  llvm_anyvector_ty], [IntrNoMem]>;
+                  llvm_anyint_ty], [IntrNoMem]>;
 
   // llvm.genx.wrelementi : write an element, direct or single-indirect
   // llvm.genx.wrelementf : write an element, direct or single-indirect
