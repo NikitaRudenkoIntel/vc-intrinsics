@@ -233,5 +233,36 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
               Intrinsic<[], [llvm_i32_ty, llvm_i32_ty, llvm_i32_ty,
                   llvm_anyvector_ty], []>;
 
-}
+  //--------------------------------------------------------------------
+  // GenX backend internal intrinsics
 
+
+  // llvm.genx.convert : convert register category (non address)
+  //
+  // arg0: input value (i32 or vector of i32)
+  //
+  // Return value: converted value (same type)
+  //
+  // This intrinsic is inserted by the GenXCatgoryConversion pass to represent
+  // a value being converted between two register categories. The input and
+  // result categories are not represented; they are implied by the other
+  // def/uses of the value. Address conversion is not covered by this
+  // intrinsic.
+  //
+  def int_genx_convert :
+              Intrinsic<[llvm_anyint_ty], [LLVMMatchType<0>], [IntrNoMem]>;
+
+  // llvm.genx.convert.addr : convert to address register category
+  //
+  // arg0: input value (i16 or vector of i16)
+  //
+  // Return value: converted value (same type)
+  //
+  // This intrinsic is inserted by the GenXCatgoryConversion pass to represent
+  // a value being converted from a general value to an address, used as the
+  // variable index in an element or region access.
+  //
+  def int_genx_convert_addr :
+              Intrinsic<[llvm_anyint_ty], [LLVMMatchType<0>], [IntrNoMem]>;
+
+}
