@@ -265,4 +265,17 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   def int_genx_convert_addr :
               Intrinsic<[llvm_anyint_ty], [LLVMMatchType<0>], [IntrNoMem]>;
 
+  // llvm.genx.convert.pred : convert to predicate register category
+  //
+  // arg0: input value (i32)
+  //
+  // Return value: converted value (v32i1)
+  //
+  // This intrinsic is inserted by GenXConstantMaterialization where a
+  // wrregion has a constant mask other than 1. We could just use a bitcast,
+  // except that EarlyCSE follows GenXConstantMaterialization and it has
+  // a habit of putting the constant back in the wrregion.
+  def int_genx_convert_pred :
+              Intrinsic<[llvm_anyint_ty], [llvm_i32_ty], [IntrNoMem]>;
+
 }
