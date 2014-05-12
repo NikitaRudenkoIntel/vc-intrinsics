@@ -278,4 +278,19 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   def int_genx_convert_pred :
               Intrinsic<[llvm_anyint_ty], [llvm_i32_ty], [IntrNoMem]>;
 
+  // llvm.genx.add.addr : add an offset onto an address register
+  //
+  // arg0: lhs input (i16 or vector of i16)
+  // arg1: rhs input (same type)
+  //
+  // Return value: result of add (same type)
+  //
+  // When the result of a constant add/sub is used as a variable index in
+  // a region access, GenXCategoryConversion converts it into this intrinsic
+  // so that it will be considered an add to an address register.
+  //
+  def int_genx_add_addr :
+            Intrinsic<[llvm_anyint_ty],
+                [LLVMMatchType<0>, LLVMMatchType<0>], [IntrNoMem]>;
+
 }
