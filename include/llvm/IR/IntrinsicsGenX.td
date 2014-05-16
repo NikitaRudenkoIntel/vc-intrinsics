@@ -858,6 +858,21 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
               Intrinsic<[], [llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty,
                   llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_anyvector_ty], []>;
 
+  // llvm.genx.oword_ld : vISA OWORD_LD instruction
+  //
+  // arg0: i32 size (log2 number of owords, 0..3)
+  // arg1: i32 is_modified, constant
+  // arg2: i32 surface index
+  // arg3: i32 offset (in owords)
+  // arg4: ignored (type same as return value, used for Clang intrinsic resolving)
+  //
+  // Return value: the data read.
+  // The return type must be of the size that the instruction reads
+  //
+  def int_genx_oword_ld : GCCBuiltin<"__builtin_genx_oword_ld">,
+              Intrinsic<[llvm_anyvector_ty], [llvm_i32_ty, llvm_i32_ty, llvm_i32_ty,
+                  llvm_i32_ty, LLVMMatchType<0>], []>;
+
   // llvm.genx.oword_st : vISA OWORD_ST instruction
   //
   // arg0: i32 size (log2 number of owords, 0..3)
