@@ -875,6 +875,24 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   //--------------------------------------------------------------------
   // GenX backend internal intrinsics
 
+  // llvm.genx.constanti : copy constant to register
+  // llvm.genx.constantf : copy constant to register
+  //
+  // arg0: input value (constant, any scalar or vector type)
+  //
+  // Return value: same type
+  //
+  // This intrinsic is inserted by the GenXConstantMaterialization pass
+  // to load a constant in a way that stops the subsequent CSE pass
+  // from propagating it back into the operand using it.
+  //
+  // There are two variants simply because there is no way of saying here
+  // that an argument can have any scalar or vector type.
+  //
+  def int_genx_constanti : Intrinsic<[llvm_anyint_ty],
+          [LLVMMatchType<0>], [IntrNoMem]>;
+  def int_genx_constantf : Intrinsic<[llvm_anyfloat_ty],
+          [LLVMMatchType<0>], [IntrNoMem]>;
 
   // llvm.genx.convert : convert register category (non address)
   //
