@@ -812,6 +812,49 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
 
 
   //--------------------------------------------------------------------
+  // vISA reserved register intrinsics
+
+  // llvm.genx.thread.x : read vISA v1 (%thread_x)
+  // llvm.genx.thread.y : read vISA v2 (%thread_y)
+  //
+  // Return value:  i16 the value read
+  //
+  def int_genx_thread_x : Intrinsic<[llvm_i16_ty], [], [IntrNoMem]>;
+  def int_genx_thread_y : Intrinsic<[llvm_i16_ty], [], [IntrNoMem]>;
+
+  // llvm.genx.local.id.x : read vISA v3 (%local_id_x)
+  // llvm.genx.local.id.y : read vISA v4 (%local_id_y)
+  // llvm.genx.local.size.x : read vISA v5 (%local_size_x)
+  // llvm.genx.local.size.y : read vISA v6 (%local_size_y)
+  // llvm.genx.group.id.x : read vISA v7 (%local_id_x)
+  // llvm.genx.group.id.y : read vISA v8 (%local_id_y)
+  // llvm.genx.group.count.x : read vISA v9 (%local_id_x)
+  // llvm.genx.group.count.y : read vISA v10 (%local_id_y)
+  //
+  // Return value:  i32 the value read
+  //
+  def int_genx_local_id_x : Intrinsic<[llvm_i32_ty], [], [IntrNoMem]>;
+  def int_genx_local_id_y : Intrinsic<[llvm_i32_ty], [], [IntrNoMem]>;
+  def int_genx_local_size_x : Intrinsic<[llvm_i32_ty], [], [IntrNoMem]>;
+  def int_genx_local_size_y : Intrinsic<[llvm_i32_ty], [], [IntrNoMem]>;
+  def int_genx_group_id_x : Intrinsic<[llvm_i32_ty], [], [IntrNoMem]>;
+  def int_genx_group_id_y : Intrinsic<[llvm_i32_ty], [], [IntrNoMem]>;
+  def int_genx_group_count_x : Intrinsic<[llvm_i32_ty], [], [IntrNoMem]>;
+  def int_genx_group_count_y : Intrinsic<[llvm_i32_ty], [], [IntrNoMem]>;
+
+  // llvm.genx.timestamp : read vISA v11 (%timestamp)
+  //
+  // Return value:  v3i32 the value read
+  //
+  def int_genx_timestamp : Intrinsic<[llvm_anyint_ty], [], [IntrNoMem]>;
+
+  // llvm.genx.r0 : read vISA v12 (%r0)
+  //
+  // Return value:  v8i32 the value read
+  //
+  def int_genx_r0 : Intrinsic<[llvm_anyint_ty], [], [IntrNoMem]>;
+
+  //--------------------------------------------------------------------
   // Shared function intrinsics
 
 
