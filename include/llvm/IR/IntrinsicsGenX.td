@@ -148,6 +148,22 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   def int_genx_uutrunc_sat : Intrinsic<[llvm_anyint_ty], [llvm_anyint_ty], [IntrNoMem]>;
 
   //--------------------------------------------------------------------
+  // Modifier intrinsics. Abs is the only source modifier that is represented
+  // by an intrinsic; neg(x) uses 0-x, and not(x) uses x^-1.
+
+  // llvm.genx.absf : abs modifier for fp
+  // llvm.genx.absi : abs modifier for integer
+  //
+  // arg0: input value, scalar/vector
+  //
+  // Return value: result, same type
+  //
+  def int_genx_absf :
+              Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>], [IntrNoMem]>;
+  def int_genx_absi :
+              Intrinsic<[llvm_anyint_ty], [LLVMMatchType<0>], [IntrNoMem]>;
+
+  //--------------------------------------------------------------------
   // ALU intrinsics
 
   // llvm.genx.acos : acos instruction
