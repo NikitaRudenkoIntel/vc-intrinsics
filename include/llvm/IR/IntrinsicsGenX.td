@@ -880,21 +880,23 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   // arg1: i32 surface index
   // arg2: i32 plane, constant
   // arg3: i32 block width in bytes, constant
-  // arg4: i32 block height, constant
-  // arg5: i32 x byte offset
-  // arg6: i32 y byte offset
-  // arg7: ignored (type same as return value, used for Clang intrinsic resolving)
+  //       (block height inferred from return type size and block width)
+  // arg4: i32 x byte offset
+  // arg5: i32 y byte offset
   //
   // Return value: the data read.
   //
-  // The return type must be of the size that the instruction reads, that is,
-  // stride * height bytes, where stride is block width * elementsize rounded
-  // up to the next power of 2 but no less than 4. If block height is 1, it is
-  // valid to have a size calculated without the rounding up.
+  // The number of bytes taken by a row in the return value, the "rounded
+  // block width", is the block width rounded up to the next power of two
+  // no less than 4. The size of the return type must be a multiple of
+  // this rounded block width, and the multiplier is the block height.
   //
-  def int_genx_media_ld : GCCBuiltin<"__builtin_genx_media_ld">,
+  // The block width has a maximum of 32 (64 on BDW+). The maxmimum byte
+  // size of the return type is 256.
+  //
+  def int_genx_media_ld :
               Intrinsic<[llvm_anyvector_ty], [llvm_i32_ty, llvm_i32_ty, llvm_i32_ty,
-                  llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, LLVMMatchType<0>], []>;
+                  llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], []>;
 
   // llvm.genx.media_st : vISA MEDIA_ST instruction
   //
@@ -902,49 +904,49 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   // arg1: i32 surface index
   // arg2: i32 plane, constant
   // arg3: i32 block width in bytes, constant
-  // arg4: i32 block height, constant
-  // arg5: i32 x byte offset
-  // arg6: i32 y byte offset
-  // arg7: data to write
+  //       (block height inferred from data type size and block width)
+  // arg4: i32 x byte offset
+  // arg5: i32 y byte offset
+  // arg6: data to write
   //
-  // The data to write type must be at least the size that the instruction
-  // writes, that is, stride * height bytes, where stride is block width *
-  // elementsize rounded up to the next power of 2 but no less than 4. If block
-  // height is 1, it is valid to have a size calculated without the rounding
-  // up.
+  // The number of bytes taken by a row in the return value, the "rounded
+  // block width", is the block width rounded up to the next power of two
+  // no less than 4. The size of the data to write type must be a multiple of
+  // this rounded block width, and the multiplier is the block height.
   //
-  def int_genx_media_st : GCCBuiltin<"__builtin_genx_media_st">,
+  // The block width has a maximum of 32 (64 on BDW+). The maxmimum byte
+  // size of the data to write is 256.
+  //
+  def int_genx_media_st :
               Intrinsic<[], [llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty,
-                  llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_anyvector_ty], []>;
+                  llvm_i32_ty, llvm_i32_ty, llvm_anyvector_ty], []>;
 
   // llvm.genx.oword_ld : vISA OWORD_LD instruction
   //
-  // arg0: i32 size (log2 number of owords, 0..3)
-  // arg1: i32 is_modified, constant
-  // arg2: i32 surface index
-  // arg3: i32 offset (in owords)
-  // arg4: ignored (type same as return value, used for Clang intrinsic resolving)
+  //       (log2 number of owords inferred from return type)
+  // arg0: i32 is_modified, constant
+  // arg1: i32 surface index
+  // arg2: i32 offset (in owords)
   //
   // Return value: the data read.
-  // The return type must be of the size that the instruction reads
+  //
+  // The byte size of the return type must be 16, 32, 64, or 128.
   //
   def int_genx_oword_ld : GCCBuiltin<"__builtin_genx_oword_ld">,
-              Intrinsic<[llvm_anyvector_ty], [llvm_i32_ty, llvm_i32_ty, llvm_i32_ty,
-                  llvm_i32_ty, LLVMMatchType<0>], []>;
+              Intrinsic<[llvm_anyvector_ty], [llvm_i32_ty, llvm_i32_ty,
+                  llvm_i32_ty], []>;
 
   // llvm.genx.oword_st : vISA OWORD_ST instruction
   //
-  // arg0: i32 size (log2 number of owords, 0..3)
-  // arg1: i32 surface index
-  // arg2: i32 offset (in owords)
-  // arg3: data to write
+  //       (log2 number of owords inferred from return type)
+  // arg0: i32 surface index
+  // arg1: i32 offset (in owords)
+  // arg2: data to write
   //
-  // The data to write type must be at least the size that the instruction
-  // writes.
+  // The byte size of the data to write must be 16, 32, 64, or 128.
   //
   def int_genx_oword_st : GCCBuiltin<"__builtin_genx_oword_st">,
-              Intrinsic<[], [llvm_i32_ty, llvm_i32_ty, llvm_i32_ty,
-                  llvm_anyvector_ty], []>;
+              Intrinsic<[], [llvm_i32_ty, llvm_i32_ty, llvm_anyvector_ty], []>;
 
   //--------------------------------------------------------------------
   // GenX backend internal intrinsics
