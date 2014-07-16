@@ -33,6 +33,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   // arg2: i32 width in elements, constant
   // arg3: i32 stride in elements, constant
   // arg4: i16 offset in bytes
+  // arg5: i32 parent width, constant, ignored if offset is constant
   //
   // Return value: the region extracted
   //
@@ -47,9 +48,15 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   // element type of the input, indicating that the region has one element.
   // (Lowering lowers an extractelement to this type of rdregion.)
   //
-  def int_genx_rdregion :
-              Intrinsic<[llvm_anyvector_ty], [llvm_anyvector_ty, llvm_i32_ty,
-                  llvm_i32_ty, llvm_i32_ty, llvm_i16_ty], [IntrNoMem]>;
+  // The parent width arg is ignored if the offset arg is constant. If the
+  // offset arg is variable, then a non-undef parent width is a statement
+  // that the value of offset is such that a row of the region does not
+  // cross a multiple of parent width boundary. This is used by the backend
+  // to determine whether the region can be collapsed into another region.
+  //
+  def int_genx_rdregion : Intrinsic<[llvm_anyvector_ty], [llvm_anyvector_ty,
+      llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i16_ty, llvm_i32_ty],
+      [IntrNoMem]>;
 
   // llvm.genx.wrregion : write a region, direct or single-indirect
   //
@@ -59,7 +66,8 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   // arg3: i32 width in elements, constant
   // arg4: i32 stride in elements, constant
   // arg5: i16 offset in bytes
-  // arg6: vector of i1 mask, or scalar i1
+  // arg6: i32 parent width, constant, ignored if offset is constant
+  // arg7: vector of i1 mask, or scalar i1
   //
   // Return value: the updated vector with the region modified
   //
@@ -82,11 +90,15 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   // type as an element of arg0, indicating that the region has one element.
   // (Lowering lowers an insertelement to this type of wrregion.)
   //
-  def int_genx_wrregion :
-              Intrinsic<[llvm_anyvector_ty], [LLVMMatchType<0>,
-                  llvm_anyvector_ty, llvm_i32_ty,
-                  llvm_i32_ty, llvm_i32_ty, llvm_i16_ty,
-                  llvm_anyint_ty], [IntrNoMem]>;
+  // The parent width arg is ignored if the offset arg is constant. If the
+  // offset arg is variable, then a non-undef parent width is a statement
+  // that the value of offset is such that a row of the region does not
+  // cross a multiple of parent width boundary. This is used by the backend
+  // to determine whether the region can be collapsed into another region.
+  //
+  def int_genx_wrregion : Intrinsic<[llvm_anyvector_ty], [LLVMMatchType<0>,
+      llvm_anyvector_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i16_ty,
+      llvm_i32_ty, llvm_anyint_ty], [IntrNoMem]>;
 
   //--------------------------------------------------------------------
   // ALU type conversion intrinsics
