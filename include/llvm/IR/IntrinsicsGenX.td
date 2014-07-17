@@ -534,11 +534,12 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   // llvm.genx.*max : max instruction
   //    llvm.genx.smax : result and operands signed
   //    llvm.genx.umax : result and operands unsigned
+  //    llvm.genx.fmax : result and operands float
   //
-  // arg0: first input, any scalar/vector integer type, even i64
+  // arg0: first input, any scalar/vector integer/float type, even i64
   // arg1: second input, same type as arg0
   //
-  // Return value: result, any scalar or vector integer type with same
+  // Return value: result, any scalar, vector integer/float type with same
   //               vector width
   //
   // There is no need for a saturating variant of this intrinsic.
@@ -550,15 +551,18 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
                 [llvm_anyint_ty, LLVMMatchType<1>], [IntrNoMem]>;
   def int_genx_umax : Intrinsic<[llvm_anyint_ty],
                 [llvm_anyint_ty, LLVMMatchType<1>], [IntrNoMem]>;
+  def int_genx_fmax : Intrinsic<[llvm_anyfloat_ty],
+                [llvm_anyfloat_ty, LLVMMatchType<1>], [IntrNoMem]>;
 
   // llvm.genx.*min : min instruction
   //    llvm.genx.smin : result and operands signed
   //    llvm.genx.umin : result and operands unsigned
+  //    llvm.genx.fmin : result and operands float
   //
-  // arg0: first input, any scalar/vector integer type, even i64
+  // arg0: first input, any scalar/vector integer/float type, even i64
   // arg1: second input, same type as arg0
   //
-  // Return value: result, any scalar or vector integer type with same
+  // Return value: result, any scalar or vector integer/float type with same
   //               vector width
   //
   // There is no need for a saturating variant of this intrinsic.
@@ -570,6 +574,8 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
                 [llvm_anyint_ty, LLVMMatchType<1>], [IntrNoMem]>;
   def int_genx_umin : Intrinsic<[llvm_anyint_ty],
                 [llvm_anyint_ty, LLVMMatchType<1>], [IntrNoMem]>;
+  def int_genx_fmin : Intrinsic<[llvm_anyfloat_ty],
+                [llvm_anyfloat_ty, LLVMMatchType<1>], [IntrNoMem]>;
 
   // mod : no intrinsic needed as the LLVM IR SRem, URem and FRem instructions
   // cover vISA functionality
