@@ -1764,9 +1764,9 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
 
   // llvm.genx.fence : vISA FENCE instruction
   //
-  // arg0: i32 mask, constant
+  // arg0: i8 mask, constant
   //
-  def int_genx_fence : Intrinsic<[], [llvm_i32_ty], []>;
+  def int_genx_fence : Intrinsic<[], [llvm_i8_ty], []>;
 
   // llvm.genx.wait : vISA WAIT instruction
   //
