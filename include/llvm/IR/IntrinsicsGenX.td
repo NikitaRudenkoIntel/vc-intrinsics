@@ -32,7 +32,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   // arg1: i32 vstride in elements, constant
   // arg2: i32 width in elements, constant
   // arg3: i32 stride in elements, constant
-  // arg4: i16 offset in bytes
+  // arg4: i16 or vXi16 offset in bytes
   // arg5: i32 parent width, constant, ignored if offset is constant
   //
   // Return value: the region extracted
@@ -43,6 +43,10 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   //
   // There is no requirement on vstride, width, stride or total size being
   // a power of two or having any maximum.
+  //
+  // The offset in bytes arg can be i16 or vector of i16. If a vector, then
+  // its vector width must be the height of the region, i.e. the total
+  // size of the region divided by the width.
   //
   // After lowering, the return type can be a scalar of the same type as the
   // element type of the input, indicating that the region has one element.
@@ -55,7 +59,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   // to determine whether the region can be collapsed into another region.
   //
   def int_genx_rdregion : Intrinsic<[llvm_anyvector_ty], [llvm_anyvector_ty,
-      llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i16_ty, llvm_i32_ty],
+      llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_anyint_ty, llvm_i32_ty],
       [IntrNoMem]>;
 
   // llvm.genx.wrregion : write a region, direct or single-indirect
@@ -65,7 +69,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   // arg2: i32 vstride in elements, constant
   // arg3: i32 width in elements, constant
   // arg4: i32 stride in elements, constant
-  // arg5: i16 offset in bytes
+  // arg5: i16 or vXi16 offset in bytes
   // arg6: i32 parent width, constant, ignored if offset is constant
   // arg7: vector of i1 mask, or scalar i1
   //
@@ -86,6 +90,10 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   // There is no requirement on vstride, width, stride or total size being
   // a power of two or having any maximum.
   //
+  // The offset in bytes arg can be i16 or vector of i16. If a vector, then
+  // its vector width must be the height of the region, i.e. the total
+  // size of the region divided by the width.
+  //
   // After lowering, the arg1 subvector to write can be a scalar of the same
   // type as an element of arg0, indicating that the region has one element.
   // (Lowering lowers an insertelement to this type of wrregion.)
@@ -97,7 +105,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   // to determine whether the region can be collapsed into another region.
   //
   def int_genx_wrregion : Intrinsic<[llvm_anyvector_ty], [LLVMMatchType<0>,
-      llvm_anyvector_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i16_ty,
+      llvm_anyvector_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_anyint_ty,
       llvm_i32_ty, llvm_anyint_ty], [IntrNoMem]>;
 
   //--------------------------------------------------------------------
