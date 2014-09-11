@@ -1053,7 +1053,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   // i1 constant with value 1.
   def int_genx_gather : Intrinsic<[llvm_anyvector_ty], [llvm_i32_ty,
     llvm_anyint_ty, llvm_i32_ty, llvm_i32_ty, llvm_anyint_ty,
-    LLVMMatchType<0>], []>;
+    LLVMMatchType<0>], [IntrReadMem]>;
 
   // llvm.genx.gather.scaled : vISA GATHER_SCALED instruction
   //
@@ -1092,7 +1092,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   //
   def int_genx_gather_scaled : Intrinsic<[llvm_anyvector_ty], [llvm_anyint_ty,
     llvm_i32_ty, llvm_i32_ty, llvm_i16_ty, llvm_i32_ty, llvm_anyint_ty,
-    LLVMMatchType<0>], []>;
+    LLVMMatchType<0>], [IntrReadMem]>;
 
   // llvm.genx.gather4 : vISA GATHER4 instruction
   //
@@ -1119,7 +1119,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   // The element type of the return value must be i32 or float.
   def int_genx_gather4 : Intrinsic<[llvm_anyvector_ty], [llvm_i32_ty,
     llvm_i32_ty, llvm_anyint_ty, llvm_i32_ty, llvm_i32_ty, llvm_anyint_ty,
-    LLVMMatchType<0>], []>;
+    LLVMMatchType<0>], [IntrReadMem]>;
 
   // llvm.genx.gather4.scaled : vISA GATHER4_SCALED instruction
   //
@@ -1147,7 +1147,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   // The element type of the return value must be i32 or float.
   def int_genx_gather4_scaled : Intrinsic<[llvm_anyvector_ty], [llvm_anyint_ty,
     llvm_i32_ty, llvm_i32_ty, llvm_i16_ty, llvm_i32_ty, llvm_anyint_ty,
-    LLVMMatchType<0>], []>;
+    LLVMMatchType<0>], [IntrReadMem]>;
 
   // llvm.genx.gather4.typed : vISA GATHER4_TYPED instruction
   //
@@ -1175,7 +1175,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   // The element type of the return value must be i32 or float.
   def int_genx_gather4_typed : Intrinsic<[llvm_anyvector_ty], [llvm_i32_ty,
     llvm_anyint_ty, llvm_i32_ty, llvm_anyint_ty, llvm_anyint_ty,
-    llvm_anyint_ty, LLVMMatchType<0>], []>;
+    llvm_anyint_ty, LLVMMatchType<0>], [IntrReadMem]>;
 
   // llvm.genx.media.ld : vISA MEDIA_LD instruction
   //
@@ -1198,7 +1198,8 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   // size of the return type is 256.
   //
   def int_genx_media_ld : Intrinsic<[llvm_anyvector_ty], [llvm_i32_ty,
-    llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], []>;
+    llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+    [IntrReadMem]>;
 
   // llvm.genx.media.st : vISA MEDIA_ST instruction
   //
@@ -1235,9 +1236,9 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   // The byte size of the return type must be 16, 32, 64, or 128.
   //
   def int_genx_oword_ld : Intrinsic<[llvm_anyvector_ty], [llvm_i32_ty,
-    llvm_i32_ty, llvm_i32_ty], []>;
+    llvm_i32_ty, llvm_i32_ty], [IntrReadMem]>;
   def int_genx_oword_ld_unaligned : Intrinsic<[llvm_anyvector_ty],
-    [llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], []>;
+    [llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [IntrReadMem]>;
 
   // llvm.genx.oword.st : vISA OWORD_ST instruction
   //
@@ -1399,7 +1400,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   // The element type of the return value must be i32 or float.
   //
   def int_genx_transpose_ld : Intrinsic<[llvm_anyvector_ty], [llvm_i32_ty,
-    llvm_i32_ty, llvm_i32_ty, llvm_i32_ty]>;
+    llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [IntrReadMem]>;
 
   // llvm.genx.untyped.atomic.add : vISA UNTYPED_ATOMIC ADD instruction
   // llvm.genx.untyped.atomic.sub : vISA UNTYPED_ATOMIC SUB instruction
@@ -1509,7 +1510,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   //
   def int_genx_svm_block_ld : Intrinsic<[llvm_anyvector_ty], [llvm_i64_ty], []>;
   def int_genx_svm_block_ld_unaligned : Intrinsic<[llvm_anyvector_ty],
-    [llvm_i64_ty], []>;
+    [llvm_i64_ty], [IntrReadMem]>;
 
   // llvm.genx.svm.block.st : vISA SVM BLOCK_ST instruction
   //
@@ -1539,7 +1540,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   // number of blocks (rounded up to 4 if block size is 1).
   //
   def int_genx_svm_gather : Intrinsic<[llvm_anyvector_ty], [llvm_anyint_ty,
-    llvm_i32_ty, llvm_anyint_ty, LLVMMatchType<0>], []>;
+    llvm_i32_ty, llvm_anyint_ty, LLVMMatchType<0>], [IntrReadMem]>;
 
   // llvm.genx.svm.gather4.scaled : vISA SVM GATHER4_SCALED instruction
   //
@@ -1566,7 +1567,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   // The element type of the return value must be i32 or float.
   def int_genx_svm_gather4_scaled : Intrinsic<[llvm_anyvector_ty],
     [llvm_anyint_ty, llvm_i32_ty, llvm_i16_ty, llvm_i64_ty, llvm_anyint_ty,
-    LLVMMatchType<0>], []>;
+    LLVMMatchType<0>], [IntrReadMem]>;
 
   // llvm.genx.svm.scatter : vISA SVM SCATTER instruction
   //
@@ -1712,7 +1713,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   // The element type of the return value must be i32 or float.
   //
   def int_genx_load : Intrinsic<[llvm_anyvector_ty], [llvm_i32_ty, llvm_i32_ty,
-    llvm_anyint_ty, LLVMMatchType<1>, LLVMMatchType<1>], []>;
+    llvm_anyint_ty, LLVMMatchType<1>, LLVMMatchType<1>], [IntrReadMem]>;
 
   // llvm.genx.sample : vISA SAMPLE instruction
   //
@@ -1741,7 +1742,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   //
   def int_genx_sample : Intrinsic<[llvm_anyvector_ty], [llvm_i32_ty,
     llvm_i32_ty, llvm_i32_ty, llvm_anyfloat_ty, LLVMMatchType<1>,
-    LLVMMatchType<1>], []>;
+    LLVMMatchType<1>], [IntrReadMem]>;
 
   // llvm.genx.sample.unorm : vISA SAMPLE_UNORM instruction
   //
@@ -1762,7 +1763,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   //
   def int_genx_sample_unorm : Intrinsic<[llvm_anyvector_ty], [llvm_i32_ty, llvm_i32_ty,
     llvm_i32_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty],
-    []>;
+    [IntrReadMem]>;
 
   // llvm.genx.barrier : vISA BARRIER instruction
   // llvm.genx.cache.flush : vISA CACHE_FLUSH instruction
