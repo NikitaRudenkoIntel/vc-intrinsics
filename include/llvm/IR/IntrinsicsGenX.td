@@ -39,6 +39,9 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   //
   // The return type must be a vector with the same element type as the input
   // vector, and number of elements giving the total size of the region.
+  // The element type must be an integral power of two number of bytes up to
+  // and including 8 bytes in size, thus one of i8, i16, i32, i64, half,
+  // float, double. In particular i1 is not allowed.
   // The width must be non-zero and must divide the total size evenly.
   //
   // There is no requirement on vstride, width, stride or total size being
@@ -78,14 +81,20 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   // The return type must be a vector with the same type as the arg0 vector.
   // The arg1 subvector must have the same element type as the arg0 vector
   // and be no larger.
+  // The element type must be an integral power of two number of bytes up to
+  // and including 8 bytes in size, thus one of i8, i16, i32, i64, half,
+  // float, double. In particular i1 is not allowed.
   // The width must be non-zero and must divide the total size evenly.
   //
-  // The arg6 mask is a vector of booleans, at least as wide as the
+  // The arg7 mask is a vector of booleans, at least as wide as the
   // arg1 subvector, such that an element of the subvector is written into
   // its place in the vector only if the corresponding element of the mask
   // is true.
-  // Alternatively, arg6 can be a single i1 whose value is considered to be
-  // the value of every element of the mask.
+  // Alternatively, arg7 can be a single i1 constant with value 1,
+  // meaning that the wrregion is unconditional.
+  // Alternatively, arg7 can be a v32i1. If the arg1 subvector is wider than
+  // 32 elements, then the mask is replicated enough times to cover the
+  // required number of elements.
   //
   // There is no requirement on vstride, width, stride or total size being
   // a power of two or having any maximum.
