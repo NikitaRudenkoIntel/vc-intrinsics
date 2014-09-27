@@ -1798,16 +1798,16 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
 
   // llvm.genx.raw.send : vISA RAW_SEND instruction
   //
-  //       (modifiers inferred from whether it is send or sendc)
+  // arg0  i32 modifier whether it is send or sendc, constant
   //       (exec_size inferred from predicate vector width, defaulting to 16
   //          if predicate is i1)
-  // arg0: i1/vXi1 predicate
-  // arg1: i32 extended message descriptor, constant
+  // arg1: i1/vXi1 predicate
+  // arg2: i32 extended message descriptor, constant
   //       (numsrc inferred from src size)
   //       (numdst inferred from dst size)
-  // arg2: i32 desc
-  // arg3: src
-  // arg4: old_dst
+  // arg3: i32 desc
+  // arg4: src
+  // arg5: old_dst
   //
   // Return value: dst
   //
@@ -1822,44 +1822,42 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   // by the send, then use old_dst as the "old value of destination registers"
   // input.
   //
-  def int_genx_raw_send : Intrinsic<[llvm_anyvector_ty], [llvm_anyint_ty,
-    llvm_i32_ty, llvm_i32_ty, llvm_anyvector_ty, LLVMMatchType<0>], []>;
+  def int_genx_raw_send : Intrinsic<[llvm_anyvector_ty], [llvm_i32_ty,
+    llvm_anyint_ty, llvm_i32_ty, llvm_i32_ty, llvm_anyvector_ty,
+    LLVMMatchType<0>], []>;
 
   // llvm.genx.raw.send.noresult : vISA RAW_SEND instruction with no result
-  // llvm.genx.raw.sendc : vISA RAW_SEND instruction with no result with sendc bit set
   //
-  //       (modifiers inferred from whether it is send or sendc)
+  // arg0  i32 modifier whether it is send or sendc, constant
   //       (exec_size inferred from predicate vector width, defaulting to 16
   //          if predicate is i1)
-  // arg0: i1/vXi1 predicate
-  // arg1: i32 extended message descriptor, constant
+  // arg1: i1/vXi1 predicate
+  // arg2: i32 extended message descriptor, constant
   //       (numsrc inferred from src size)
   //       (numdst is 0)
-  // arg2: i32 desc
-  // arg3: src
+  // arg3: i32 desc
+  // arg4: src
   //
   // The SEND instruction has a field for the size of src. This is inferred by
   // rounding the size of src up to the next whole GRF.
   //
-  def int_genx_raw_send_noresult : Intrinsic<[], [llvm_anyint_ty,
-    llvm_i32_ty, llvm_i32_ty, llvm_anyvector_ty], []>;
-  def int_genx_raw_sendc : Intrinsic<[], [llvm_anyint_ty,
+  def int_genx_raw_send_noresult : Intrinsic<[], [llvm_i32_ty, llvm_anyint_ty,
     llvm_i32_ty, llvm_i32_ty, llvm_anyvector_ty], []>;
 
   // llvm.genx.raw.sends : vISA RAW_SENDS instruction
   //
-  //       (modifiers inferred from whether it is sendc)
+  // arg0  i32 modifier whether it is send or sendc, constant
   //       (exec_size inferred from predicate vector width, defaulting to 16
   //          if predicate is i1)
-  // arg0: i1/vXi1 predicate
-  // arg1: i32 extended message descriptor, constant
+  // arg1: i1/vXi1 predicate
+  // arg2: i32 extended message descriptor, constant
   //       (numsrc inferred from src size)
   //       (numsrc2 inferred from src2 size)
   //       (numdst inferred from dst size)
-  // arg2: i32 desc
-  // arg3: src
-  // arg4: src2
-  // arg5: old_dst
+  // arg3: i32 desc
+  // arg4: src
+  // arg5: src2
+  // arg6: old_dst
   //
   // Return value: dst
   //
@@ -1874,9 +1872,30 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   // by the send, then use old_dst as the "old value of destination registers"
   // input.
   //
-  def int_genx_raw_sends : Intrinsic<[llvm_anyvector_ty], [llvm_anyint_ty,
-    llvm_i32_ty, llvm_i32_ty, llvm_anyvector_ty, llvm_anyvector_ty,
-    LLVMMatchType<0>], []>;
+  def int_genx_raw_sends : Intrinsic<[llvm_anyvector_ty], [llvm_i32_ty,
+    llvm_anyint_ty, llvm_i32_ty, llvm_i32_ty, llvm_anyvector_ty,
+    llvm_anyvector_ty, LLVMMatchType<0>], []>;
+
+  // llvm.genx.raw.sends.noresult : vISA RAW_SENDS instruction with no result
+  //
+  // arg0  i32 modifier whether it is send or sendc, constant
+  //       (exec_size inferred from predicate vector width, defaulting to 16
+  //          if predicate is i1)
+  // arg1: i1/vXi1 predicate
+  // arg2: i32 extended message descriptor, constant
+  //       (numsrc inferred from src size)
+  //       (numsrc2 inferred from src2 size)
+  //       (numdst is 0)
+  // arg3: i32 desc
+  // arg4: src
+  // arg5: src2
+  //
+  // The SENDS instruction has a field for the size of each of src and src2.
+  // These are inferred by rounding the size of each of src and src2 up to the
+  // next whole GRF.
+  //
+  def int_genx_raw_sends_noresult : Intrinsic<[], [llvm_i32_ty, llvm_anyint_ty,
+    llvm_i32_ty, llvm_i32_ty, llvm_anyvector_ty, llvm_anyvector_ty], []>;
 
   //--------------------------------------------------------------------
   // GenX backend internal intrinsics
