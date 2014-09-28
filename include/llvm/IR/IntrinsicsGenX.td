@@ -903,7 +903,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   //
   // Return value:  v8i32 the value read
   //
-  def int_genx_r0 : Intrinsic<[llvm_anyint_ty], [], [IntrNoMem]>;
+  def int_genx_r0 : Intrinsic<[llvm_v8i32_ty], [], [IntrReadMem]>;
 
   //--------------------------------------------------------------------
   // Shared function intrinsics
