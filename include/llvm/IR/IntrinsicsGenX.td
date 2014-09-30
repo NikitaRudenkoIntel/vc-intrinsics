@@ -1176,15 +1176,15 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   // The predicate arg must either have the same vector width, or be a scalar
   // i1 constant with value 1.
   // The instruction reads up to 4 channels per element, with the lowest 4
-  // bits of the channel mask arg giving the mask of channels _not_ to read.
-  // The number of 0 bits in that lower 4 bits of the channel mask arg is the
-  // number of channels to read per element.
+  // bits of the channel mask arg giving the mask of channels to read.
+  // The number of 1 bits in that lower 4 bits of the channel mask arg is the
+  // number of channels to read per element. Mask "0000" is not allowed.
   // The vector width of the return value must be the number of elements
   // times the number of channels to read per element.
   // The element type of the return value must be i32 or float.
   def int_genx_gather4_typed : Intrinsic<[llvm_anyvector_ty], [llvm_i32_ty,
-    llvm_anyint_ty, llvm_i32_ty, llvm_anyint_ty, llvm_anyint_ty,
-    llvm_anyint_ty, LLVMMatchType<0>], [IntrReadMem]>;
+    llvm_anyint_ty, llvm_i32_ty, llvm_v8i32_ty, llvm_v8i32_ty,
+    llvm_v8i32_ty, LLVMMatchType<0>], [IntrReadMem]>;
 
   // llvm.genx.media.ld : vISA MEDIA_LD instruction
   //
@@ -1370,27 +1370,26 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   // arg0: i32 channel mask, constant
   // arg1: i1/vXi1 predicate (Num_elts inferred from U pixel address type)
   // arg2: i32 surface index
-  // arg3: vXi32 U pixel address
-  // arg4: vXi32 V pixel address
-  // arg5: vXi32 R pixel address
-  //
-  // Return value: the data read
+  // arg3: v8Xi32 U pixel address
+  // arg4: v8Xi32 V pixel address
+  // arg5: v8Xi32 R pixel address
+  // arg6: data to write
   //
   // The vector widths of the U pixel address, V pixel address and R pixel
-  // address args must be equal and are the number of elements to read, which
+  // address args must be equal and are the number of elements to write, which
   // must be 8.
   // The predicate arg must either have the same vector width, or be a scalar
   // i1 constant with value 1.
-  // The instruction reads up to 4 channels per element, with the lowest 4
-  // bits of the channel mask arg giving the mask of channels _not_ to read.
-  // The number of 0 bits in that lower 4 bits of the channel mask arg is the
-  // number of channels to read per element.
+  // The instruction writes up to 4 channels per element, with the lowest 4
+  // bits of the channel mask arg giving the mask of channels to write.
+  // The number of 1 bits in that lower 4 bits of the channel mask arg is the
+  // number of channels to write per element. Mask "0000" is not allowed.
   // The vector width of the return value must be the number of elements
   // times the number of channels to read per element.
-  // The element type of the return value must be i32 or float.
+  // The element type of the source value must be i32 or float.
   //
   def int_genx_scatter4_typed : Intrinsic<[], [llvm_i32_ty, llvm_anyint_ty,
-    llvm_i32_ty, llvm_anyint_ty, llvm_anyint_ty, llvm_anyint_ty,
+    llvm_i32_ty, llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty,
     llvm_anyvector_ty], []>;
 
   // llvm.genx.transpose.ld : vISA TRANSPOSE_LD instruction
