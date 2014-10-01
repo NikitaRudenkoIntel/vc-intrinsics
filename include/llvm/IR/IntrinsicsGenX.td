@@ -1974,4 +1974,18 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
             Intrinsic<[llvm_anyint_ty],
                 [LLVMMatchType<0>, LLVMMatchType<0>], [IntrNoMem]>;
 
+  // llvm.genx.rdpredregion : read region at specified offset from a predicate
+  //
+  // arg0: i1 vector
+  // arg1: constant i32 offset (in elements)
+  //
+  // Return value: v4i1/v8i1/v16i1 result of region read
+  //
+  // The number of elements to read is determined from the number of elements
+  // in the return type, and must be 4, 8 or 16.
+  // The offset must be a multiple // of the number of elements.
+  //
+  def int_genx_rdpredregion : Intrinsic<[llvm_anyint_ty],
+      [llvm_anyint_ty, llvm_i32_ty], [IntrNoMem]>;
+
 }
