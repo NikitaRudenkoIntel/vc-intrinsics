@@ -179,6 +179,8 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   //--------------------------------------------------------------------
   // Modifier intrinsics. Abs is the only source modifier that is represented
   // by an intrinsic; neg(x) uses 0-x, and not(x) uses x^-1.
+  // (x^-1 is lowered to the backend-internal notp/noti intrinsics in
+  // GenXLowering.)
 
   // llvm.genx.absf : abs modifier for fp
   // llvm.genx.absi : abs modifier for integer
@@ -1987,5 +1989,19 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   //
   def int_genx_rdpredregion : Intrinsic<[llvm_anyint_ty],
       [llvm_anyint_ty, llvm_i32_ty], [IntrNoMem]>;
+
+  // llvm.genx.noti : invert bits in integer or predicate
+  // llvm.genx.notp : invert bits in predicate
+  //
+  // arg0: input value, scalar/vector
+  //
+  // Return value: result, same type
+  //
+  // GenXLowering lowers xor with -1 into one of these intrinsics.
+  //
+  def int_genx_noti :
+              Intrinsic<[llvm_anyint_ty], [LLVMMatchType<0>], [IntrNoMem]>;
+  def int_genx_notp :
+              Intrinsic<[llvm_anyint_ty], [LLVMMatchType<0>], [IntrNoMem]>;
 
 }
