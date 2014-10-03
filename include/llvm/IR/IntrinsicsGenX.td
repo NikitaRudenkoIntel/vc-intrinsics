@@ -1238,7 +1238,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   //       (log2 number of owords inferred from return type)
   // arg0: i32 is_modified, constant
   // arg1: i32 surface index
-  // arg2: i32 offset (in owords)
+  // arg2: i32 offset (in owords for .ld / in bytes for .ld.unaligned)
   //
   // Return value: the data read.
   //
