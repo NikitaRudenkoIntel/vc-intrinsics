@@ -195,6 +195,19 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
               Intrinsic<[llvm_anyint_ty], [LLVMMatchType<0>], [IntrNoMem]>;
 
   //--------------------------------------------------------------------
+  // Boolean reduction intrinsics
+
+  // llvm.genx.all : true if all input elements are true
+  // llvm.genx.any : true if any input element is true
+  //
+  // arg0: input value: v*i1
+  //
+  // Return value: i1 result
+  //
+  def int_genx_all : Intrinsic<[llvm_i1_ty], [llvm_anyint_ty], [IntrNoMem]>;
+  def int_genx_any : Intrinsic<[llvm_i1_ty], [llvm_anyint_ty], [IntrNoMem]>;
+
+  //--------------------------------------------------------------------
   // ALU intrinsics
 
   // llvm.genx.acos : acos instruction
