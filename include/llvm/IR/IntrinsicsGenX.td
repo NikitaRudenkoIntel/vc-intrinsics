@@ -1065,9 +1065,9 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
 
   // llvm.genx.gather : vISA GATHER instruction
   //
-  //       (Elt_size inferred from data type)
-  // arg0: i32 is_modified, constant
-  // arg1: i1/vXi1 predicate (Num_elts inferred from data type)
+  // arg0: Elt_size inferred from argument type
+  // arg1: i32 is_modified, constant
+  //       (Num_elts inferred from data type)
   // arg2: i32 surface index
   // arg3: i32 global offset in elements
   // arg4: vXi32 element offset in elements
@@ -1078,11 +1078,9 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   // The vector width of the return value is the number of elements to read,
   // which must be 1, 8 or 16.
   // The element offset arg must have the same vector width.
-  // The predicate arg must either have the same vector width, or be a scalar
-  // i1 constant with value 1.
-  def int_genx_gather : Intrinsic<[llvm_anyvector_ty], [llvm_i32_ty,
-    llvm_anyint_ty, llvm_i32_ty, llvm_i32_ty, llvm_anyint_ty,
-    LLVMMatchType<0>], [IntrReadMem]>;
+  def int_genx_gather : Intrinsic<[llvm_anyvector_ty], [llvm_anyvector_ty,
+    llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_anyint_ty, LLVMMatchType<0>],
+    [IntrReadMem]>;
 
   // llvm.genx.gather.scaled : vISA GATHER_SCALED instruction
   //
@@ -1279,20 +1277,20 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
 
   // llvm.genx.scatter : vISA SCATTER instruction
   //
-  //       (Elt_size inferred from data type)
-  // arg0: i1/vXi1 predicate (Num_elts inferred from data type)
+  // arg0: Elt_size from argument element type
   // arg1: i32 surface index
   // arg2: i32 global offset in elements
   // arg3: vXi32 element offset in elements
-  // arg4: the data to write
+  // arg4: the data to write. The first <num_elts> elements will be used. The
+  // operand must have one of UD, D, F type; for 1 and 2 byte accesses the upper
+  // bits will be ignored.
   //
   // The vector width of the data to write is the number of elements to write,
   // which must be 1, 8 or 16.
   // The element offset arg must have the same vector width.
-  // The predicate arg must either have the same vector width, or be a scalar
-  // i1 constant with value 1.
-  def int_genx_scatter : Intrinsic<[], [llvm_anyint_ty, llvm_i32_ty, llvm_i32_ty,
-    llvm_anyint_ty, llvm_anyvector_ty], []>;
+  //
+  def int_genx_scatter : Intrinsic<[], [llvm_anyvector_ty, llvm_i32_ty,
+    llvm_i32_ty, llvm_anyint_ty, llvm_anyvector_ty], []>;
 
   // llvm.genx.scatter.scaled : vISA SCATTER_SCALED instruction
   //
