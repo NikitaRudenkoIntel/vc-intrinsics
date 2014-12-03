@@ -1083,36 +1083,32 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   //
   //       (Exec_size inferred from element offset type)
   // arg0: i1/vXi1 predicate
-  //       (block size inferred from data element type)
+  //       (block size MBZ, means 1 byte)
   // arg1: i32 log2 num blocks, constant (0/1/2 for num blocks 1/2/4)
   // arg2: i32 surface index
   // arg3: i16 scale, constant
   // arg4: i32 global offset in bytes
-  // arg5: vXi32 element offset (X = 8 or 16)
+  // arg5: vXi32 element offset in bytes (X = 8 or 16)
   // arg6: old value of the data read
   //
   // Return value: the data read
   //
   // The vector width of the element offset arg is the number of elements to
   // read, which must be 8 or 16.
+  //
   // The predicate arg must either have the same vector width, or be a scalar
   // i1 constant with value 1.
   //
-  // The element type of the data read gives the block size: i8 for byte,
-  // i16 for 2 byte, or i32/float for 4 byte.
+  // The block size must be 1 byte.
   //
-  // For 4 byte block size, the number of elements in the data read
-  // must be num blocks * exec_size.
+  // Only T0 (SLM) and T5 (stateless) are supported.
   //
-  // For 1 or 2 byte block size, and
-  // num blocks = 1, the read skips elements in the data read value
-  // so each block is on a dword boundary, therefore the number of
-  // elements in the data read value must be exec_size * (4 / block size).
+  // The old value of the data read (the return value) must have UD, D or
+  // F type. For 1 and 2 byte (1 x num blocks) reads the upper bytes have
+  // undefined values in the returned value.
   //
-  // For 1 or 2 byte block size and num blocks > 1, I'm not sure whether
-  // the data is packed as the vISA spec does not say. Therefore I don't
-  // know what the number of elements in the data read value is meant
-  // to be.
+  // This instruction is available for SKL+ in general and it works for pre-SKL
+  // only when scale is 0.
   //
   def int_genx_gather_scaled : Intrinsic<[llvm_anyvector_ty], [llvm_anyint_ty,
     llvm_i32_ty, llvm_i32_ty, llvm_i16_ty, llvm_i32_ty, llvm_anyint_ty,
@@ -1297,7 +1293,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   //
   //       (Exec_size inferred from element offset type)
   // arg0: i1/vXi1 predicate
-  //       (block size inferred from data element type)
+  //       (block size MBZ, means 1 byte)
   // arg1: i32 log2 num blocks, constant (0/1/2 for num blocks 1/2/4)
   // arg2: i32 surface index
   // arg3: i16 scale, constant
@@ -1307,24 +1303,19 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   //
   // The vector width of the element offset arg is the number of elements to
   // write, which must be 8 or 16.
+  //
   // The predicate arg must either have the same vector width, or be a scalar
   // i1 constant with value 1.
   //
-  // The element type of the data read gives the block size: i8 for byte,
-  // i16 for 2 byte, or i32/float for 4 byte.
+  // The block size must be 1 byte.
   //
-  // For 4 byte block size, the number of elements in the data to write
-  // must be num blocks * exec_size.
+  // Only T0 (SLM) and T5 (stateless) are supported.
   //
-  // For 1 or 2 byte block size, and
-  // num blocks = 1, the write skips elements in the data to write value
-  // so each block is on a dword boundary, therefore the number of
-  // elements in the data to write value must be exec_size * (4 / block size).
+  // The data type to write must have UD, D or F type. For 1 and 2 byte (1 x num
+  // blocks) accesses the upper bytes will be ignored.
   //
-  // For 1 or 2 byte block size and num blocks > 1, I'm not sure whether
-  // the data is packed as the vISA spec does not say. Therefore I don't
-  // know what the number of elements in the data to write value is meant
-  // to be.
+  // This instruction is available for SKL+ in general and it works for pre-SKL
+  // only when scale is 0.
   //
   def int_genx_scatter_scaled : Intrinsic<[], [llvm_anyint_ty,
     llvm_i32_ty, llvm_i32_ty, llvm_i16_ty, llvm_i32_ty, llvm_anyint_ty,
