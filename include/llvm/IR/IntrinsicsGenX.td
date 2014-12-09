@@ -1779,6 +1779,36 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
     llvm_i32_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty],
     [IntrReadMem]>;
 
+  // llvm.genx.avs : vISA AVS instruction
+  //
+  // arg0: i32 channel mask, constant
+  // arg1: i32 sampler index
+  // arg2: i32 surface index
+  // arg3: float U offset
+  // arg4: float V offset
+  // arg5: float deltaU
+  // arg6: float deltaV
+  // arg7: float u2d
+  // arg8: i32 groupID
+  // arg9: i32 verticalBlockNumber
+  // arg10: i32 Output format control, constant
+  // arg11: float v2d
+  // arg12: i32 execMode, constant
+  // arg13: i8 IEFBypass
+  //
+  // Return value: the data read.
+  //
+  // The actual data returned is determined by a combination of <channel>,
+  // <cntrl>, <execMode>, as well as whether output shuffle is enabled in the
+  // sampler state.
+  //
+  // SIMD Control Flow: channel enable is ignored.
+  //
+  def int_genx_avs : Intrinsic<[llvm_anyvector_ty], [llvm_i32_ty, llvm_i32_ty,
+    llvm_i32_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty,
+    llvm_float_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_float_ty,
+    llvm_i32_ty, llvm_i8_ty], [IntrReadMem]>;
+
   // llvm.genx.barrier : vISA BARRIER instruction
   // llvm.genx.cache.flush : vISA CACHE_FLUSH instruction
   //
