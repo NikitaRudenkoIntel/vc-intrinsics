@@ -910,9 +910,11 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
 
   // llvm.genx.timestamp : read vISA v11 (%timestamp)
   //
-  // Return value:  v3i32 the value read
+  // Return value:  vxi32 the value read
   //
-  def int_genx_timestamp : Intrinsic<[llvm_anyint_ty], [], [IntrNoMem]>;
+  // The vector width must be power of 2 and no larger than 4.
+  //
+  def int_genx_timestamp : Intrinsic<[llvm_anyint_ty], [], []>;
 
   // llvm.genx.r0 : read vISA v12 (%r0)
   //
