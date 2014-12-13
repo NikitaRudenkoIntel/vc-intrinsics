@@ -541,18 +541,19 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   //
   // arg0: first input, any scalar/vector integer type (not i64)
   // arg1: second input, same type as arg0
+  // arg2: third input, same type as arg0
   //
   // Return value: result, any scalar or vector integer type with same
   //               vector width
   //
   def int_genx_ssmad : Intrinsic<[llvm_anyint_ty],
-                [llvm_anyint_ty, LLVMMatchType<1>], [IntrNoMem]>;
+                [llvm_anyint_ty, LLVMMatchType<1>, LLVMMatchType<1>], [IntrNoMem]>;
   def int_genx_sumad : Intrinsic<[llvm_anyint_ty],
-                [llvm_anyint_ty, LLVMMatchType<1>], [IntrNoMem]>;
+                [llvm_anyint_ty, LLVMMatchType<1>, LLVMMatchType<1>], [IntrNoMem]>;
   def int_genx_usmad : Intrinsic<[llvm_anyint_ty],
-                [llvm_anyint_ty, LLVMMatchType<1>], [IntrNoMem]>;
+                [llvm_anyint_ty, LLVMMatchType<1>, LLVMMatchType<1>], [IntrNoMem]>;
   def int_genx_uumad : Intrinsic<[llvm_anyint_ty],
-                [llvm_anyint_ty, LLVMMatchType<1>], [IntrNoMem]>;
+                [llvm_anyint_ty, LLVMMatchType<1>, LLVMMatchType<1>], [IntrNoMem]>;
 
   // llvm.genx.*mad.sat : mad instruction with saturation
   //    llvm.genx.ssmad.sat : result signed, operands signed
@@ -562,18 +563,19 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   //
   // arg0: first input, any scalar/vector integer type (not i64)
   // arg1: second input, same type as arg0
+  // arg2: third input, same type as arg0
   //
   // Return value: result, any scalar or vector integer type with same
   //               vector width
   //
   def int_genx_ssmad_sat : Intrinsic<[llvm_anyint_ty],
-                [llvm_anyint_ty, LLVMMatchType<1>], [IntrNoMem]>;
+                [llvm_anyint_ty, LLVMMatchType<1>, LLVMMatchType<1>], [IntrNoMem]>;
   def int_genx_sumad_sat : Intrinsic<[llvm_anyint_ty],
-                [llvm_anyint_ty, LLVMMatchType<1>], [IntrNoMem]>;
+                [llvm_anyint_ty, LLVMMatchType<1>, LLVMMatchType<1>], [IntrNoMem]>;
   def int_genx_usmad_sat : Intrinsic<[llvm_anyint_ty],
-                [llvm_anyint_ty, LLVMMatchType<1>], [IntrNoMem]>;
+                [llvm_anyint_ty, LLVMMatchType<1>, LLVMMatchType<1>], [IntrNoMem]>;
   def int_genx_uumad_sat : Intrinsic<[llvm_anyint_ty],
-                [llvm_anyint_ty, LLVMMatchType<1>], [IntrNoMem]>;
+                [llvm_anyint_ty, LLVMMatchType<1>, LLVMMatchType<1>], [IntrNoMem]>;
 
   // llvm.genx.*max : max instruction
   //    llvm.genx.smax : result and operands signed
