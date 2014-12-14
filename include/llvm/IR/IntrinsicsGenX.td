@@ -920,9 +920,10 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
 
   // llvm.genx.r0 : read vISA v12 (%r0)
   //
-  // Return value:  v8i32 the value read
+  // Return value:  vxi32 or i32 the value read
   //
-  def int_genx_r0 : Intrinsic<[llvm_v8i32_ty], [], [IntrReadMem]>;
+  // The vector width must be power of 2 and no larger than 8.
+  def int_genx_r0 : Intrinsic<[llvm_anyint_ty], [], [IntrReadMem]>;
 
   //--------------------------------------------------------------------
   // Shared function intrinsics
