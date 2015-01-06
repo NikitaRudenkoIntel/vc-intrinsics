@@ -1962,11 +1962,15 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   //
   // Return value: converted value (same type)
   //
-  // This intrinsic is inserted by the GenXCatgoryConversion pass to represent
+  // This intrinsic is inserted by the GenXCatgory pass to represent
   // a value being converted between two register categories. The input and
   // result categories are not represented; they are implied by the other
   // def/uses of the value. Address conversion is not covered by this
   // intrinsic.
+  //
+  // The intrinsic is also inserted by GenXCoalescing to represent a copy
+  // of a value of category other than general. Thus the input and output
+  // might be both the same category, but not both general.
   //
   def int_genx_convert :
               Intrinsic<[llvm_anyint_ty], [LLVMMatchType<0>], [IntrNoMem]>;
