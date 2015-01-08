@@ -2046,4 +2046,19 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   def int_genx_notp :
               Intrinsic<[llvm_anyint_ty], [LLVMMatchType<0>], [IntrNoMem]>;
 
+  // llvm.genx.simdcf.any : simd cf marker intrinsic.
+  //
+  // arg0: vector of i1
+  // arg1: filename string (global constant)
+  // arg2: line number (constant)
+  //
+  // Return value: i1 value as condition for a scalar control flow.
+  //
+  // This intrinsic is used to mark a simd cf that takes a predicate vector and
+  // returns a scalar value for scalar cf. The last two arguments can be used to
+  // generate debug location for the corresponding call site.
+  //
+  def int_genx_simdcf_any :
+              Intrinsic<[llvm_i1_ty],
+                        [llvm_anyvector_ty, llvm_ptr_ty, llvm_i32_ty], []>;
 }
