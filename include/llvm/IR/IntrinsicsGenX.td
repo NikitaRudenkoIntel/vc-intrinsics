@@ -1941,11 +1941,12 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   // llvm.genx.constanti : copy constant to register
   // llvm.genx.constantf : copy constant to register
   //
-  // arg0: input value (constant, any scalar or vector type)
+  // arg0: input value (constant, any scalar or vector type other than i1 or
+  //         vector of i1)
   //
   // Return value: same type
   //
-  // This intrinsic is inserted by the GenXConstantMaterialization pass
+  // This intrinsic is inserted by the GenXLowering pass
   // to load a constant in a way that stops the subsequent CSE pass
   // from propagating it back into the operand using it.
   //
@@ -1989,18 +1990,18 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   def int_genx_convert_addr :
               Intrinsic<[llvm_anyint_ty], [LLVMMatchType<0>], [IntrNoMem]>;
 
-  // llvm.genx.constantpred : convert int constant to predicate register category
+  // llvm.genx.constantpred : load constant predicate (i1 or vector of i1)
   //
-  // arg0: input value (i32)
+  // arg0: constant i1 or vector of i1
   //
-  // Return value: converted value (v*i1)
+  // Return value: loaded value, same type
   //
-  // This intrinsic is inserted by GenXConstantMaterialization where a
-  // wrregion has a constant mask other than 1. We could just use a bitcast,
-  // except that EarlyCSE follows GenXConstantMaterialization and it has
-  // a habit of putting the constant back in the wrregion.
+  // This intrinsic is inserted by GenXLowering to load a predicate constant.
+  // We could just use a bitcast, except that EarlyCSE follows
+  // GenXConstantMaterialization and it has a habit of putting the constant
+  // back in the wrregion.
   def int_genx_constantpred :
-              Intrinsic<[llvm_anyint_ty], [llvm_i32_ty], [IntrNoMem]>;
+              Intrinsic<[llvm_anyint_ty], [LLVMMatchType<0>], [IntrNoMem]>;
 
   // llvm.genx.add.addr : add an offset onto an address register
   //
