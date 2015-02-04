@@ -925,6 +925,14 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   // The vector width must be power of 2 and no larger than 8.
   def int_genx_r0 : Intrinsic<[llvm_anyint_ty], [], [IntrReadMem]>;
 
+  // llvm.genx.get.color : read color value of the thread origin
+  //
+  // Return Value: i16 the value read
+  //
+  // This may not be the most appropriate way to access this value,
+  // but is a stop-gap solution.
+  def int_genx_get_color : Intrinsic<[llvm_i16_ty], [], [IntrNoMem]>;
+
   //--------------------------------------------------------------------
   // Shared function intrinsics
   // These are in the order they appear in the vISA spec, not in
