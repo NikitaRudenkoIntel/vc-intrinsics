@@ -2035,10 +2035,25 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   //
   // The number of elements to read is determined from the number of elements
   // in the return type, and must be 4, 8 or 16.
-  // The offset must be a multiple // of the number of elements.
+  // The offset must be a multiple of the number of elements.
   //
   def int_genx_rdpredregion : Intrinsic<[llvm_anyint_ty],
       [llvm_anyint_ty, llvm_i32_ty], [IntrNoMem]>;
+
+  // llvm.genx.wrpredregion : write region at specified offset into a predicate
+  //
+  // arg0: i1 old value of vector
+  // arg1: i1 subvector to write into region
+  // arg2: constant i32 offset (in elements)
+  //
+  // Return value: v4i1/v8i1/v16i1 result of region write
+  //
+  // The number of elements to write is determined from the number of elements
+  // in the "subvector to write" arg, and must be 4, 8 or 16.
+  // The offset must be a multiple of the number of elements.
+  //
+  def int_genx_wrpredregion : Intrinsic<[llvm_anyint_ty],
+      [LLVMMatchType<0>, llvm_anyint_ty, llvm_i32_ty], [IntrNoMem]>;
 
   // llvm.genx.noti : invert bits in integer or predicate
   // llvm.genx.notp : invert bits in predicate
