@@ -19,9 +19,6 @@
 
 let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
 
-  def int_genx_add_sat : GCCBuiltin<"__builtin_genx_add_sat">,
-              Intrinsic<[llvm_anyvector_ty], [LLVMMatchType<0>, LLVMMatchType<0>], [IntrNoMem]>;
-
   //--------------------------------------------------------------------
   // Region/element access intrinsics
 
