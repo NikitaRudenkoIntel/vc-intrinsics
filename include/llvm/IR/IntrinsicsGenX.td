@@ -20,6 +20,12 @@
 let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
 
   //--------------------------------------------------------------------
+  // Start and end markers of the genx intrinsic enum values. This relies on
+  // tablegen outputting the intrinsics in sorted by name order.
+  def int_genx_aaaabegin : Intrinsic<[llvm_anyvector_ty], [], []>;
+  def int_genx_zzzzend : Intrinsic<[llvm_anyvector_ty], [], []>;
+
+  //--------------------------------------------------------------------
   // Region/element access intrinsics
 
 
