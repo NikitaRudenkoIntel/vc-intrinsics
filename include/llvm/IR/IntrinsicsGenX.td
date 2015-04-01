@@ -787,7 +787,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   // any difference to the result, so I have provided just this one intrinsic.
   //
   def int_genx_sad2add : Intrinsic<[llvm_anyint_ty], [llvm_anyint_ty,
-              LLVMMatchType<1>], [IntrNoMem]>;
+              LLVMMatchType<1>, LLVMMatchType<0>], [IntrNoMem]>;
 
   // llvm.genx.*sad2add.sat : two-wide sum of absolute differences and add, saturated
   //    llvm.genx.ssad2add.sat : signed arg2 and result
@@ -800,9 +800,9 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   // Return value: result, same type as arg2
   //
   def int_genx_ssad2add_sat : Intrinsic<[llvm_anyint_ty], [llvm_anyint_ty,
-              LLVMMatchType<1>], [IntrNoMem]>;
+              LLVMMatchType<1>, LLVMMatchType<0>], [IntrNoMem]>;
   def int_genx_usad2add_sat : Intrinsic<[llvm_anyint_ty], [llvm_anyint_ty,
-              LLVMMatchType<1>], [IntrNoMem]>;
+              LLVMMatchType<1>, LLVMMatchType<0>], [IntrNoMem]>;
 
   // llvm.genx.*shl : shl instruction, no saturation
   //    llvm.genx.ssshl : result signed, operands signed
