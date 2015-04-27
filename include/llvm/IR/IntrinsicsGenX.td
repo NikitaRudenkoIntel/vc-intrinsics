@@ -505,7 +505,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   // Return value: result, same type as arg1
   //
   def int_genx_line : Intrinsic<[llvm_anyfloat_ty],
-                    [LLVMMatchType<0>, LLVMMatchType<0>], [IntrNoMem]>;
+                    [llvm_v4f32_ty, LLVMMatchType<0>], [IntrNoMem]>;
 
   // llvm.genx.log : base 2 logarithm
   //
