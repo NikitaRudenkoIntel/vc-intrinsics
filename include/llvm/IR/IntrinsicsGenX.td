@@ -499,13 +499,22 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
 
   // llvm.genx.line : linear equation
   //
-  // arg0: first input value, vector float with exactly 4 elements
-  // arg1: second input value, vector float with a multiple of 4 elements
+  // arg0: first input value, vector float with a multiple of 4 elements
+  // arg1: second input value, vector float, same size
   //
-  // Return value: result, same type as arg1
+  // Return value: result, same type as the args
+  //
+  // The coefficients for the line operation are arg0[4n+0] and arg0[4n+3].
+  // Which n you get for each 4 wide part of the operation is
+  // undefined, because of the effect of legalization in the GenX backend.
+  //
+  // Therefore, to get the correct effect, arg0 should be the result of a
+  // rdregion<0;4,1> (i.e. replicate a single row of 4 elements) whose input is
+  // a 4 wide vector, so the same arg0[0], arg0[1] and arg0[3] are guaranteed
+  // to be used.
   //
   def int_genx_line : Intrinsic<[llvm_anyfloat_ty],
-                    [llvm_v4f32_ty, LLVMMatchType<0>], [IntrNoMem]>;
+                    [LLVMMatchType<0>, LLVMMatchType<0>], [IntrNoMem]>;
 
   // llvm.genx.log : base 2 logarithm
   //
@@ -697,10 +706,19 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
 
   // llvm.genx.pln : plane equation
   //
-  // arg0: first input value, vector of 4 float
-  // arg1: second input value, vector float with a multiple of 16 elements
+  // arg0: first input value, vector float with a multiple of 8 elements
+  // arg1: second input value, vector float with twice as many elements as arg0
   //
-  // Return value: result, vector float with half the vector width of arg1
+  // Return value: result, vector float same type as arg0
+  //
+  // The coefficients for the pln operation are arg0[4n+0], arg0[4n+1] and
+  // arg0[4n+3]. Which n you get for each 8 wide part of the operation is
+  // undefined, because of the effect of legalization in the GenX backend.
+  //
+  // Therefore, to get the correct effect, arg0 should be the result of a
+  // rdregion<0;4,1> (i.e. replicate rows of 4 elements) whose input is a 4
+  // wide vector, so the same arg0[0], arg0[1] and arg0[3] are guaranteed to be
+  // used.
   //
   def int_genx_pln : Intrinsic<[llvm_anyfloat_ty],
                     [LLVMMatchType<0>, llvm_anyfloat_ty], [IntrNoMem]>;
