@@ -184,6 +184,7 @@ class Region {
 public:
   enum { ROOT, IF, ELSE, DO, BREAK, CONTINUE };
 private:
+  bool Errored;
   unsigned Kind;
   Region *Parent;
   BasicBlock *Entry; // if block, or loop header block
@@ -193,17 +194,19 @@ private:
   unsigned NumBreaks :16;
   unsigned NumContinues :16;
   Region(unsigned Kind, Region *Parent, BasicBlock *Entry, BasicBlock *Exit)
-    : Kind(Kind), Parent(Parent), Entry(Entry), Exit(Exit),
+    : Errored(false), Kind(Kind), Parent(Parent), Entry(Entry), Exit(Exit),
       SimdWidth(!Parent ? 0 : Parent->SimdWidth), NumBreaks(0),
       NumContinues(0) {}
 public:
   ~Region();
   static Region *createRegionTree(Function *F, unsigned CMWidth);
+  bool hasError() const { return Errored; }
   unsigned getKind() const { return Kind; }
   BasicBlock *getEntry() const { return Entry; }
   BasicBlock *getExit() const { return Exit; }
   BasicBlock *getElse() const;
   unsigned getSimdWidth() const { return SimdWidth; }
+  Region *getRoot();
   Region *getParent() const { return Parent; }
   unsigned getNumContinues() const { return NumContinues; }
   // iterator iterates through children.
@@ -477,43 +480,45 @@ void CMSimdCFLowering::processFunction(Function *F, unsigned CMWidth)
 
   DEBUG(F->print(dbgs()));
   Region *Root = Region::createRegionTree(F, CMWidth);
-  DEBUG(
-    dbgs() << "CMSimdCFLowering: simd region tree:\n";
-    Root->print(dbgs())
-  );
-  // Add predication as required.
-  DEBUG(dbgs() << "CMSimdCFLowering: adding predication " << F->getName() << "\n");
-  EMs.resize(6, nullptr); // space for EMs up to 2^(6-1) in size.
-  if (CMWidth) {
-    // This is a subroutine with predicated calls. First create the alloca for
-    // the EM, and initialize it from the CM arg. Do not insert the store into
-    // code yet so it does not itself get predicated.
-    auto EM = getExecutionMask(F, CMWidth);
-    auto Store = new StoreInst(&F->getArgumentList().back(), EM);
-    // Add predication to the whole function.
-    for (auto i = F->begin(), e = F->end(); i != e; ++i)
-      predicateBlock(&*i, Root);
-    // Now insert the store just after the alloca of the execution mask.
-    Store->insertAfter(EM);
-  } else {
-    // Add predication to the whole range of each top-level simd CF construct.
-    for (auto i = Root->begin(), e = Root->end(); i != e; ++i) {
-      Region *R = *i;
-      auto BB = R->getEntry();
-      if (R->getKind() == Region::IF)
-        BB = BB->getNextNode();
-      for (auto BBE = R->getExit(); BB != BBE; BB = BB->getNextNode())
-        predicateBlock(BB, R);
+  if (!Root->hasError()) {
+    DEBUG(
+      dbgs() << "CMSimdCFLowering: simd region tree:\n";
+      Root->print(dbgs())
+    );
+    // Add predication as required.
+    DEBUG(dbgs() << "CMSimdCFLowering: adding predication " << F->getName() << "\n");
+    EMs.resize(6, nullptr); // space for EMs up to 2^(6-1) in size.
+    if (CMWidth) {
+      // This is a subroutine with predicated calls. First create the alloca for
+      // the EM, and initialize it from the CM arg. Do not insert the store into
+      // code yet so it does not itself get predicated.
+      auto EM = getExecutionMask(F, CMWidth);
+      auto Store = new StoreInst(&F->getArgumentList().back(), EM);
+      // Add predication to the whole function.
+      for (auto i = F->begin(), e = F->end(); i != e; ++i)
+        predicateBlock(&*i, Root);
+      // Now insert the store just after the alloca of the execution mask.
+      Store->insertAfter(EM);
+    } else {
+      // Add predication to the whole range of each top-level simd CF construct.
+      for (auto i = Root->begin(), e = Root->end(); i != e; ++i) {
+        Region *R = *i;
+        auto BB = R->getEntry();
+        if (R->getKind() == Region::IF)
+          BB = BB->getNextNode();
+        for (auto BBE = R->getExit(); BB != BBE; BB = BB->getNextNode())
+          predicateBlock(BB, R);
+      }
     }
+    // Lower the simd CF constructs themselves.
+    DEBUG(dbgs() << "CMSimdCFLowering: lowering CF " << F->getName() << "\n");
+    for (auto pi = Root->postorder_begin(), pe = Root->postorder_end();
+        pi != pe; ++pi) {
+      Region *R = &*pi;
+      processRegion(R);
+    }
+    addJoins();
   }
-  // Lower the simd CF constructs themselves.
-  DEBUG(dbgs() << "CMSimdCFLowering: lowering CF " << F->getName() << "\n");
-  for (auto pi = Root->postorder_begin(), pe = Root->postorder_end();
-      pi != pe; ++pi) {
-    Region *R = &*pi;
-    processRegion(R);
-  }
-  addJoins();
   delete Root;
   ReenableMasks.clear();
   EMs.clear();
@@ -1463,6 +1468,17 @@ Region *Region::createRegionTree(Function *F, unsigned CMWidth)
 }
 
 /***********************************************************************
+ * getRoot : get the root region
+ */
+Region *Region::getRoot()
+{
+  Region *Root = this;
+  while (Root->Parent)
+    Root = Root->Parent;
+  return Root;
+}
+
+/***********************************************************************
  * reportIllegal : report illegal unstructured control flow
  *
  * We only do this once per function, otherwise we would get loads of
@@ -1470,6 +1486,8 @@ Region *Region::createRegionTree(Function *F, unsigned CMWidth)
  */
 void Region::reportIllegal(Instruction *Inst)
 {
+  if (getRoot()->Errored)
+    return;
   reportError(
       "illegal unstructured SIMD control flow (did you mix it with scalar control flow?)",
       Inst);
@@ -1486,6 +1504,7 @@ void Region::reportIllegal(Instruction *Inst)
  */
 void Region::reportError(const char *Text, Instruction *Inst)
 {
+  getRoot()->Errored = true;
   if (!Inst || Inst->getDebugLoc().isUnknown()) {
     // If there is no debug info, attempt to pass the innermost simd branch
     // so we can get the source location from that.
