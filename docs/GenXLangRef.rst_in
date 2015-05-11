@@ -1,0 +1,117 @@
+============================
+LLVM IR for the GenX backend
+============================
+
+.. contents::
+    :local:
+
+Introduction
+============
+
+The GenX backend accepts
+:doc:`LLVM intermediate representation <../LangRef>`
+with certain restrictions, and with additional GenX-specific intrinsics.
+
+LLVM IR representation of vISA code
+===================================
+
+Linkage
+-------
+
+A kernel is represented by a function with ``dllexport`` linkage.
+
+A non-kernel function is represented by a function with ``public`` linkage.
+
+A subroutine is represented by a function with ``internal`` linkage. A subroutine
+is allowed to be accessed from multiple kernels and non-kernel functions; the
+GenX backend clones such a subroutine so it appears with each kernel and function
+that uses it in the vISA.
+
+No other linkage is supported.
+
+Global variables are not supported. (The CM compiler has its own CMABI pass that
+works around this by passing such variable into and out of any subroutine that
+uses it.)
+
+Kernel information
+------------------
+
+The genx.kernels named metadata node contains a metadata node
+for each kernel, containing:
+
+* 0: reference to Function
+* 1: kernel name
+* 2: asm name
+* 3: kernel argument kinds
+* 4: slm size in bytes
+
+Types
+-----
+
+Only fundamental types that correspond to Gen types are allowed:
+
+* i1 for predicate
+* i8 for b/ub
+* i16 for w/uw
+* half for hf
+* i32 for d/ud
+* float for f
+* i64 for q/uq
+* double for df
+
+Arbitrary size vectors of these types are allowed.
+
+Arithmetic/logic operator
+-------------------------
+
+There is no vector width restriction on operands and result of an
+arithmetic/logic operator.
+
+Where the operands and result have the same type, and no saturation is
+required, the corresponding LLVM IR instruction can be used, for example
+``add``.
+
+A floating point operation where saturation is required is represented by
+the LLVM IR instruction followed by the ``llvm.genx.sat`` intrinsic.
+
+For an integer operation, vISA allows the operands to have one type
+and the result to have a different type. This is represented by an intrinsic,
+typically with signed/unsigned variants and variants with saturation.
+Saturation cannot be represented by a separate intrinsic as for floating
+point, because the intermediate result in the EU's ALU has one more bit
+than the execution size.
+
+An intrinsic is also required where the operator does not have an LLVM IR
+instruction equivalent, such as ``min``.
+
+
+Load and store
+--------------
+
+Load and store instructions are allowed only to load/store from/to a static
+alloca, i.e. ones that are removed by a mem2reg pass.
+
+SIMD control flow
+-----------------
+
+SIMD control flow is represented in LLVM IR in a way that reflects the
+semantics, as if it is being implemented in vISA by scalar control flow and
+masking.
+
+For example, a SIMD ``if`` is represented by a scalar conditional branch to
+the else leg, where the scalar condition is "are all bits 0 in the vector
+condition?". An operation within the then leg
+that writes a value representing a variable (rather
+than an intermediate value) needs to be masked with either a ``select`` or
+a predicated ``llvm.genx.wrregion``.
+
+The end of the then leg needs to check whether all bits are 1 in the vector
+condition, and if so branch over the else leg to the endif.
+
+
+GenX intrinsics
+===============
+
+.. The rst-formatted comments in include/llvm/IR/IntrinsicsGenX.td are extracted
+   and appended here to document the GenX specific intrinsics.
+
