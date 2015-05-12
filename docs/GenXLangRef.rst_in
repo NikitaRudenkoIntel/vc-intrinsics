@@ -94,19 +94,57 @@ alloca, i.e. ones that are removed by a mem2reg pass.
 SIMD control flow
 -----------------
 
-SIMD control flow is represented in LLVM IR in a way that reflects the
-semantics, as if it is being implemented in vISA by scalar control flow and
-masking.
+SIMD control flow is not directly represented in LLVM IR. Instead, it can be
+built using:
 
-For example, a SIMD ``if`` is represented by a scalar conditional branch to
-the else leg, where the scalar condition is "are all bits 0 in the vector
-condition?". An operation within the then leg
-that writes a value representing a variable (rather
-than an intermediate value) needs to be masked with either a ``select`` or
-a predicated ``llvm.genx.wrregion``.
+* a scalar conditional branch
+  where the condition is the result of an ``llvm.genx.all`` or ``llvm.genx.any``
+  of a vector condition;
 
-The end of the then leg needs to check whether all bits are 1 in the vector
-condition, and if so branch over the else leg to the endif.
+* predication (using ``select``, or predicated ``llvm.genx.wrregion``).
+
+Then, structured or unstructured SIMD control flow can be modelled
+using LLVM IR as follows:
+
+* There is a vXi1 execution mask (EM) (for SIMD width X). Within SIMD
+  control flow, vector instructions that affect state are predicated by
+  EM. (SIMD control flow of different widths cannot be mixed, although
+  it can appear separately in the same function, so there is a separate
+  EM for each width used in the function.)
+
+* Each SIMD control flow join point has a vXi1 re-enable mask (RM)
+  variable. It is initialized to 0.
+
+* A SIMD conditional branch does the following:
+
+  - For a channel that is enabled (bit set in EM) and wants to take the
+    branch, its bit is cleared in EM and set in the branch target's RM.
+
+  - For a forward branch, if all bits in EM are now zero, it branches to
+    the next join point where any currently disabled channel could be
+    re-enabled. For structured control flow, this is the join point of
+    the current or next outer construct.
+
+  - For a backward branch, if any bit in EM is 1, it branches to the
+    earliest point where any currently disabled channel could be
+    re-enabled. For structured control flow, this is the top of the
+    innermost loop.
+
+* A join point does the following:
+
+  - re-enables channels from its RM variable: EM \|= RM. (If we know from
+    the control flow structure that EM==0, as we do at an "else" and a
+    loop exit, then we can instead use EM = RM, which makes the resulting
+    optimized IR considerably simpler.)
+
+  - resets its RM to 0
+
+  - if EM is still all zero, it branches to the next join point where any
+    currently disabled channel could be re-enabled.
+
+LLVM IR using this model can be translated directly into vISA by the GenX
+backend. However it also has an opportunity to analyze the LLVM IR and
+spot where it can implement it using vISA ``goto`` and ``join`` instructions.
 
 
 GenX intrinsics
