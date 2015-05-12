@@ -335,6 +335,7 @@ private:
   void predicateBlock(BasicBlock *BB, Region *R);
   void predicateInst(Instruction *Inst, Region *R);
   void predicateStore(StoreInst *SI, Region *R);
+  void predicateScatterGather(CallInst *CI, Region *R, unsigned PredOperandNum);
   CallInst *predicateWrRegion(CallInst *WrR, Region *R);
   void predicateCall(CallInst *CI, Region *R);
   CallInst *addCallMaskToCall(CallInst *CI, Function *Callee, Value *CM);
@@ -891,17 +892,33 @@ void CMSimdCFLowering::predicateInst(Instruction *Inst, Region *R)
       case Intrinsic::genx_wrregion:
       case Intrinsic::genx_simdcf_any:
         return; // ignore these intrinsics
-      default:
-        // An IntrNoMem intrinsic is an ALU intrinsic and can be ignored.
-        if (Callee->doesNotAccessMemory())
-          return;
-        assert(0 && "predicating non-ALU intrinsic not implemented yet");
-        return;
       case Intrinsic::not_intrinsic:
-        break;
+        // Call to real subroutine.
+        predicateCall(CI, R);
+        return;
     }
-    // Call to real subroutine.
-    predicateCall(CI, R);
+    // An IntrNoMem intrinsic is an ALU intrinsic and can be ignored.
+    if (Callee->doesNotAccessMemory())
+      return;
+    // Look for a predicate operand in operand 2, 1 or 0.
+    unsigned PredNum = std::max(2U, CI->getNumArgOperands());
+    for (;;) {
+      if (auto VT = dyn_cast<VectorType>(CI->getArgOperand(PredNum)->getType()))
+      {
+        if (VT->getElementType()->isIntegerTy(1)) {
+          // We have a predicate operand.
+          predicateScatterGather(CI, R, PredNum);
+          return;
+        }
+      }
+      if (!PredNum)
+        break;
+      --PredNum;
+    }
+    R->reportError(
+          (Twine("illegal instruction inside SIMD control flow: ")
+            + Intrinsic::getName((Intrinsic::ID)IntrinsicID))
+          .str().c_str(), CI);
     return;
   }
   if (auto SI = dyn_cast<StoreInst>(Inst)) {
@@ -981,6 +998,34 @@ void CMSimdCFLowering::predicateStore(StoreInst *SI, Region *R)
   auto Select = SelectInst::Create(EM, V, Load,
       V->getName() + ".simdcfpred", SI);
   SI->setOperand(0, Select);
+}
+
+/***********************************************************************
+ * predicateScatterGather : predicate a scatter/gather intrinsic call
+ *
+ * This works on the scatter/gather intrinsics with a predicate operand.
+ */
+void CMSimdCFLowering::predicateScatterGather(CallInst *CI, Region *R,
+      unsigned PredOperandNum)
+{
+  Value *OldPred = CI->getArgOperand(PredOperandNum);
+  assert(OldPred->getType()->getScalarType()->isIntegerTy(1));
+  unsigned Width = R->getSimdWidth();
+  if (Width != OldPred->getType()->getVectorNumElements()) {
+    R->reportError("mismatched SIMD width of scatter/gather", CI);
+    return;
+  }
+  auto NewPred = loadExecutionMask(CI, Width);
+  if (auto C = dyn_cast<Constant>(OldPred))
+    if (C->isAllOnesValue())
+      OldPred = nullptr;
+  if (OldPred) {
+    auto And = BinaryOperator::Create(Instruction::And, OldPred, NewPred,
+        OldPred->getName() + ".and." + NewPred->getName(), CI);
+    And->setDebugLoc(CI->getDebugLoc());
+    NewPred = And;
+  }
+  CI->setArgOperand(PredOperandNum, NewPred);
 }
 
 /***********************************************************************
@@ -1507,9 +1552,16 @@ void Region::reportIllegal(Instruction *Inst)
 void Region::reportError(const char *Text, Instruction *Inst)
 {
   getRoot()->Errored = true;
+  while (Inst && Inst->getDebugLoc().isUnknown()) {
+    // If there is no debug info, try going up to find an instruction with
+    // debug info.
+    if (Inst == &Inst->getParent()->front())
+      break;
+    Inst = Inst->getPrevNode();
+  }
   if (!Inst || Inst->getDebugLoc().isUnknown()) {
-    // If there is no debug info, attempt to pass the innermost simd branch
-    // so we can get the source location from that.
+    // If there is no instruction and still no debug info, attempt to pass the
+    // innermost simd branch so we can get the source location from that.
     Region *R = this;
     switch (R->getKind()) {
       case ELSE:
