@@ -618,6 +618,8 @@ void CMSimdCFLowering::lowerDo(Region *R)
   }
   if (GotContinue) {
     // If we had any continues, the while block needs a join point.
+    // Ensure it has an RM for addJoins to find.
+    getReenableMask(While, Cond->getType()->getVectorNumElements());
     PendingJoins.push_back(PendingJoin(While, Exit));
   }
   // Add a join point after the loop, skipping to the next outer control
@@ -1407,7 +1409,7 @@ Region *Region::createRegionTree(Function *F, unsigned CMWidth)
             Region *Loop = R;
             while (Loop && Loop->getKind() != DO)
               Loop = Loop->getParent();
-            if (Loop && Loop->Exit->getNextNode() == Succ) {
+            if (Loop && Loop->Exit == Succ->getNextNode()) {
               // This is a continue. (Note that we push a new region into the
               // tree, but we do not make it the current region.)
               DEBUG(dbgs() << BB->getName() << ": continue (to " << Succ->getName() << ")\n");
