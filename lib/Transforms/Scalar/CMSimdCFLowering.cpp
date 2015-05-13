@@ -978,6 +978,10 @@ void CMSimdCFLowering::predicateStore(StoreInst *SI, Region *R)
         // Yes it is predicated. Stop here and further predicate it.
         break;
       }
+    } else if (Width == 1) {
+      // Single element wrregion. This is a scalar operation, so we do not
+      // want to predicate it at all.
+      return;
     } else if (Width < R->getSimdWidth()) {
       // Too narrow. Predicate the last correctly sized wrregion or the store.
       break;
