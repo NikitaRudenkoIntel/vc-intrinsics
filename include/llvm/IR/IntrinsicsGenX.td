@@ -1091,7 +1091,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// * ``llvm.genx.dword.atomic.imax`` : vISA DWORD_ATOMIC IMAX instruction
   ///
   /// * (Exec_size inferred from element offset type)
-  /// * arg0: i1/vXi1 predicate
+  /// * arg0: vXi1 predicate
   /// * arg1: i32 surface index
   /// * arg2: vXi32 element offset in bytes
   /// * arg3: vXi32 src
@@ -1099,38 +1099,38 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   ///
   /// * Return value: vXi32 the old value read
   ///
-  /// Element offset, src, and the return value must all have the same vector
-  /// width, which must be 1, 8 or 16.
+  /// Predicate, element offset, src, and the return value must all have the
+  /// same vector width, which must be 1, 8 or 16.
   ///
   def int_genx_dword_atomic_add : Intrinsic<[llvm_anyvector_ty],
-    [llvm_anyint_ty, llvm_i32_ty, llvm_anyint_ty, LLVMMatchType<0>,
+    [llvm_anyvector_ty, llvm_i32_ty, llvm_anyint_ty, LLVMMatchType<0>,
     LLVMMatchType<0>], []>;
   def int_genx_dword_atomic_sub : Intrinsic<[llvm_anyvector_ty],
-    [llvm_anyint_ty, llvm_i32_ty, llvm_anyint_ty, LLVMMatchType<0>,
+    [llvm_anyvector_ty, llvm_i32_ty, llvm_anyint_ty, LLVMMatchType<0>,
     LLVMMatchType<0>], []>;
   def int_genx_dword_atomic_min : Intrinsic<[llvm_anyvector_ty],
-    [llvm_anyint_ty, llvm_i32_ty, llvm_anyint_ty, LLVMMatchType<0>,
+    [llvm_anyvector_ty, llvm_i32_ty, llvm_anyint_ty, LLVMMatchType<0>,
     LLVMMatchType<0>], []>;
   def int_genx_dword_atomic_max : Intrinsic<[llvm_anyvector_ty],
-    [llvm_anyint_ty, llvm_i32_ty, llvm_anyint_ty, LLVMMatchType<0>,
+    [llvm_anyvector_ty, llvm_i32_ty, llvm_anyint_ty, LLVMMatchType<0>,
     LLVMMatchType<0>], []>;
   def int_genx_dword_atomic_xchg : Intrinsic<[llvm_anyvector_ty],
-    [llvm_anyint_ty, llvm_i32_ty, llvm_anyint_ty, LLVMMatchType<0>,
+    [llvm_anyvector_ty, llvm_i32_ty, llvm_anyint_ty, LLVMMatchType<0>,
     LLVMMatchType<0>], []>;
   def int_genx_dword_atomic_and : Intrinsic<[llvm_anyvector_ty],
-    [llvm_anyint_ty, llvm_i32_ty, llvm_anyint_ty, LLVMMatchType<0>,
+    [llvm_anyvector_ty, llvm_i32_ty, llvm_anyint_ty, LLVMMatchType<0>,
     LLVMMatchType<0>], []>;
   def int_genx_dword_atomic_or : Intrinsic<[llvm_anyvector_ty],
-    [llvm_anyint_ty, llvm_i32_ty, llvm_anyint_ty, LLVMMatchType<0>,
+    [llvm_anyvector_ty, llvm_i32_ty, llvm_anyint_ty, LLVMMatchType<0>,
     LLVMMatchType<0>], []>;
   def int_genx_dword_atomic_xor : Intrinsic<[llvm_anyvector_ty],
-    [llvm_anyint_ty, llvm_i32_ty, llvm_anyint_ty, LLVMMatchType<0>,
+    [llvm_anyvector_ty, llvm_i32_ty, llvm_anyint_ty, LLVMMatchType<0>,
     LLVMMatchType<0>], []>;
   def int_genx_dword_atomic_imin : Intrinsic<[llvm_anyvector_ty],
-    [llvm_anyint_ty, llvm_i32_ty, llvm_anyint_ty, LLVMMatchType<0>,
+    [llvm_anyvector_ty, llvm_i32_ty, llvm_anyint_ty, LLVMMatchType<0>,
     LLVMMatchType<0>], []>;
   def int_genx_dword_atomic_imax : Intrinsic<[llvm_anyvector_ty],
-    [llvm_anyint_ty, llvm_i32_ty, llvm_anyint_ty, LLVMMatchType<0>,
+    [llvm_anyvector_ty, llvm_i32_ty, llvm_anyint_ty, LLVMMatchType<0>,
     LLVMMatchType<0>], []>;
 
   /// ``llvm.genx.dword.atomic.*`` : dword atomic with fmin/fmax operation
@@ -1139,7 +1139,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// * ``llvm.genx.dword.atomic.fmax`` : vISA DWORD_ATOMIC FMAX instruction
   ///
   /// * (Exec_size inferred from element offset type)
-  /// * arg0: i1/vXi1 predicate
+  /// * arg0: vXi1 predicate
   /// * arg1: i32 surface index
   /// * arg2: vXi32 element offset in bytes
   /// * arg3: vXfloat src
@@ -1147,14 +1147,14 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   ///
   /// * Return value: vXfloat the old value read
   ///
-  /// Element offset, src, and the return value must all have the same vector
-  /// width, which must be 1, 8 or 16.
+  /// Predicate, element offset, src, and the return value must all have the
+  /// same vector width, which must be 1, 8 or 16.
   ///
   def int_genx_dword_atomic_fmin : Intrinsic<[llvm_anyvector_ty],
-    [llvm_anyint_ty, llvm_i32_ty, llvm_anyint_ty, LLVMMatchType<0>,
+    [llvm_anyvector_ty, llvm_i32_ty, llvm_anyint_ty, LLVMMatchType<0>,
     LLVMMatchType<0>], []>;
   def int_genx_dword_atomic_fmax : Intrinsic<[llvm_anyvector_ty],
-    [llvm_anyint_ty, llvm_i32_ty, llvm_anyint_ty, LLVMMatchType<0>,
+    [llvm_anyvector_ty, llvm_i32_ty, llvm_anyint_ty, LLVMMatchType<0>,
     LLVMMatchType<0>], []>;
 
   /// ``llvm.genx.dword.atomic.*`` : dword atomic with inc/dec operation
@@ -1163,26 +1163,26 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// * ``llvm.genx.dword.atomic.dec`` : vISA DWORD_ATOMIC DEC instruction
   ///
   /// * (Exec_size inferred from element offset type)
-  /// * arg0: i1/vXi1 predicate
+  /// * arg0: vXi1 predicate
   /// * arg1: i32 surface index
   /// * arg2: vXi32 element offset in bytes
   /// * arg3: vXi32 original value of the register that the data is read into
   ///
   /// * Return value: vXi32 the old value read
   ///
-  /// Element offset, src, and the return value must all have the same vector
-  /// width, which must be 1, 8 or 16.
+  /// Predicate, element offset, src, and the return value must all have the
+  /// same vector width, which must be 1, 8 or 16.
   ///
   def int_genx_dword_atomic_inc : Intrinsic<[llvm_anyvector_ty],
-    [llvm_anyint_ty, llvm_i32_ty, LLVMMatchType<0>, LLVMMatchType<0>], []>;
+    [llvm_anyvector_ty, llvm_i32_ty, LLVMMatchType<0>, LLVMMatchType<0>], []>;
   def int_genx_dword_atomic_dec : Intrinsic<[llvm_anyvector_ty],
-    [llvm_anyint_ty, llvm_i32_ty, LLVMMatchType<0>, LLVMMatchType<0>], []>;
+    [llvm_anyvector_ty, llvm_i32_ty, LLVMMatchType<0>, LLVMMatchType<0>], []>;
 
   /// ``llvm.genx.dword.atomic.cmpxchg`` : vISA DWORD_ATOMIC CMPXCHG instruction
   /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   ///
   /// * (Exec_size inferred from element offset type)
-  /// * arg0: i1/vXi1 predicate
+  /// * arg0: vXi1 predicate
   /// * arg1: i32 surface index
   /// * arg2: vXi32 element offset in bytes
   /// * arg3: vXi32 src0
@@ -1191,18 +1191,18 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   ///
   /// * Return value: vXi32 the old value read
   ///
-  /// Element offset, src, and the return value must all have the same vector
-  /// width, which must be 1, 8 or 16.
+  /// Predicate, element offset, src, and the return value must all have the
+  /// same vector width, which must be 1, 8 or 16.
   ///
   def int_genx_dword_atomic_cmpxchg : Intrinsic<[llvm_anyvector_ty],
-    [llvm_anyint_ty, llvm_i32_ty, LLVMMatchType<0>, LLVMMatchType<0>,
+    [llvm_anyvector_ty, llvm_i32_ty, LLVMMatchType<0>, LLVMMatchType<0>,
     LLVMMatchType<0>, LLVMMatchType<0>], []>;
 
   /// ``llvm.genx.dword.atomic.fcmpwr`` : vISA DWORD_ATOMIC FCMPWR instruction
   /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   ///
   /// * (Exec_size inferred from element offset type)
-  /// * arg0: i1/vXi1 predicate
+  /// * arg0: vXi1 predicate
   /// * arg1: i32 surface index
   /// * arg2: vXi32 element offset in bytes
   /// * arg3: vXfloat src0
@@ -1211,11 +1211,11 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   ///
   /// * Return value: vXfloat the old value read
   ///
-  /// Element offset, src, and the return value must all have the same vector
-  /// width, which must be 1, 8 or 16.
+  /// Predicate, element offset, src, and the return value must all have the
+  /// same vector width, which must be 1, 8 or 16.
   ///
   def int_genx_dword_atomic_fcmpwr : Intrinsic<[llvm_anyvector_ty],
-    [llvm_anyint_ty, llvm_i32_ty, llvm_anyint_ty, LLVMMatchType<0>,
+    [llvm_anyvector_ty, llvm_i32_ty, llvm_anyint_ty, LLVMMatchType<0>,
     LLVMMatchType<0>, LLVMMatchType<0>], []>;
 
   /// ``llvm.genx.gather`` : vISA GATHER instruction
@@ -1244,7 +1244,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   ///
   /// * (Exec_size inferred from element offset type)
-  /// * arg0: i1/vXi1 predicate
+  /// * arg0: vXi1 predicate
   ///       (block size MBZ, means 1 byte)
   /// * arg1: i32 log2 num blocks, constant (0/1/2 for num blocks 1/2/4)
   /// * arg2: i32 surface index
@@ -1258,8 +1258,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// The vector width of the element offset arg is the number of elements to
   /// read, which must be 8 or 16.
   ///
-  /// The predicate arg must either have the same vector width, or be a scalar
-  /// i1 constant with value 1.
+  /// The predicate arg must have the same vector width.
   ///
   /// The block size must be 1 byte.
   ///
@@ -1272,16 +1271,16 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// This instruction is available for SKL+ in general and it works for pre-SKL
   /// only when scale is 0.
   ///
-  def int_genx_gather_scaled : Intrinsic<[llvm_anyvector_ty], [llvm_anyint_ty,
-    llvm_i32_ty, llvm_i32_ty, llvm_i16_ty, llvm_i32_ty, llvm_anyint_ty,
-    LLVMMatchType<0>], [IntrReadMem]>;
+  def int_genx_gather_scaled : Intrinsic<[llvm_anyvector_ty],
+    [llvm_anyvector_ty, llvm_i32_ty, llvm_i32_ty, llvm_i16_ty, llvm_i32_ty,
+    llvm_anyint_ty, LLVMMatchType<0>], [IntrReadMem]>;
 
   /// ``llvm.genx.gather4`` : vISA GATHER4 instruction
   /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   ///
   /// * arg0: i32 channel mask, constant
   /// * arg1: i32 is_modified, constant
-  /// * arg2: i1/vXi1 predicate (Num_elts inferred from element offset type)
+  /// * arg2: vXi1 predicate (Num_elts inferred from element offset type)
   /// * arg3: i32 surface index
   /// * arg4: i32 global offset in i32s
   /// * arg5: vXi32 element offset in i32s
@@ -1291,8 +1290,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   ///
   /// The vector width of the element offset arg is the number of elements to
   /// read, which must be 8 or 16.
-  /// The predicate arg must either have the same vector width, or be a scalar
-  /// i1 constant with value 1.
+  ///
   /// The instruction reads up to 4 channels per element, with the lowest 4
   /// bits of the channel mask arg giving the mask of channels _not_ to read.
   /// The number of 0 bits in that lower 4 bits of the channel mask arg is the
@@ -1302,14 +1300,14 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// The element type of the return value must be i32 or float.
   ///
   def int_genx_gather4 : Intrinsic<[llvm_anyvector_ty], [llvm_i32_ty,
-    llvm_i32_ty, llvm_anyint_ty, llvm_i32_ty, llvm_i32_ty, llvm_anyint_ty,
+    llvm_i32_ty, llvm_anyvector_ty, llvm_i32_ty, llvm_i32_ty, llvm_anyint_ty,
     LLVMMatchType<0>], [IntrReadMem]>;
 
   /// ``llvm.genx.gather4.scaled`` : vISA GATHER4_SCALED instruction
   /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   ///
   /// * (Exec_size inferred from element offset type)
-  /// * arg0: i1/vXi1 predicate
+  /// * arg0: vXi1 predicate
   /// * arg1: i32 channel mask, constant
   /// * arg2: i32 surface index
   /// * arg3: i16 scale, constant
@@ -1321,8 +1319,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   ///
   /// The vector width of the element offset arg is the number of elements to
   /// read, which must be 8 or 16.
-  /// The predicate arg must either have the same vector width, or be a scalar
-  /// i1 constant with value 1.
+  /// The predicate arg must have the same vector width.
   /// The instruction reads up to 4 channels per element, with the lowest 4
   /// bits of the channel mask arg giving the mask of channels _not_ to read.
   /// The number of 0 bits in that lower 4 bits of the channel mask arg is the
@@ -1331,15 +1328,15 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// times the number of channels to read per element.
   /// The element type of the return value must be i32 or float.
   ///
-  def int_genx_gather4_scaled : Intrinsic<[llvm_anyvector_ty], [llvm_anyint_ty,
-    llvm_i32_ty, llvm_i32_ty, llvm_i16_ty, llvm_i32_ty, llvm_anyint_ty,
-    LLVMMatchType<0>], [IntrReadMem]>;
+  def int_genx_gather4_scaled : Intrinsic<[llvm_anyvector_ty],
+    [llvm_anyvector_ty, llvm_i32_ty, llvm_i32_ty, llvm_i16_ty, llvm_i32_ty,
+    llvm_anyint_ty, LLVMMatchType<0>], [IntrReadMem]>;
 
   /// ``llvm.genx.gather4.typed`` : vISA GATHER4_TYPED instruction
   /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   ///
   /// * arg0: i32 channel mask, constant
-  /// * arg1: i1/vXi1 predicate (Num_elts inferred from element offset type)
+  /// * arg1: vXi1 predicate (Num_elts inferred from element offset type)
   /// * arg2: i32 surface index
   /// * arg3: vXi32 U pixel address
   /// * arg4: vXi32 V pixel address
@@ -1351,8 +1348,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// The vector widths of the U pixel address, V pixel address and R pixel
   /// address args must be equal and are the number of elements to read, which
   /// must be 8.
-  /// The predicate arg must either have the same vector width, or be a scalar
-  /// i1 constant with value 1.
+  /// The predicate arg must have the same vector width.
   /// The instruction reads up to 4 channels per element, with the lowest 4
   /// bits of the channel mask arg giving the mask of channels to read.
   /// The number of 1 bits in that lower 4 bits of the channel mask arg is the
@@ -1362,7 +1358,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// The element type of the return value must be i32 or float.
   ///
   def int_genx_gather4_typed : Intrinsic<[llvm_anyvector_ty], [llvm_i32_ty,
-    llvm_anyint_ty, llvm_i32_ty, llvm_v8i32_ty, llvm_v8i32_ty,
+    llvm_anyvector_ty, llvm_i32_ty, llvm_v8i32_ty, llvm_v8i32_ty,
     llvm_v8i32_ty, LLVMMatchType<0>], [IntrReadMem]>;
 
   /// ``llvm.genx.media.ld`` : vISA MEDIA_LD instruction
@@ -1468,7 +1464,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   ///
   /// * (Exec_size inferred from element offset type)
-  /// * arg0: i1/vXi1 predicate
+  /// * arg0: vXi1 predicate
   ///       (block size MBZ, means 1 byte)
   /// * arg1: i32 log2 num blocks, constant (0/1/2 for num blocks 1/2/4)
   /// * arg2: i32 surface index
@@ -1480,8 +1476,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// The vector width of the element offset arg is the number of elements to
   /// write, which must be 8 or 16.
   ///
-  /// The predicate arg must either have the same vector width, or be a scalar
-  /// i1 constant with value 1.
+  /// The predicate arg must have the same vector width.
   ///
   /// The block size must be 1 byte.
   ///
@@ -1493,7 +1488,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// This instruction is available for SKL+ in general and it works for pre-SKL
   /// only when scale is 0.
   ///
-  def int_genx_scatter_scaled : Intrinsic<[], [llvm_anyint_ty,
+  def int_genx_scatter_scaled : Intrinsic<[], [llvm_anyvector_ty,
     llvm_i32_ty, llvm_i32_ty, llvm_i16_ty, llvm_i32_ty, llvm_anyint_ty,
     llvm_anyvector_ty], []>;
 
@@ -1501,7 +1496,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   ///
   /// * arg0: i32 channel mask, constant
-  /// * arg1: i1/vXi1 predicate (Num_elts inferred from element offset type)
+  /// * arg1: vXi1 predicate (Num_elts inferred from element offset type)
   /// * arg2: i32 surface index
   /// * arg3: i32 global offset in i32s
   /// * arg4: vXi32 element offset in i32s
@@ -1519,14 +1514,14 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// times the number of channels to write per element.
   /// The element type of the data to write must be i32 or float.
   ///
-  def int_genx_scatter4 : Intrinsic<[], [llvm_i32_ty, llvm_anyint_ty,
+  def int_genx_scatter4 : Intrinsic<[], [llvm_i32_ty, llvm_anyvector_ty,
     llvm_i32_ty, llvm_i32_ty, llvm_anyint_ty, llvm_anyvector_ty], []>;
 
   /// ``llvm.genx.scatter4.scaled`` : vISA SCATTER4_SCALED instruction
   /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   ///
   /// * (Exec_size inferred from element offset type)
-  /// * arg0: i1/vXi1 predicate
+  /// * arg0: vXi1 predicate
   /// * arg1: i32 channel mask, constant
   /// * arg2: i32 surface index
   /// * arg3: i16 scale, constant
@@ -1536,8 +1531,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   ///
   /// The vector width of the element offset arg is the number of elements to
   /// write, which must be 8 or 16.
-  /// The predicate arg must either have the same vector width, or be a scalar
-  /// i1 constant with value 1.
+  /// The predicate arg must have the same vector width.
   /// The instruction writes up to 4 channels per element, with the lowest 4
   /// bits of the channel mask arg giving the mask of channels _not_ to read.
   /// The number of 0 bits in that lower 4 bits of the channel mask arg is the
@@ -1547,7 +1541,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// times the number of channels to write per element.
   /// The element type of the data to write must be i32 or float.
   ///
-  def int_genx_scatter4_scaled : Intrinsic<[], [llvm_anyint_ty, llvm_i32_ty,
+  def int_genx_scatter4_scaled : Intrinsic<[], [llvm_anyvector_ty, llvm_i32_ty,
     llvm_i32_ty, llvm_i16_ty, llvm_i32_ty, llvm_anyint_ty, llvm_anyvector_ty],
     []>;
 
@@ -1555,7 +1549,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   ///
   /// * arg0: i32 channel mask, constant
-  /// * arg1: i1/vXi1 predicate (Num_elts inferred from U pixel address type)
+  /// * arg1: vXi1 predicate (Num_elts inferred from U pixel address type)
   /// * arg2: i32 surface index
   /// * arg3: v8Xi32 U pixel address
   /// * arg4: v8Xi32 V pixel address
@@ -1565,8 +1559,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// The vector widths of the U pixel address, V pixel address and R pixel
   /// address args must be equal and are the number of elements to write, which
   /// must be 8.
-  /// The predicate arg must either have the same vector width, or be a scalar
-  /// i1 constant with value 1.
+  /// The predicate arg must have the same vector width.
   /// The instruction writes up to 4 channels per element, with the lowest 4
   /// bits of the channel mask arg giving the mask of channels to write.
   /// The number of 1 bits in that lower 4 bits of the channel mask arg is the
@@ -1575,7 +1568,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// times the number of channels to read per element.
   /// The element type of the source value must be i32 or float.
   ///
-  def int_genx_scatter4_typed : Intrinsic<[], [llvm_i32_ty, llvm_anyint_ty,
+  def int_genx_scatter4_typed : Intrinsic<[], [llvm_i32_ty, llvm_anyvector_ty,
     llvm_i32_ty, llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty,
     llvm_anyvector_ty], []>;
 
@@ -1611,7 +1604,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// * ``llvm.genx.untyped.atomic.imin`` : vISA UNTYPED_ATOMIC IMIN instruction
   /// * ``llvm.genx.untyped.atomic.imax`` : vISA UNTYPED_ATOMIC IMAX instruction
   ///
-  /// * arg0: i1/vXi1 predicate (Num_elts inferred from element offset type)
+  /// * arg0: vXi1 predicate (Num_elts inferred from element offset type)
   /// * arg1: i32 surface index
   /// * arg2: i32 global offset in i32s
   /// * arg3: vXi32 element offset in i32s
@@ -1620,38 +1613,38 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   ///
   /// * Return value: vXi32 the old value read
   ///
-  /// Element offset, src, and the return value must all have the same vector
-  /// width, which must be 8 or 16.
+  /// Predicate, element offset, src, and the return value must all have the
+  //same vector / width, which must be 8 or 16.
   ///
   def int_genx_untyped_atomic_add : Intrinsic<[llvm_anyvector_ty],
-    [llvm_anyint_ty, llvm_i32_ty, llvm_i32_ty, LLVMMatchType<0>,
+    [llvm_anyvector_ty, llvm_i32_ty, llvm_i32_ty, LLVMMatchType<0>,
     LLVMMatchType<0>, LLVMMatchType<0>], []>;
   def int_genx_untyped_atomic_sub : Intrinsic<[llvm_anyvector_ty],
-    [llvm_anyint_ty, llvm_i32_ty, llvm_i32_ty, LLVMMatchType<0>,
+    [llvm_anyvector_ty, llvm_i32_ty, llvm_i32_ty, LLVMMatchType<0>,
     LLVMMatchType<0>, LLVMMatchType<0>], []>;
   def int_genx_untyped_atomic_min : Intrinsic<[llvm_anyvector_ty],
-    [llvm_anyint_ty, llvm_i32_ty, llvm_i32_ty, LLVMMatchType<0>,
+    [llvm_anyvector_ty, llvm_i32_ty, llvm_i32_ty, LLVMMatchType<0>,
     LLVMMatchType<0>, LLVMMatchType<0>], []>;
   def int_genx_untyped_atomic_max : Intrinsic<[llvm_anyvector_ty],
-    [llvm_anyint_ty, llvm_i32_ty, llvm_i32_ty, LLVMMatchType<0>,
+    [llvm_anyvector_ty, llvm_i32_ty, llvm_i32_ty, LLVMMatchType<0>,
     LLVMMatchType<0>, LLVMMatchType<0>], []>;
   def int_genx_untyped_atomic_xchg : Intrinsic<[llvm_anyvector_ty],
-    [llvm_anyint_ty, llvm_i32_ty, llvm_i32_ty, LLVMMatchType<0>,
+    [llvm_anyvector_ty, llvm_i32_ty, llvm_i32_ty, LLVMMatchType<0>,
     LLVMMatchType<0>, LLVMMatchType<0>], []>;
   def int_genx_untyped_atomic_and : Intrinsic<[llvm_anyvector_ty],
-    [llvm_anyint_ty, llvm_i32_ty, llvm_i32_ty, LLVMMatchType<0>,
+    [llvm_anyvector_ty, llvm_i32_ty, llvm_i32_ty, LLVMMatchType<0>,
     LLVMMatchType<0>, LLVMMatchType<0>], []>;
   def int_genx_untyped_atomic_or : Intrinsic<[llvm_anyvector_ty],
-    [llvm_anyint_ty, llvm_i32_ty, llvm_i32_ty, LLVMMatchType<0>,
+    [llvm_anyvector_ty, llvm_i32_ty, llvm_i32_ty, LLVMMatchType<0>,
     LLVMMatchType<0>, LLVMMatchType<0>], []>;
   def int_genx_untyped_atomic_xor : Intrinsic<[llvm_anyvector_ty],
-    [llvm_anyint_ty, llvm_i32_ty, llvm_i32_ty, LLVMMatchType<0>,
+    [llvm_anyvector_ty, llvm_i32_ty, llvm_i32_ty, LLVMMatchType<0>,
     LLVMMatchType<0>, LLVMMatchType<0>], []>;
   def int_genx_untyped_atomic_imin : Intrinsic<[llvm_anyvector_ty],
-    [llvm_anyint_ty, llvm_i32_ty, llvm_i32_ty, LLVMMatchType<0>,
+    [llvm_anyvector_ty, llvm_i32_ty, llvm_i32_ty, LLVMMatchType<0>,
     LLVMMatchType<0>, LLVMMatchType<0>], []>;
   def int_genx_untyped_atomic_imax : Intrinsic<[llvm_anyvector_ty],
-    [llvm_anyint_ty, llvm_i32_ty, llvm_i32_ty, LLVMMatchType<0>,
+    [llvm_anyvector_ty, llvm_i32_ty, llvm_i32_ty, LLVMMatchType<0>,
     LLVMMatchType<0>, LLVMMatchType<0>], []>;
 
   /// ``llvm.genx.untyped.atomic.*`` : vISA UNTYPED_ATOMIC with inc/dec
@@ -1659,7 +1652,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// * ``llvm.genx.untyped.atomic.inc`` : vISA UNTYPED_ATOMIC INC instruction
   /// * ``llvm.genx.untyped.atomic.dec`` : vISA UNTYPED_ATOMIC DEC instruction
   ///
-  /// * arg0: i1/vXi1 predicate (Num_elts inferred from element offset type)
+  /// * arg0: vXi1 predicate (Num_elts inferred from element offset type)
   /// * arg1: i32 surface index
   /// * arg2: i32 global offset in i32s
   /// * arg3: vXi32 element offset in i32s
@@ -1667,20 +1660,20 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   ///
   /// * Return value: vXi32 the old value read
   ///
-  /// Element offset and the return value must have the same vector
+  /// Predicate, element offset and the return value must have the same vector
   /// width, which must be 8 or 16.
   ///
   def int_genx_untyped_atomic_inc : Intrinsic<[llvm_anyvector_ty],
-    [llvm_anyint_ty, llvm_i32_ty, llvm_i32_ty, LLVMMatchType<0>,
+    [llvm_anyvector_ty, llvm_i32_ty, llvm_i32_ty, LLVMMatchType<0>,
     LLVMMatchType<0>], []>;
   def int_genx_untyped_atomic_dec : Intrinsic<[llvm_anyvector_ty],
-    [llvm_anyint_ty, llvm_i32_ty, llvm_i32_ty, LLVMMatchType<0>,
+    [llvm_anyvector_ty, llvm_i32_ty, llvm_i32_ty, LLVMMatchType<0>,
     LLVMMatchType<0>], []>;
 
   /// ``llvm.genx.untyped.atomic.cmpxchg`` : vISA UNTYPED_ATOMIC CMPXCHG instruction
   /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   ///
-  /// * arg0: i1/vXi1 predicate (Num_elts inferred from element offset type)
+  /// * arg0: vXi1 predicate (Num_elts inferred from element offset type)
   /// * arg1: i32 surface index
   /// * arg2: i32 global offset in i32s
   /// * arg3: vXi32 element offset in i32s
@@ -1690,11 +1683,11 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   ///
   /// * Return value: vXi32 the old value read
   ///
-  /// Element offset, src0, src1, and the return value must all have the same
-  /// vector width, which must be 8 or 16.
+  /// Predicate, element offset, src0, src1, and the return value must all have
+  /// the same vector width, which must be 8 or 16.
   ///
   def int_genx_untyped_atomic_cmpxchg : Intrinsic<[llvm_anyvector_ty],
-    [llvm_anyint_ty, llvm_i32_ty, llvm_i32_ty, LLVMMatchType<0>,
+    [llvm_anyvector_ty, llvm_i32_ty, llvm_i32_ty, LLVMMatchType<0>,
     LLVMMatchType<0>, LLVMMatchType<0>, LLVMMatchType<0>], []>;
 
   /// ``llvm.genx.svm.block.ld*`` : vISA SVM BLOCK_LD instruction
@@ -1731,7 +1724,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   ///
   /// * (exec size inferred from address vector width)
-  /// * arg0: i1/vXi1 predicate (Num_elts inferred from element offset type)
+  /// * arg0: vXi1 predicate (Num_elts inferred from this arg)
   /// * (block size inferred from data element type)
   /// * arg1: i32 log2 num blocks, constant (0/1/2/3 for num blocks 1/2/4/8)
   /// * arg2: vXi64 address (X = 8 or 16)
@@ -1744,14 +1737,14 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// The return value vector width is the address vector width times
   /// number of blocks (rounded up to 4 if block size is 1).
   ///
-  def int_genx_svm_gather : Intrinsic<[llvm_anyvector_ty], [llvm_anyint_ty,
+  def int_genx_svm_gather : Intrinsic<[llvm_anyvector_ty], [llvm_anyvector_ty,
     llvm_i32_ty, llvm_anyint_ty, LLVMMatchType<0>], [IntrReadMem]>;
 
   /// ``llvm.genx.svm.gather4.scaled`` : vISA SVM GATHER4_SCALED instruction
   /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   ///
   /// * (exec_size inferred from element offset type)
-  /// * arg0: i1/vXi1 predicate
+  /// * arg0: vXi1 predicate
   /// * arg1: i32 channel mask, constant
   /// * arg3: i16 scale, constant
   /// * arg4: i64 global address in bytes
@@ -1773,14 +1766,14 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// The element type of the return value must be i32 or float.
   ///
   def int_genx_svm_gather4_scaled : Intrinsic<[llvm_anyvector_ty],
-    [llvm_anyint_ty, llvm_i32_ty, llvm_i16_ty, llvm_i64_ty, llvm_anyint_ty,
+    [llvm_anyvector_ty, llvm_i32_ty, llvm_i16_ty, llvm_i64_ty, llvm_anyint_ty,
     LLVMMatchType<0>], [IntrReadMem]>;
 
   /// ``llvm.genx.svm.scatter`` : vISA SVM SCATTER instruction
   /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   ///
   /// * (exec size inferred from address vector width)
-  /// * arg0: i1/vXi1 predicate (Num_elts inferred from element offset type)
+  /// * arg0: vXi1 predicate (Num_elts inferred from element offset type)
   /// * (block size inferred from data element type)
   /// * arg1: i32 log2 num blocks, constant (0/1/2/3 for num blocks 1/2/4/8)
   /// * arg2: vXi64 address (X = 8 or 16)
@@ -1791,14 +1784,14 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// The data vector width is the address vector width times
   /// number of blocks (rounded up to 4 if block size is 1).
   ///
-  def int_genx_svm_scatter : Intrinsic<[], [llvm_anyint_ty, llvm_i32_ty,
+  def int_genx_svm_scatter : Intrinsic<[], [llvm_anyvector_ty, llvm_i32_ty,
     llvm_anyint_ty, llvm_anyvector_ty], []>;
 
   /// ``llvm.genx.svm.scatter4.scaled`` : vISA SVM SCATTER4_SCALED instruction
   /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   ///
   /// * (exec_size inferred from element offset type)
-  /// * arg0: i1/vXi1 predicate
+  /// * arg0: vXi1 predicate
   /// * arg1: i32 channel mask, constant
   /// * arg3: i16 scale, constant
   /// * arg4: i64 global address in bytes
@@ -1818,7 +1811,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// The element type of the data to write arg must be i32 or float.
   ///
   def int_genx_svm_scatter4_scaled : Intrinsic<[llvm_anyvector_ty],
-    [llvm_anyint_ty, llvm_i32_ty, llvm_i16_ty, llvm_i64_ty, llvm_anyint_ty],
+    [llvm_anyvector_ty, llvm_i32_ty, llvm_i16_ty, llvm_i64_ty, llvm_anyint_ty],
     []>;
 
   /// ``llvm.genx.svm.atomic.*`` : vISA SVM_ATOMIC with binary operator
@@ -1834,73 +1827,73 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// * ``llvm.genx.svm.atomic.imin`` : vISA SVM_ATOMIC IMIN instruction
   /// * ``llvm.genx.svm.atomic.imax`` : vISA SVM_ATOMIC IMAX instruction
   ///
-  /// * arg0: i1/vXi1 predicate (Num_elts inferred from element offset type)
+  /// * arg0: vXi1 predicate (Num_elts inferred from this arg)
   /// * arg1: vXi64 element addresses in bytes
   /// * arg2: vXi32/vXi64 src
   /// * arg3: original value of the register that the data is read into
   ///
   /// * Return value: vXi32/vXi64 the old value read
   ///
-  /// Element offset, src, and the return value must all have the same vector
-  /// width, which must be 8 (BDW+) or 16 (SKL+).
+  /// Predicate, element offset, src, and the return value must all have the
+  /// same vector width, which must be 8 (BDW+) or 16 (SKL+).
   ///
   def int_genx_svm_atomic_add : Intrinsic<[llvm_anyvector_ty],
-    [llvm_anyint_ty, llvm_anyint_ty, LLVMMatchType<0>, LLVMMatchType<0>], []>;
+    [llvm_anyvector_ty, llvm_anyint_ty, LLVMMatchType<0>, LLVMMatchType<0>], []>;
   def int_genx_svm_atomic_sub : Intrinsic<[llvm_anyvector_ty],
-    [llvm_anyint_ty, llvm_anyint_ty, LLVMMatchType<0>, LLVMMatchType<0>], []>;
+    [llvm_anyvector_ty, llvm_anyint_ty, LLVMMatchType<0>, LLVMMatchType<0>], []>;
   def int_genx_svm_atomic_min : Intrinsic<[llvm_anyvector_ty],
-    [llvm_anyint_ty, llvm_anyint_ty, LLVMMatchType<0>, LLVMMatchType<0>], []>;
+    [llvm_anyvector_ty, llvm_anyint_ty, LLVMMatchType<0>, LLVMMatchType<0>], []>;
   def int_genx_svm_atomic_max : Intrinsic<[llvm_anyvector_ty],
-    [llvm_anyint_ty, llvm_anyint_ty, LLVMMatchType<0>, LLVMMatchType<0>], []>;
+    [llvm_anyvector_ty, llvm_anyint_ty, LLVMMatchType<0>, LLVMMatchType<0>], []>;
   def int_genx_svm_atomic_xchg : Intrinsic<[llvm_anyvector_ty],
-    [llvm_anyint_ty, llvm_anyint_ty, LLVMMatchType<0>, LLVMMatchType<0>], []>;
+    [llvm_anyvector_ty, llvm_anyint_ty, LLVMMatchType<0>, LLVMMatchType<0>], []>;
   def int_genx_svm_atomic_and : Intrinsic<[llvm_anyvector_ty],
-    [llvm_anyint_ty, llvm_anyint_ty, LLVMMatchType<0>, LLVMMatchType<0>], []>;
+    [llvm_anyvector_ty, llvm_anyint_ty, LLVMMatchType<0>, LLVMMatchType<0>], []>;
   def int_genx_svm_atomic_or : Intrinsic<[llvm_anyvector_ty],
-    [llvm_anyint_ty, llvm_anyint_ty, LLVMMatchType<0>, LLVMMatchType<0>], []>;
+    [llvm_anyvector_ty, llvm_anyint_ty, LLVMMatchType<0>, LLVMMatchType<0>], []>;
   def int_genx_svm_atomic_xor : Intrinsic<[llvm_anyvector_ty],
-    [llvm_anyint_ty, llvm_anyint_ty, LLVMMatchType<0>, LLVMMatchType<0>], []>;
+    [llvm_anyvector_ty, llvm_anyint_ty, LLVMMatchType<0>, LLVMMatchType<0>], []>;
   def int_genx_svm_atomic_imin : Intrinsic<[llvm_anyvector_ty],
-    [llvm_anyint_ty, llvm_anyint_ty, LLVMMatchType<0>, LLVMMatchType<0>], []>;
+    [llvm_anyvector_ty, llvm_anyint_ty, LLVMMatchType<0>, LLVMMatchType<0>], []>;
   def int_genx_svm_atomic_imax : Intrinsic<[llvm_anyvector_ty],
-    [llvm_anyint_ty, llvm_anyint_ty, LLVMMatchType<0>, LLVMMatchType<0>], []>;
+    [llvm_anyvector_ty, llvm_anyint_ty, LLVMMatchType<0>, LLVMMatchType<0>], []>;
 
   /// ``llvm.genx.svm.atomic.*`` : vISA SVM_ATOMIC with inc/dec
   /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   /// * ``llvm.genx.svm.atomic.inc`` : vISA SVM_ATOMIC INC instruction
   /// * ``llvm.genx.svm.atomic.dec`` : vISA SVM_ATOMIC DEC instruction
   ///
-  /// * arg0: i1/vXi1 predicate (Num_elts inferred from element offset type)
+  /// * arg0: vXi1 predicate (Num_elts inferred from this arg)
   /// * arg1: vXi64 element addresses in bytes
   /// * arg2: vXi32/vXi64 src
   /// * arg3: original value of the register that the data is read into
   ///
   /// * Return value: vXi32/vXi64 the old value read
   ///
-  /// Element offset and the return value must have the same vector
+  /// Predicate, element offset and the return value must have the same vector
   /// width, which must be 8 (BDW+) or 16 (SKL+).
   ///
   def int_genx_svm_atomic_inc : Intrinsic<[llvm_anyvector_ty],
-    [llvm_anyint_ty, llvm_anyint_ty, LLVMMatchType<0>], []>;
+    [llvm_anyvector_ty, llvm_anyint_ty, LLVMMatchType<0>], []>;
   def int_genx_svm_atomic_dec : Intrinsic<[llvm_anyvector_ty],
-    [llvm_anyint_ty, llvm_anyint_ty, LLVMMatchType<0>], []>;
+    [llvm_anyvector_ty, llvm_anyint_ty, LLVMMatchType<0>], []>;
 
   /// ``llvm.genx.svm.atomic.cmpxchg`` : vISA SVM_ATOMIC CMPXCHG instruction
   /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   ///
-  /// * arg0: i1/vXi1 predicate (Num_elts inferred from element offset type)
+  /// * arg0: vXi1 predicate (Num_elts inferred from element offset type)
   /// * arg1: vXi64 element addresses in bytes
   /// * arg2: vXi32/vXi64 src0
   /// * arg3: vXi32/vXi64 src1
   /// * arg4: original value of the register that the data is read into
   ///
-  /// * Return value: vXi32vXi64 the old value read
+  /// * Return value: vXi32/vXi64 the old value read
   ///
-  /// Element offset, src0, src1, and the return value must all have the same
-  /// vector width, which must be 8 (BDW+) or 16 (SKL+).
+  /// Predicate, element offset, src0, src1, and the return value must all have
+  /// the same vector width, which must be 8 (BDW+) or 16 (SKL+).
   ///
   def int_genx_svm_atomic_cmpxchg : Intrinsic<[llvm_anyvector_ty],
-    [llvm_anyint_ty, llvm_anyint_ty, LLVMMatchType<0>, LLVMMatchType<0>,
+    [llvm_anyvector_ty, llvm_anyint_ty, LLVMMatchType<0>, LLVMMatchType<0>,
     LLVMMatchType<0>], []>;
 
   /// ``llvm.genx.load`` : vISA LOAD (sampler load) instruction
@@ -2070,6 +2063,10 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// by the send, then use old_dst as the "old value of destination registers"
   /// input.
   ///
+  /// The predicate must be constant i1 with value 1 for a message that is not
+  /// predicatable. For a predicatable message, it must be a vector of i1 with
+  /// width determining the execution size.
+  ///
   def int_genx_raw_send : Intrinsic<[llvm_anyvector_ty], [llvm_i32_ty,
     llvm_anyint_ty, llvm_i32_ty, llvm_i32_ty, llvm_anyvector_ty,
     LLVMMatchType<0>], []>;
@@ -2089,6 +2086,10 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   ///
   /// The SEND instruction has a field for the size of src. This is inferred by
   /// rounding the size of src up to the next whole GRF.
+  ///
+  /// The predicate must be constant i1 with value 1 for a message that is not
+  /// predicatable. For a predicatable message, it must be a vector of i1 with
+  /// width determining the execution size.
   ///
   def int_genx_raw_send_noresult : Intrinsic<[], [llvm_i32_ty, llvm_anyint_ty,
     llvm_i32_ty, llvm_i32_ty, llvm_anyvector_ty], []>;
@@ -2122,6 +2123,10 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// by the send, then use old_dst as the "old value of destination registers"
   /// input.
   ///
+  /// The predicate must be constant i1 with value 1 for a message that is not
+  /// predicatable. For a predicatable message, it must be a vector of i1 with
+  /// width determining the execution size.
+  ///
   def int_genx_raw_sends : Intrinsic<[llvm_anyvector_ty], [llvm_i32_ty,
     llvm_anyint_ty, llvm_i32_ty, llvm_i32_ty, llvm_anyvector_ty,
     llvm_anyvector_ty, LLVMMatchType<0>], []>;
@@ -2144,6 +2149,10 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// The SENDS instruction has a field for the size of each of src and src2.
   /// These are inferred by rounding the size of each of src and src2 up to the
   /// next whole GRF.
+  ///
+  /// The predicate must be constant i1 with value 1 for a message that is not
+  /// predicatable. For a predicatable message, it must be a vector of i1 with
+  /// width determining the execution size.
   ///
   def int_genx_raw_sends_noresult : Intrinsic<[], [llvm_i32_ty, llvm_anyint_ty,
     llvm_i32_ty, llvm_i32_ty, llvm_anyvector_ty, llvm_anyvector_ty], []>;
