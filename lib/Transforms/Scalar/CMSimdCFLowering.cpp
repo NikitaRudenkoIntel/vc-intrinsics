@@ -298,7 +298,6 @@ struct PendingJoin {
 
 /// The CM SIMD CF lowering pass (a function pass)
 class CMSimdCFLowering : public FunctionPass {
-  bool Illegal;
   // An EM (execution mask) variable for each possible SIMD width.
   SmallVector<AllocaInst *, 6> EMs;
   // A map giving the RM (re-enable mask) variable for each join point.
