@@ -751,7 +751,7 @@ void CMSimdCFLowering::addBranch(Value *Cond, bool BranchOn,
       //  unconditional branch to Join
       Instruction *LoadedEM = new LoadInst(EM, EM->getName(), InsertBefore);
       LoadedEM->setDebugLoc(DL);
-      Instruction *LoadedRM = new LoadInst(EM, RM->getName(), InsertBefore);
+      Instruction *LoadedRM = new LoadInst(RM, RM->getName(), InsertBefore);
       LoadedRM->setDebugLoc(DL);
       LoadedRM = BinaryOperator::Create(Instruction::Or, LoadedRM,
           LoadedEM, RM->getName(), InsertBefore);
