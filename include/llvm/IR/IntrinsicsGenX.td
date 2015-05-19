@@ -1229,8 +1229,8 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// * arg0: vXi1 predicate
   ///       (block size MBZ, means 1 byte)
   /// * arg1: i32 log2 num blocks, constant (0/1/2 for num blocks 1/2/4)
-  /// * arg2: i32 surface index
-  /// * arg3: i16 scale, constant
+  /// * arg2: i16 scale, constant
+  /// * arg3: i32 surface index
   /// * arg4: i32 global offset in bytes
   /// * arg5: vXi32 element offset in bytes (X = 8 or 16)
   /// * arg6: old value of the data read
@@ -1254,7 +1254,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// only when scale is 0.
   ///
   def int_genx_gather_scaled : Intrinsic<[llvm_anyvector_ty],
-    [llvm_anyvector_ty, llvm_i32_ty, llvm_i32_ty, llvm_i16_ty, llvm_i32_ty,
+    [llvm_anyvector_ty, llvm_i32_ty, llvm_i16_ty, llvm_i32_ty, llvm_i32_ty,
     llvm_anyint_ty, LLVMMatchType<0>], [IntrReadMem]>;
 
   /// ``llvm.genx.gather4`` : vISA GATHER4 instruction
@@ -1291,8 +1291,8 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// * (Exec_size inferred from element offset type)
   /// * arg0: vXi1 predicate
   /// * arg1: i32 channel mask, constant
-  /// * arg2: i32 surface index
-  /// * arg3: i16 scale, constant
+  /// * arg2: i16 scale, constant
+  /// * arg3: i32 surface index
   /// * arg4: i32 global offset in bytes
   /// * arg5: vXi32 element offset in bytes
   /// * arg6: old value of the data read
@@ -1311,7 +1311,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// The element type of the return value must be i32 or float.
   ///
   def int_genx_gather4_scaled : Intrinsic<[llvm_anyvector_ty],
-    [llvm_anyvector_ty, llvm_i32_ty, llvm_i32_ty, llvm_i16_ty, llvm_i32_ty,
+    [llvm_anyvector_ty, llvm_i32_ty, llvm_i16_ty, llvm_i32_ty, llvm_i32_ty,
     llvm_anyint_ty, LLVMMatchType<0>], [IntrReadMem]>;
 
   /// ``llvm.genx.gather4.typed`` : vISA GATHER4_TYPED instruction
@@ -1449,8 +1449,8 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// * arg0: vXi1 predicate
   ///       (block size MBZ, means 1 byte)
   /// * arg1: i32 log2 num blocks, constant (0/1/2 for num blocks 1/2/4)
-  /// * arg2: i32 surface index
-  /// * arg3: i16 scale, constant
+  /// * arg2: i16 scale, constant
+  /// * arg3: i32 surface index
   /// * arg4: i32 global offset in bytes
   /// * arg5: vXi32 element offset (X = 8 or 16)
   /// * arg6: data to write
@@ -1471,7 +1471,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// only when scale is 0.
   ///
   def int_genx_scatter_scaled : Intrinsic<[], [llvm_anyvector_ty,
-    llvm_i32_ty, llvm_i32_ty, llvm_i16_ty, llvm_i32_ty, llvm_anyint_ty,
+    llvm_i32_ty, llvm_i16_ty, llvm_i32_ty, llvm_i32_ty, llvm_anyint_ty,
     llvm_anyvector_ty], []>;
 
   /// ``llvm.genx.scatter4`` : vISA SCATTER4 instruction
@@ -1505,8 +1505,8 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// * (Exec_size inferred from element offset type)
   /// * arg0: vXi1 predicate
   /// * arg1: i32 channel mask, constant
-  /// * arg2: i32 surface index
-  /// * arg3: i16 scale, constant
+  /// * arg2: i16 scale, constant
+  /// * arg3: i32 surface index
   /// * arg4: i32 global offset in bytes
   /// * arg5: vXi32 element offset in bytes
   /// * arg6: data to write
@@ -1524,7 +1524,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// The element type of the data to write must be i32 or float.
   ///
   def int_genx_scatter4_scaled : Intrinsic<[], [llvm_anyvector_ty, llvm_i32_ty,
-    llvm_i32_ty, llvm_i16_ty, llvm_i32_ty, llvm_anyint_ty, llvm_anyvector_ty],
+    llvm_i16_ty, llvm_i32_ty, llvm_i32_ty, llvm_anyint_ty, llvm_anyvector_ty],
     []>;
 
   /// ``llvm.genx.scatter4.typed`` : vISA SCATTER4_TYPED instruction
