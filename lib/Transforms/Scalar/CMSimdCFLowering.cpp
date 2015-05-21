@@ -334,6 +334,7 @@ private:
   void predicateBlock(BasicBlock *BB, Region *R);
   void predicateInst(Instruction *Inst, Region *R);
   void predicateStore(StoreInst *SI, Region *R);
+  CallInst *convertScatterGather(CallInst *CI, unsigned IID);
   void predicateScatterGather(CallInst *CI, Region *R, unsigned PredOperandNum);
   CallInst *predicateWrRegion(CallInst *WrR, Region *R);
   void predicateCall(CallInst *CI, Region *R);
@@ -891,6 +892,13 @@ void CMSimdCFLowering::predicateInst(Instruction *Inst, Region *R)
       case Intrinsic::genx_wrregion:
       case Intrinsic::genx_simdcf_any:
         return; // ignore these intrinsics
+      case Intrinsic::genx_gather:
+      case Intrinsic::genx_gather4:
+      case Intrinsic::genx_scatter:
+      case Intrinsic::genx_scatter4:
+        CI = convertScatterGather(CI, IntrinsicID);
+        predicateScatterGather(CI, R, 0);
+        return;
       case Intrinsic::not_intrinsic:
         // Call to real subroutine.
         predicateCall(CI, R);
@@ -1001,6 +1009,87 @@ void CMSimdCFLowering::predicateStore(StoreInst *SI, Region *R)
   auto Select = SelectInst::Create(EM, V, Load,
       V->getName() + ".simdcfpred", SI);
   SI->setOperand(0, Select);
+}
+
+/***********************************************************************
+ * convertScatterGather : convert old unpredicable scatter/gather
+ *
+ * This converts an old-style gather, gather4, scatter, scatter4 into a
+ * new-style gather_scaled, gather4_scaled, scatter_scaled, scatter4_scaled
+ * so it can be predicated.
+ */
+CallInst *CMSimdCFLowering::convertScatterGather(CallInst *CI, unsigned IID)
+{
+  bool IsScatter = IID == Intrinsic::genx_scatter
+                || IID == Intrinsic::genx_scatter4;
+  bool Is4 = IID == Intrinsic::genx_gather4 || IID == Intrinsic::genx_scatter4;
+  unsigned NumArgs = CI->getNumArgOperands();
+  auto GlobalOffset = CI->getArgOperand(NumArgs - 3);
+  auto EltOffsets = CI->getArgOperand(NumArgs - 2);
+  // Gather the overloaded types and get the intrinsic declaration.
+  SmallVector<Type *, 4> Tys;
+  if (!IsScatter)
+    Tys.push_back(CI->getType()); // return type
+  auto PredTy = VectorType::get(Type::getInt1Ty(
+            CI->getContext()), EltOffsets->getType()->getVectorNumElements());
+  Tys.push_back(PredTy); // predicate type
+  Tys.push_back(CI->getArgOperand(NumArgs - 2)->getType()); // offsets type
+  if (IsScatter)
+    Tys.push_back(CI->getArgOperand(NumArgs - 1)->getType()); // data type
+  unsigned NewIID = 0;
+  switch (IID) {
+    case Intrinsic::genx_gather: NewIID = Intrinsic::genx_gather_scaled; break;
+    case Intrinsic::genx_gather4: NewIID = Intrinsic::genx_gather4_scaled; break;
+    case Intrinsic::genx_scatter: NewIID = Intrinsic::genx_scatter_scaled; break;
+    case Intrinsic::genx_scatter4: NewIID = Intrinsic::genx_scatter4_scaled; break;
+    default: llvm_unreachable("invalid intrinsic ID"); break;
+  }
+  Function *Decl = Intrinsic::getDeclaration(
+      CI->getParent()->getParent()->getParent(), (Intrinsic::ID)NewIID, Tys);
+  // Get the element size.
+  unsigned EltSize = 4;
+  if (!Is4)
+    EltSize = CI->getArgOperand(0)->getType()->getScalarType()
+      ->getPrimitiveSizeInBits() / 8U;
+  // Scale the global and element offsets.
+  if (EltSize != 1) {
+    auto EltSizeC = ConstantInt::get(GlobalOffset->getType(), EltSize);
+    auto NewInst = BinaryOperator::Create(Instruction::Mul, GlobalOffset,
+        EltSizeC, "", CI);
+    NewInst->setDebugLoc(CI->getDebugLoc());
+    GlobalOffset = NewInst;
+    NewInst = BinaryOperator::Create(Instruction::Mul, EltOffsets,
+        ConstantVector::getSplat(
+          EltOffsets->getType()->getVectorNumElements(), EltSizeC),
+        "", CI);
+    NewInst->setDebugLoc(CI->getDebugLoc());
+    EltOffsets = NewInst;
+  }
+  // Gather the args for the new intrinsic. First the all ones predicate.
+  SmallVector<Value *, 8> Args;
+  Args.push_back(Constant::getAllOnesValue(PredTy));
+  // Block size for non-4 variants, channel mask for 4 variants.
+  if (!Is4)
+    Args.push_back(ConstantInt::get(GlobalOffset->getType(),
+        countTrailingZeros(EltSize, ZB_Undefined)));
+  else
+    Args.push_back(CI->getArgOperand(0));
+  // Scale -- always 0.
+  Args.push_back(ConstantInt::get(Type::getInt16Ty(CI->getContext()), 0));
+  // Surface index.
+  Args.push_back(CI->getArgOperand(NumArgs - 4));
+  // Global and element offsets.
+  Args.push_back(GlobalOffset);
+  Args.push_back(EltOffsets);
+  // Data.
+  Args.push_back(CI->getArgOperand(NumArgs - 1));
+  // Create the new intrinsic and replace the old one.
+  auto NewCI = CallInst::Create(Decl, Args, "", CI);
+  NewCI->takeName(CI);
+  NewCI->setDebugLoc(CI->getDebugLoc());
+  CI->replaceAllUsesWith(NewCI);
+  CI->eraseFromParent();
+  return NewCI;
 }
 
 /***********************************************************************
