@@ -325,6 +325,7 @@ private:
   void calculateVisitOrder(Module *M, std::vector<Function *> *VisitOrder);
   void processFunction(Function *F, unsigned SimdWidth);
   void processRegion(Region *R);
+  Value* ensureSIMDCondition(Region *R, Value *Cond, Instruction *Branch, DebugLoc DL);
   void lowerIf(Region *R);
   void lowerDo(Region *R);
   BasicBlock *getJoinPoint(Region *R);
@@ -541,6 +542,42 @@ void CMSimdCFLowering::processRegion(Region *R)
 }
 
 /***********************************************************************
+ * ensureSIMDConditional : make sure a conditional value is suitable
+ * for use in a SIMD CF region.
+ *
+ * Enter:   R = the SIMD region the condition pertains to.
+ *          Cond = the condition
+ *          Branch = the instruction that branches on the condition,
+ *                   any new instructions should be inserted before this
+ *          DL = the debug location for any new instructions
+ *
+ * Return:  A condition value known to be suitable for R's SIMD context
+ */
+
+Value* CMSimdCFLowering::ensureSIMDCondition(Region *R, Value *Cond, Instruction *Branch, DebugLoc DL)
+{
+  if (auto VT = dyn_cast<VectorType>(Cond->getType())) {
+    if (VT->getNumElements() == 1) {
+      // A vector of size one. This is a scalar condition in a SIMD
+      // context. Splat the condition value to the required size.
+
+      auto NewVT = VectorType::get(Type::getInt32Ty(Cond->getContext()), R->getSimdWidth());
+      auto UndefVal = UndefValue::get(Cond->getType());
+      auto IdxVal = Constant::getNullValue(NewVT);
+
+      auto NewCond = new ShuffleVectorInst(Cond, UndefVal, IdxVal, "splatsimdcf", Branch);
+
+      NewCond->setDebugLoc(DL);
+      Cond = NewCond;
+    } else
+      assert(VT->getNumElements() == R->getSimdWidth() &&
+             "condition width does not match the required SIMD context width");
+  }
+
+  return Cond;
+}
+
+/***********************************************************************
  * lowerIf : lower the simd "if" on the top of the stack
  *
  * At the conditional branch, we have already checked that the true successor
@@ -551,9 +588,11 @@ void CMSimdCFLowering::lowerIf(Region *R)
   BasicBlock *If = R->getEntry();
   BasicBlock *Endif = R->getExit();
   BasicBlock *Else = R->getElse();
-  auto OldAny = isSimdCFAny(cast<BranchInst>(
-        If->getTerminator())->getCondition());
-  auto Cond = OldAny->getOperand(0);
+  auto Branch = cast<BranchInst>(If->getTerminator());
+  auto OldAny = isSimdCFAny(Branch->getCondition());
+  auto Cond = ensureSIMDCondition(R, OldAny->getOperand(0), Branch,
+        OldAny->getDebugLoc());
+
   // Change the if code and erase the old simdcf.any.
   BasicBlock *Target = Else ? Else : Endif;
   addBranch(Cond, /*BranchOn=*/false, /*Target=*/Target, /*Join=*/Target, If);
@@ -586,9 +625,11 @@ void CMSimdCFLowering::lowerDo(Region *R)
   BasicBlock *Do = R->getEntry();
   BasicBlock *Exit = R->getExit();
   BasicBlock *While = Exit->getPrevNode();
-  auto OldAny = isSimdCFAny(cast<BranchInst>(
-        While->getTerminator())->getCondition());
-  auto Cond = OldAny->getOperand(0);
+  auto Branch = cast<BranchInst>(While->getTerminator());
+  auto OldAny = isSimdCFAny(Branch->getCondition());
+  auto Cond = ensureSIMDCondition(R, OldAny->getOperand(0), Branch,
+        OldAny->getDebugLoc());
+
   // Change the while code and erase the old simdcf.any.
   // Passing Join=nullptr to addBranch makes it generate a simd backward branch.
   addBranch(Cond, /*BranchOn=*/true, /*Target=*/Do, /*Join=*/nullptr, While);
@@ -1676,15 +1717,20 @@ void Region::reportError(const char *Text, Instruction *Inst)
  *
  * The region inherits its simd width from its parent, or 0 if it is
  * an outermost simd CF region. If it is an inner region, this function
- * checks that the inherited and the new widths agree.
+ * checks that the inherited and the new widths agree. If the new width
+ * is 1 then this is a scalar psuedo-simd region embedded in a real one,
+ * in which case we want to preserve the existing width.
  */
 void Region::setSimdWidth(Value *Predicate)
 {
   unsigned Width = Predicate->getType()->getPrimitiveSizeInBits();
-  if (SimdWidth && SimdWidth != Width)
+  if (!SimdWidth) {
+    if (Width == 1)
+      reportError("Scalar condition in outermost SIMD control flow", nullptr);
+    else
+      SimdWidth = Width;
+  } else if (Width > 1 && SimdWidth != Width)
     reportError("mismatched SIMD width in inner SIMD control flow", nullptr);
-  else
-    SimdWidth = Width;
 }
 
 /***********************************************************************
