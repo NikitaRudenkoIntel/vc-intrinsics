@@ -2280,4 +2280,21 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   def int_genx_simdcf_any :
               Intrinsic<[llvm_i1_ty],
                         [llvm_anyvector_ty, llvm_ptr_ty, llvm_i32_ty], []>;
+
+  // llvm.genx.simdcf.predicate : simd cf predication marker intrinsic.
+  //
+  // arg0: vector of scalar
+  // arg1: vector constant, same size as arg0
+  //
+  // Return value: a vector composed of elements selected from arg0 or arg1
+  // according to the implied SIMD CF predication mask.
+  //
+  // This is used in the implementation of intrinsics whose behaviour is
+  // sensitive to the surrounding SIMD CF context. In fact, they will be
+  // transformed or removed before the code reaches the GenX back-end
+  // and none should be found there.
+  //
+  def int_genx_simdcf_predicate :
+              Intrinsic<[llvm_anyvector_ty],
+                        [LLVMMatchType<0>, LLVMMatchType<0>], []>;
 }
