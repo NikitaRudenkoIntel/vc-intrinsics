@@ -334,6 +334,7 @@ private:
   CallInst *createAny(Value *In, const Twine &Name, Instruction *InsertBefore, DebugLoc DL);
   void predicateBlock(BasicBlock *BB, Region *R);
   void predicateInst(Instruction *Inst, Region *R);
+  void rewritePredication(CallInst *CI, Region *R);
   void predicateStore(StoreInst *SI, Region *R);
   CallInst *convertScatterGather(CallInst *CI, unsigned IID);
   void predicateScatterGather(CallInst *CI, Region *R, unsigned PredOperandNum);
@@ -374,16 +375,36 @@ bool CMSimdCFLowering::doInitialization(Module &M)
       break;
     }
   }
-  if (!HasSimdCF)
-    return false;
-  // Derive an order to process functions such that a function is visited
-  // after anything that calls it.
-  std::vector<Function *> VisitOrder;
-  calculateVisitOrder(&M, &VisitOrder);
-  // Process functions in that order.
-  for (auto i = VisitOrder.begin(), e = VisitOrder.end(); i != e; ++i)
-    processFunction(*i, 0);
-  return true;
+
+  if (HasSimdCF) {
+    // Derive an order to process functions such that a function is visited
+    // after anything that calls it.
+    std::vector<Function *> VisitOrder;
+    calculateVisitOrder(&M, &VisitOrder);
+    // Process functions in that order.
+    for (auto i = VisitOrder.begin(), e = VisitOrder.end(); i != e; ++i)
+      processFunction(*i, 0);
+  }
+
+  // Any predication calls which remain are not in SIMD CF regions,
+  // so can be deleted.
+  for (auto mi = M.begin(), me = M.end(); mi != me; ++ mi) {
+    Function *F = &*mi;
+
+    unsigned IntrinsicID = F->getIntrinsicID();
+    if (IntrinsicID != Intrinsic::genx_simdcf_predicate)
+      continue;
+
+    while (!F->use_empty()) {
+      auto CI = cast<CallInst>(F->use_begin()->getUser());
+      auto EnabledValues = CI->getArgOperand(0);
+
+      CI->replaceAllUsesWith(EnabledValues);
+      CI->eraseFromParent();
+    }
+  }
+
+  return HasSimdCF;
 }
 
 /***********************************************************************
@@ -933,6 +954,9 @@ void CMSimdCFLowering::predicateInst(Instruction *Inst, Region *R)
       case Intrinsic::genx_wrregion:
       case Intrinsic::genx_simdcf_any:
         return; // ignore these intrinsics
+      case Intrinsic::genx_simdcf_predicate:
+        rewritePredication(CI, R);
+        return;
       case Intrinsic::genx_gather:
       case Intrinsic::genx_gather4:
       case Intrinsic::genx_scatter:
@@ -973,6 +997,38 @@ void CMSimdCFLowering::predicateInst(Instruction *Inst, Region *R)
     predicateStore(SI, R);
     return;
   }
+}
+
+/***********************************************************************
+ * rewritePredication : convert a predication intrinsic call into a
+ * selection based on the region's SIMD predicate mask.
+ *
+ * Enter:   Inst = the predication intrinsic call instruction
+ *          R = the SIMD CF region containing the call.
+*/
+
+void CMSimdCFLowering::rewritePredication(CallInst *CI, Region *R)
+{
+  auto EnabledValues = CI->getArgOperand(0);
+  auto DisabledDefaults = CI->getArgOperand(1);
+
+  assert(isa<VectorType>(EnabledValues->getType()) &&
+         EnabledValues->getType() == DisabledDefaults->getType() &&
+         "malformed predication intrinsic");
+
+  if (cast<VectorType>(EnabledValues->getType())->getNumElements() != R->getSimdWidth()) {
+    R->reportError("reduction intrinsic's size does not match the containing SIMD control-flow width", CI);
+    return;
+  }
+
+  auto EM = loadExecutionMask(CI, R->getSimdWidth());
+  auto Select = SelectInst::Create(EM, EnabledValues, DisabledDefaults,
+      EnabledValues->getName() + ".simdcfpred", CI);
+
+  Select->setDebugLoc(CI->getDebugLoc());
+
+  CI->replaceAllUsesWith(Select);
+  CI->eraseFromParent();
 }
 
 /***********************************************************************
