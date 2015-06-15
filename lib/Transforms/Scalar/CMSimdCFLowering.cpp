@@ -1045,7 +1045,7 @@ void CMSimdCFLowering::predicateStore(StoreInst *SI, Region *R)
 {
   auto V = SI->getValueOperand();
   auto StoreVT = dyn_cast<VectorType>(V->getType());
-  if (!StoreVT)
+  if (!StoreVT || StoreVT->getNumElements() == 1)
     return; // Scalar store not predicated
   // See if the value to store is a wrregion (possibly predicated) of the
   // right width. If so, we predicate that instead. This also handles
