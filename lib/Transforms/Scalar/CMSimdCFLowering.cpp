@@ -1098,6 +1098,10 @@ void CMSimdCFLowering::predicateStore(StoreInst *SI, Region *R)
       WrRegionToPredicate->eraseFromParent();
     return;
   }
+  if (StoreVT->getNumElements() != R->getSimdWidth()) {
+    R->reportError("vector size does not match the containing SIMD control-flow width", SI);
+    return;
+  }
   // Predicate the store by creating a select.
   auto Load = new LoadInst(SI->getPointerOperand(),
       SI->getPointerOperand()->getName() + ".simdcfpred.load", SI);
