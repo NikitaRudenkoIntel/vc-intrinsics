@@ -2139,6 +2139,55 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   def int_genx_raw_sends_noresult : Intrinsic<[], [llvm_i32_ty, llvm_anyint_ty,
     llvm_i32_ty, llvm_i32_ty, llvm_anyvector_ty, llvm_anyvector_ty], []>;
 
+  /// ---------------------------
+  /// Video Analytics Instrinsics
+  /// ---------------------------
+  ///
+  /// ``llvm.genx.va.convolve2d`` vISA VA 2d Convolve instruction
+  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  ///
+  /// * arg0: i32 sampler index
+  /// * arg1: i32 surface index
+  /// * arg2: float normalized x-coordinate
+  /// * arg3: float normalized y-coordinate
+  /// * arg4: i32 properties value specifying return data format and input region size
+  ///
+  /// * Return value: v64i16 or v16i16 matrix, depending on properties value
+  ///
+  def int_genx_va_convolve2d : Intrinsic<[llvm_anyint_ty], [llvm_i32_ty, llvm_i32_ty,
+    llvm_float_ty, llvm_float_ty, llvm_i32_ty],
+    [IntrReadMem]>;
+
+  /// ``llvm.genx.va.erode`` vISA VA Erode instruction
+  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  ///
+  /// * arg0: i32 sampler index
+  /// * arg1: i32 surface index
+  /// * arg2: float normalized x-coordinate
+  /// * arg3: float normalized y-coordinate
+  /// * arg4: i32 properties value specifying return data format
+  ///
+  /// * Return value: vXi32
+  ///
+  def int_genx_va_erode : Intrinsic<[llvm_anyint_ty], [llvm_i32_ty, llvm_i32_ty,
+    llvm_float_ty, llvm_float_ty, llvm_i32_ty],
+    [IntrReadMem]>;
+
+  /// ``llvm.genx.va.dilate`` vISA VA Dilate instruction
+  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  ///
+  /// * arg0: i32 sampler index
+  /// * arg1: i32 surface index
+  /// * arg2: float normalized x-coordinate
+  /// * arg3: float normalized y-coordinate
+  /// * arg4: i32 properties value specifying return data format
+  ///
+  /// * Return value: vXi32
+  ///
+  def int_genx_va_dilate : Intrinsic<[llvm_anyint_ty], [llvm_i32_ty, llvm_i32_ty,
+    llvm_float_ty, llvm_float_ty, llvm_i32_ty],
+    [IntrReadMem]>;
+
   //--------------------------------------------------------------------
   // GenX backend internal intrinsics
 
