@@ -2174,7 +2174,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
     [IntrReadMem]>;
 
   /// ``llvm.genx.va.dilate`` vISA VA Dilate instruction
-  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   ///
   /// * arg0: i32 sampler index
   /// * arg1: i32 surface index
@@ -2187,6 +2187,34 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   def int_genx_va_dilate : Intrinsic<[llvm_anyint_ty], [llvm_i32_ty, llvm_i32_ty,
     llvm_float_ty, llvm_float_ty, llvm_i32_ty],
     [IntrReadMem]>;
+
+  /// ``llvm.genx.va.minmax'' vISA MinMax instruction
+  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  ///
+  /// * arg0: i32 surface index
+  /// * arg1: float normalized x-coordinate
+  /// * arg2: float normalized y-coordinate
+  /// * arg3: i32 enable specific minmax functionality
+  ///
+  /// * Return: v32i8 or v16i16 depending on the surface format
+  def int_genx_va_minmax : Intrinsic<[llvm_anyint_ty], [llvm_i32_ty,
+    llvm_float_ty, llvm_float_ty, llvm_i32_ty], [IntrReadMem]>;
+
+  /// ``llvm.genx.va.minmax_filter'' vISA MinMax Filter instruction
+  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  ///
+  /// * arg0: i32 sampler index
+  /// * arg1: i32 surface index
+  /// * arg2: float normalized x-coordinate
+  /// * arg3: float normalized y-coordinate
+  /// * arg4: i32 specifies the size of the minmax value returned
+  /// * arg5: i32 specifies the return data format
+  /// * arg6: i32 enable specific minmax functionality
+  ///
+  /// * Return: vXi8 or vXi16 depending on return data size and format
+  def int_genx_va_minmax_filter : Intrinsic<[llvm_anyint_ty], [llvm_i32_ty,
+    llvm_i32_ty, llvm_float_ty, llvm_float_ty, llvm_i32_ty, llvm_i32_ty,
+    llvm_i32_ty], [IntrReadMem]>;
 
   //--------------------------------------------------------------------
   // GenX backend internal intrinsics
