@@ -2216,6 +2216,33 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
     llvm_i32_ty, llvm_float_ty, llvm_float_ty, llvm_i32_ty, llvm_i32_ty,
     llvm_i32_ty], [IntrReadMem]>;
 
+  /// ``llvm.genx.va.bool.centroid' vISA Boolean Centroid instruction
+  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  ///
+  /// * arg0: i32 sampler index
+  /// * arg1: float normalized x-coordinate
+  /// * arg2: float normalized y-coordinate
+  /// * arg3: i8 vertical size
+  /// * arg4: i8 horizontal size
+  ///
+  /// * Return: v16i8 or v16i16 depending on surface format
+  def int_genx_va_bool_centroid : Intrinsic<[llvm_anyint_ty],
+    [llvm_i32_ty, llvm_float_ty, llvm_float_ty, llvm_i8_ty, llvm_i8_ty],
+    [IntrReadMem]>;
+
+  /// ``llvm.genx.va.centroid' vISA Centroid instruction
+  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  ///
+  /// * arg0: i32 sampler index
+  /// * arg1: float normalized x-coordinate
+  /// * arg2: float normalized y-coordinate
+  /// * arg3: i8 vertical size
+  ///
+  /// * Return: v32i32
+  def int_genx_va_centroid : Intrinsic<[llvm_anyint_ty],
+    [llvm_i32_ty, llvm_float_ty, llvm_float_ty, llvm_i8_ty],
+    [IntrReadMem]>;
+
   //--------------------------------------------------------------------
   // GenX backend internal intrinsics
 
