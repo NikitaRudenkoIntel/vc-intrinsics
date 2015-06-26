@@ -1200,6 +1200,159 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
     [llvm_anyvector_ty, llvm_i32_ty, llvm_anyint_ty, LLVMMatchType<0>,
     LLVMMatchType<0>, LLVMMatchType<0>], []>;
 
+  /// ``llvm.genx.typed.atomic.*`` : atomic typed with binary operator
+  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  /// * ``llvm.genx.typed.atomic.add`` : vISA TYPED_ATOMIC ADD instruction
+  /// * ``llvm.genx.typed.atomic.sub`` : vISA TYPED_ATOMIC SUB instruction
+  /// * ``llvm.genx.typed.atomic.min`` : vISA TYPED_ATOMIC MIN instruction
+  /// * ``llvm.genx.typed.atomic.max`` : vISA TYPED_ATOMIC MAX instruction
+  /// * ``llvm.genx.typed.atomic.xchg`` : vISA TYPED_ATOMIC XCHG instruction
+  /// * ``llvm.genx.typed.atomic.and`` : vISA TYPED_ATOMIC AND instruction
+  /// * ``llvm.genx.typed.atomic.or`` : vISA TYPED_ATOMIC OR instruction
+  /// * ``llvm.genx.typed.atomic.xor`` : vISA TYPED_ATOMIC XOR instruction
+  /// * ``llvm.genx.typed.atomic.imin`` : vISA TYPED_ATOMIC IMIN instruction
+  /// * ``llvm.genx.typed.atomic.imax`` : vISA TYPED_ATOMIC IMAX instruction
+  ///
+  /// * (Exec_size inferred from element offset type)
+  /// * arg0: vXi1 predicate
+  /// * arg1: i32 surface index
+  /// * arg2: vXT src
+  /// * arg3: vXi32 u
+  /// * arg4: vXi32 v - can be a constant 0 and becomes undef in lowering
+  /// * arg5: vXi32 r - can be a constant 0 and becomes undef in lowering
+  /// * arg6: vXi32 LOD - can be constant 0 and becomes undef in lowering
+  ///
+  /// * Return value: vXi32 the old value read
+  ///
+  /// Predicate, element offset, src, and the return value must all have the
+  /// same vector width (which in reality must be 8)
+  ///
+  def int_genx_typed_atomic_add : Intrinsic<[llvm_anyvector_ty],
+    [llvm_anyvector_ty, llvm_i32_ty, LLVMMatchType<0>,
+    llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty], []>;
+  def int_genx_typed_atomic_sub : Intrinsic<[],
+    [llvm_anyvector_ty, llvm_i32_ty, LLVMMatchType<0>,
+    llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty], []>;
+  def int_genx_typed_atomic_min : Intrinsic<[],
+    [llvm_anyvector_ty, llvm_i32_ty, LLVMMatchType<0>,
+    llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty], []>;
+  def int_genx_typed_atomic_max : Intrinsic<[],
+    [llvm_anyvector_ty, llvm_i32_ty, LLVMMatchType<0>,
+    llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty], []>;
+  def int_genx_typed_atomic_xchg : Intrinsic<[],
+    [llvm_anyvector_ty, llvm_i32_ty, LLVMMatchType<0>,
+    llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty], []>;
+  def int_genx_typed_atomic_and : Intrinsic<[],
+    [llvm_anyvector_ty, llvm_i32_ty, LLVMMatchType<0>,
+    llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty], []>;
+  def int_genx_typed_atomic_or : Intrinsic<[],
+    [llvm_anyvector_ty, llvm_i32_ty, LLVMMatchType<0>,
+    llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty], []>;
+  def int_genx_typed_atomic_xor : Intrinsic<[],
+    [llvm_anyvector_ty, llvm_i32_ty, LLVMMatchType<0>,
+    llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty], []>;
+  def int_genx_typed_atomic_imin : Intrinsic<[],
+    [llvm_anyvector_ty, llvm_i32_ty, LLVMMatchType<0>,
+    llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty], []>;
+  def int_genx_typed_atomic_imax : Intrinsic<[],
+    [llvm_anyvector_ty, llvm_i32_ty, LLVMMatchType<0>,
+    llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty], []>;
+
+  /// ``llvm.genx.typed.atomic.*`` : atomic typed with fmin/fmax operation
+  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  /// * ``llvm.genx.typed.atomic.fmin`` : vISA TYPED_ATOMIC FMIN instruction
+  /// * ``llvm.genx.typed.atomic.fmax`` : vISA TYPED_ATOMIC FMAX instruction
+  ///
+  /// * (Exec_size inferred from element offset type)
+  /// * arg0: vXi1 predicate
+  /// * arg1: i32 surface index
+  /// * arg2: vXfloat src
+  /// * arg3: vXi32 u
+  /// * arg4: vXi32 v - can be a constant 0 and becomes undef in lowering
+  /// * arg5: vXi32 r - can be a constant 0 and becomes undef in lowering
+  /// * arg6: vXi32 LOD - can be a constant 0 and becomes undef in lowering
+  ///
+  /// * Return value: vXfloat the old value read
+  ///
+  /// Predicate, element offset, src, and the return value must all have the
+  /// same vector width (which in reality must be 8)
+  ///
+  def int_genx_typed_atomic_fmin : Intrinsic<[llvm_anyvector_ty],
+    [llvm_anyvector_ty, llvm_i32_ty, LLVMMatchType<0>,
+    llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty], []>;
+  def int_genx_typed_atomic_fmax : Intrinsic<[llvm_anyvector_ty],
+    [llvm_anyvector_ty, llvm_i32_ty, LLVMMatchType<0>,
+    llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty], []>;
+
+  /// ``llvm.genx.typed.atomic.*`` : atomic typed with inc/dec operation
+  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  /// * ``llvm.genx.typed.atomic.inc`` : vISA TYPED_ATOMIC INC instruction
+  /// * ``llvm.genx.typed.atomic.dec`` : vISA TYPED_ATOMIC DEC instruction
+  ///
+  /// * (Exec_size inferred from element offset type)
+  /// * arg0: vXi1 predicate
+  /// * arg1: i32 surface index
+  /// * arg2: vXi32 u
+  /// * arg3: vXi32 v - can be a constant 0 and becomes undef in lowering
+  /// * arg4: vXi32 r - can be a constant 0 and becomes undef in lowering
+  /// * arg5: vXi32 LOD - can be a constant 0 and becomes undef in lowering
+  ///
+  /// * Return value: vXi32 the old value read
+  ///
+  /// Predicate, element offset, src, and the return value must all have the
+  /// same vector width (which in reality must be 8)
+  ///
+  def int_genx_typed_atomic_inc : Intrinsic<[llvm_anyvector_ty],
+    [llvm_anyvector_ty, llvm_i32_ty,
+    llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty], []>;
+  def int_genx_typed_atomic_dec : Intrinsic<[llvm_anyvector_ty],
+    [llvm_anyvector_ty, llvm_i32_ty,
+    llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty], []>;
+
+  /// ``llvm.genx.typed.atomic.cmpxchg`` : vISA TYPED_ATOMIC CMPXCHG instruction
+  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  ///
+  /// * (Exec_size inferred from element offset type)
+  /// * arg0: vXi1 predicate
+  /// * arg1: i32 surface index
+  /// * arg2: vXT src0
+  /// * arg3: vXT src1
+  /// * arg3: vXi32 u
+  /// * arg4: vXi32 v - can be a constant 0 and becomes undef in lowering
+  /// * arg5: vXi32 r - can be a constant 0 and becomes undef in lowering
+  /// * arg6: vXi32 LOD - can be a constant 0 and becomes undef in lowering
+  ///
+  /// * Return value: vXi32 the old value read
+  ///
+  /// Predicate, element offset, src, and the return value must all have the
+  /// same vector width (which in reality must be 8)
+  ///
+  def int_genx_typed_atomic_cmpxchg : Intrinsic<[llvm_anyvector_ty],
+    [llvm_anyvector_ty, llvm_i32_ty, LLVMMatchType<0>, LLVMMatchType<0>,
+    llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty], []>;
+
+  /// ``llvm.genx.typed.atomic.fcmpwr`` : vISA TYPED_ATOMIC FCMPWR instruction
+  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  ///
+  /// * (Exec_size inferred from element offset type)
+  /// * arg0: vXi1 predicate
+  /// * arg1: i32 surface index
+  /// * arg2: vXfloat src0
+  /// * arg2: vXfloat src1
+  /// * arg3: vXi32 u
+  /// * arg4: vXi32 v - can be a constant 0 and becomes undef in lowering
+  /// * arg5: vXi32 r - can be a constant 0 and becomes undef in lowering
+  /// * arg6: vXi32 LOD - can be a constant 0 and becomes undef in lowering
+  ///
+  /// * Return value: vXfloat the old value read
+  ///
+  /// Predicate, element offset, src, and the return value must all have the
+  /// same vector width (which in reality must be 8)
+  ///
+  def int_genx_typed_atomic_fcmpwr : Intrinsic<[llvm_v8f32_ty],
+    [llvm_anyvector_ty, llvm_i32_ty, LLVMMatchType<0>,LLVMMatchType<0>,
+    llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty], []>;
+
   /// ``llvm.genx.gather`` : vISA GATHER instruction
   /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   ///
