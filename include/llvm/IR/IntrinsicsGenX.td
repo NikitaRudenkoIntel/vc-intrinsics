@@ -2243,6 +2243,34 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
     [llvm_i32_ty, llvm_float_ty, llvm_float_ty, llvm_i8_ty],
     [IntrReadMem]>;
 
+  /// ``llvm.genx.va.1d.convolve.horizontal'' vISA 1d convolve horizontal instruction
+  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  ///
+  /// * arg0: i32 sampler index
+  /// * arg1: i32 surface index
+  /// * arg2: float normalized x-coordinate
+  /// * arg3: float normalized y-coordinate
+  /// * arg4: i32 mode
+  ///
+  /// * Return: v16i16 or v64i16 depending on mode
+  def int_genx_va_1d_convolve_horizontal : Intrinsic<[llvm_anyint_ty],
+    [llvm_i32_ty, llvm_i32_ty, llvm_float_ty, llvm_float_ty, llvm_i32_ty],
+    [IntrReadMem]>;
+
+  /// ``llvm.genx.va.1d.convolve.vertical'' vISA 1d convolve vertical instruction
+  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  ///
+  /// * arg0: i32 sampler index
+  /// * arg1: i32 surface index
+  /// * arg2: float normalized x-coordinate
+  /// * arg3: float normalized y-coordinate
+  /// * arg4: i32 mode
+  ///
+  /// * Return: v16i16 or v64i16 depending on mode
+  def int_genx_va_1d_convolve_vertical : Intrinsic<[llvm_anyint_ty],
+    [llvm_i32_ty, llvm_i32_ty, llvm_float_ty, llvm_float_ty, llvm_i32_ty],
+    [IntrReadMem]>;
+
   //--------------------------------------------------------------------
   // GenX backend internal intrinsics
 
