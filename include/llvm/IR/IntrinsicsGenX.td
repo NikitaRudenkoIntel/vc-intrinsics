@@ -2609,4 +2609,36 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   def int_genx_simdcf_predicate :
               Intrinsic<[llvm_anyvector_ty],
                         [LLVMMatchType<0>, LLVMMatchType<0>], []>;
+
+  // ``llvm.genx.wrconstregion`` : write a constant region
+  // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  //
+  // * arg0: vector to write region in to
+  // * arg1: subvector to write into the region, constant
+  // * arg2: i32 vstride in elements, constant
+  // * arg3: i32 width in elements, constant
+  // * arg4: i32 stride in elements, constant
+  // * arg5: i16 or vXi16 offset in bytes, constant
+  // * arg6: i32 parent width, constant, ignored
+  // * arg7: constant scalar i1 predicate value 1
+  //
+  // * Return value: the updated vector with the region modified
+  //
+  // This is the same as llvm.genx.wrregion, but with the following restrictions:
+  //
+  // * the subvector to write is constant;
+  // * the offset is constant;
+  // * the predicate is 1.
+  //
+  // It is used by GenXConstants when inserting code to load a constant, and
+  // specifically does not participate in simplification or constant
+  // propagation so we do not lose that constant loading code.
+  //
+  // The operands are the same as llvm.genx.wrregion so it can mostly be handled
+  // by the same code as llvm.genx.wrregion.
+  //
+  def int_genx_wrconstregion : Intrinsic<[llvm_anyvector_ty], [LLVMMatchType<0>,
+      llvm_anyvector_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_anyint_ty,
+      llvm_i32_ty, llvm_anyint_ty], [IntrNoMem]>;
+
 }
