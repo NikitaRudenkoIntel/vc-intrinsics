@@ -2303,7 +2303,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// * arg1: i32 surface index
   /// * arg2: float normalized x-coordinate
   /// * arg3: float normalized y-coordinate
-  /// * arg4: i32 properties value specifying return data format and input region size
+  /// * arg4: i32 properties value specifying return data format and input region size, constant
   ///
   /// * Return value: v64i16 or v16i16 matrix, depending on properties value
   ///
@@ -2318,7 +2318,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// * arg1: i32 surface index
   /// * arg2: float normalized x-coordinate
   /// * arg3: float normalized y-coordinate
-  /// * arg4: i32 properties value specifying return data format
+  /// * arg4: i32 properties value specifying return data format, constant
   ///
   /// * Return value: vXi32
   ///
@@ -2333,7 +2333,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// * arg1: i32 surface index
   /// * arg2: float normalized x-coordinate
   /// * arg3: float normalized y-coordinate
-  /// * arg4: i32 properties value specifying return data format
+  /// * arg4: i32 properties value specifying return data format, constant
   ///
   /// * Return value: vXi32
   ///
@@ -2341,7 +2341,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
     llvm_float_ty, llvm_float_ty, llvm_i32_ty],
     [IntrReadMem]>;
 
-  /// ``llvm.genx.va.minmax'' vISA MinMax instruction
+  /// ``llvm.genx.va.minmax`` vISA MinMax instruction
   /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   ///
   /// * arg0: i32 surface index
@@ -2353,15 +2353,15 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   def int_genx_va_minmax : Intrinsic<[llvm_anyint_ty], [llvm_i32_ty,
     llvm_float_ty, llvm_float_ty, llvm_i32_ty], [IntrReadMem]>;
 
-  /// ``llvm.genx.va.minmax_filter'' vISA MinMax Filter instruction
+  /// ``llvm.genx.va.minmax_filter`` vISA MinMax Filter instruction
   /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   ///
   /// * arg0: i32 sampler index
   /// * arg1: i32 surface index
   /// * arg2: float normalized x-coordinate
   /// * arg3: float normalized y-coordinate
-  /// * arg4: i32 specifies the size of the minmax value returned
-  /// * arg5: i32 specifies the return data format
+  /// * arg4: i32 specifies the size of the minmax value returned, constant
+  /// * arg5: i32 specifies the return data format, constant
   /// * arg6: i32 enable specific minmax functionality
   ///
   /// * Return: vXi8 or vXi16 depending on return data size and format
@@ -2369,8 +2369,8 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
     llvm_i32_ty, llvm_float_ty, llvm_float_ty, llvm_i32_ty, llvm_i32_ty,
     llvm_i32_ty], [IntrReadMem]>;
 
-  /// ``llvm.genx.va.bool.centroid' vISA Boolean Centroid instruction
-  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  /// ``llvm.genx.va.bool.centroid`` vISA Boolean Centroid instruction
+  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   ///
   /// * arg0: i32 sampler index
   /// * arg1: float normalized x-coordinate
@@ -2383,8 +2383,8 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
     [llvm_i32_ty, llvm_float_ty, llvm_float_ty, llvm_i8_ty, llvm_i8_ty],
     [IntrReadMem]>;
 
-  /// ``llvm.genx.va.centroid' vISA Centroid instruction
-  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  /// ``llvm.genx.va.centroid`` vISA Centroid instruction
+  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   ///
   /// * arg0: i32 sampler index
   /// * arg1: float normalized x-coordinate
@@ -2396,42 +2396,42 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
     [llvm_i32_ty, llvm_float_ty, llvm_float_ty, llvm_i8_ty],
     [IntrReadMem]>;
 
-  /// ``llvm.genx.va.1d.convolve.horizontal'' vISA 1d convolve horizontal instruction
+  /// ``llvm.genx.va.1d.convolve.horizontal`` vISA 1d convolve horizontal instruction
   /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   ///
   /// * arg0: i32 sampler index
   /// * arg1: i32 surface index
   /// * arg2: float normalized x-coordinate
   /// * arg3: float normalized y-coordinate
-  /// * arg4: i32 mode
+  /// * arg4: i32 mode, constant
   ///
   /// * Return: v16i16 or v64i16 depending on mode
   def int_genx_va_1d_convolve_horizontal : Intrinsic<[llvm_anyint_ty],
     [llvm_i32_ty, llvm_i32_ty, llvm_float_ty, llvm_float_ty, llvm_i32_ty],
     [IntrReadMem]>;
 
-  /// ``llvm.genx.va.1d.convolve.vertical'' vISA 1d convolve vertical instruction
+  /// ``llvm.genx.va.1d.convolve.vertical`` vISA 1d convolve vertical instruction
   /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   ///
   /// * arg0: i32 sampler index
   /// * arg1: i32 surface index
   /// * arg2: float normalized x-coordinate
   /// * arg3: float normalized y-coordinate
-  /// * arg4: i32 mode
+  /// * arg4: i32 mode, constant
   ///
   /// * Return: v16i16 or v64i16 depending on mode
   def int_genx_va_1d_convolve_vertical : Intrinsic<[llvm_anyint_ty],
     [llvm_i32_ty, llvm_i32_ty, llvm_float_ty, llvm_float_ty, llvm_i32_ty],
     [IntrReadMem]>;
 
-  /// ``llvm.genx.va.1pixel.convolve'' vISA 1 Pixel Convolve instruction
+  /// ``llvm.genx.va.1pixel.convolve`` vISA 1 Pixel Convolve instruction
   /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   ///
   /// * arg0: i32 sampler index
   /// * arg1: i32 surface index
   /// * arg2: float normalized x-coordinate
   /// * arg3: float normalized y-coordinate
-  /// * arg4: i32 mode
+  /// * arg4: i32 mode, constant
   /// * arg5: v32i16 offsets
   ///
   /// * Return: v64i16 or v16i16 depending on mode.
@@ -2439,7 +2439,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
     [llvm_i32_ty, llvm_i32_ty, llvm_float_ty, llvm_float_ty,
      llvm_i32_ty, llvm_anyint_ty], [IntrReadMem]>;
 
-  /// ``llvm.genx.va.1pixel.convolve.1x1mode'' vISA 1 Pixel Convolve (1x1 mode) instruction
+  /// ``llvm.genx.va.1pixel.convolve.1x1mode`` vISA 1 Pixel Convolve (1x1 mode) instruction
   /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   ///
   /// * arg0: i32 sampler index
@@ -2450,6 +2450,18 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// * Return: v64i16 or v16i16 depending on mode.
   def int_genx_va_1pixel_convolve_1x1mode : Intrinsic<[llvm_anyint_ty],
     [llvm_i32_ty, llvm_i32_ty, llvm_float_ty, llvm_float_ty], [IntrReadMem]>;
+
+  /// ``llvm.genx.va.lbp.creation`` vISA LBP Creation instruction
+  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  ///
+  /// * arg0: i32 surface index
+  /// * arg1: float normalized x-coordinate
+  /// * arg2: float normalized y-coordinate
+  /// * arg3: mode, constant
+  ///
+  /// * Return: v64i8 or v128i8 depending on mode
+  def int_genx_va_lbp_creation : Intrinsic<[llvm_anyint_ty],
+    [llvm_i32_ty, llvm_float_ty, llvm_float_ty, llvm_i32_ty], [IntrReadMem]>;
 
   //--------------------------------------------------------------------
   // GenX backend internal intrinsics
