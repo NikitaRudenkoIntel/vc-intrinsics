@@ -2463,6 +2463,18 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   def int_genx_va_lbp_creation : Intrinsic<[llvm_anyint_ty],
     [llvm_i32_ty, llvm_float_ty, llvm_float_ty, llvm_i32_ty], [IntrReadMem]>;
 
+  /// ``llvm.genx.va.lbp.correlation`` vISA LBP Correlation instruction
+  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  ///
+  /// * arg0: i32 surface index
+  /// * arg1: float normalized x-coordinate
+  /// * arg2: float normalized y-coordinate
+  /// * arg3: i16 horizontal disparity
+  ///
+  /// * Return: v64i8
+  def int_genx_va_lbp_correlation : Intrinsic<[llvm_anyint_ty],
+    [llvm_i32_ty, llvm_float_ty, llvm_float_ty, llvm_i16_ty], [IntrReadMem]>;
+
   //--------------------------------------------------------------------
   // GenX backend internal intrinsics
 
