@@ -2493,6 +2493,20 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
     [llvm_i32_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty,
     llvm_i8_ty, llvm_i8_ty, llvm_i8_ty, llvm_i8_ty], [IntrReadMem]>;
 
+  /// ``llvm.genx.va.flood.fill`` vISA Flood Fill instruction
+  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  ///
+  /// * arg0: i8 Is8Connect, constant (valid values 0 or 1).
+  /// * arg1: v10i16 pixel mask horizontal direction
+  /// * arg2: i16 pixel mask vertical direction left
+  /// * arg3: i16 pixel mask vertical direction right
+  /// * arg4: i16 loop count
+  ///
+  /// * Return: v8i16
+  def int_genx_va_flood_fill : Intrinsic<[llvm_anyint_ty],
+    [llvm_i8_ty, llvm_anyint_ty, llvm_i16_ty, llvm_i16_ty, llvm_i16_ty],
+    [IntrReadMem]>;
+
   //--------------------------------------------------------------------
   // GenX backend internal intrinsics
 
