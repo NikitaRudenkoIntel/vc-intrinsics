@@ -2475,6 +2475,24 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   def int_genx_va_lbp_correlation : Intrinsic<[llvm_anyint_ty],
     [llvm_i32_ty, llvm_float_ty, llvm_float_ty, llvm_i16_ty], [IntrReadMem]>;
 
+  /// ``llvm.genx.va.correlation.search`` vISA Correlation Search instruction
+  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  ///
+  /// * arg0: i32 surface index
+  /// * arg1: float normalized x-coordinate
+  /// * arg2: float normalized y-coordinate
+  /// * arg3: float normalized vertical origin
+  /// * arg4: float normalized horizontal origin
+  /// * arg5: i8 x-direction size
+  /// * arg6: i8 y-direction size
+  /// * arg7: i8 x-direction search size
+  /// * arg8: i8 y-direction search size
+  ///
+  /// * Return: vXi32
+  def int_genx_va_correlation_search : Intrinsic<[llvm_anyint_ty],
+    [llvm_i32_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty,
+    llvm_i8_ty, llvm_i8_ty, llvm_i8_ty, llvm_i8_ty], [IntrReadMem]>;
+
   //--------------------------------------------------------------------
   // GenX backend internal intrinsics
 
