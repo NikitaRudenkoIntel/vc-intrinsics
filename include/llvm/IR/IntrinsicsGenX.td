@@ -2311,6 +2311,22 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
     llvm_float_ty, llvm_float_ty, llvm_i32_ty],
     [IntrReadMem]>;
 
+  /// ``llvm.genx.va.hdc.convolve2d`` vISA VA HDC 2d Convolve instruction
+  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  ///
+  /// * arg0: i32 sampler index
+  /// * arg1: i32 surface index
+  /// * arg2: float normalized x-coordinate
+  /// * arg3: float normalized y-coordinate
+  /// * arg4: i32 properties value specifying return data format and input region size, constant
+  /// * arg5: i32 destination surface
+  /// * arg6: i16 destination surface x-offset
+  /// * arg7: i16 destination surface y-offset
+  ///
+  def int_genx_va_hdc_convolve2d : Intrinsic<[], [llvm_i32_ty, llvm_i32_ty,
+    llvm_float_ty, llvm_float_ty, llvm_i32_ty, llvm_i32_ty, llvm_i16_ty, llvm_i16_ty],
+    []>;
+
   /// ``llvm.genx.va.erode`` vISA VA Erode instruction
   /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   ///
