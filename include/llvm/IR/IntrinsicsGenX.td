@@ -2342,6 +2342,21 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
     llvm_float_ty, llvm_float_ty, llvm_i32_ty],
     [IntrReadMem]>;
 
+  /// ``llvm.genx.va.hdc.erode`` vISA VA HDC Erode instruction
+  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  ///
+  /// * arg0: i32 sampler index
+  /// * arg1: i32 surface index
+  /// * arg2: float normalized x-coordinate
+  /// * arg3: float normalized y-coordinate
+  /// * arg4: i32 destination surface
+  /// * arg5: i16 destination surface x-offset
+  /// * arg6: i16 destination surface y-offset
+  ///
+  def int_genx_va_hdc_erode : Intrinsic<[], [llvm_i32_ty, llvm_i32_ty,
+    llvm_float_ty, llvm_float_ty, llvm_i32_ty, llvm_i16_ty, llvm_i16_ty],
+    []>;
+
   /// ``llvm.genx.va.dilate`` vISA VA Dilate instruction
   /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   ///
@@ -2356,6 +2371,21 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   def int_genx_va_dilate : Intrinsic<[llvm_anyint_ty], [llvm_i32_ty, llvm_i32_ty,
     llvm_float_ty, llvm_float_ty, llvm_i32_ty],
     [IntrReadMem]>;
+
+  /// ``llvm.genx.va.hdc.dilate`` vISA VA HDC Dilate instruction
+  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  ///
+  /// * arg0: i32 sampler index
+  /// * arg1: i32 surface index
+  /// * arg2: float normalized x-coordinate
+  /// * arg3: float normalized y-coordinate
+  /// * arg4: i32 destination surface
+  /// * arg5: i16 destination surface x-offset
+  /// * arg6: i16 destination surface y-offset
+  ///
+  def int_genx_va_hdc_dilate : Intrinsic<[], [llvm_i32_ty, llvm_i32_ty,
+    llvm_float_ty, llvm_float_ty, llvm_i32_ty, llvm_i16_ty, llvm_i16_ty],
+    []>;
 
   /// ``llvm.genx.va.minmax`` vISA MinMax instruction
   /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
