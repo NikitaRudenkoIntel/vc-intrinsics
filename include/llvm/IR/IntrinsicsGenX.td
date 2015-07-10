@@ -2399,7 +2399,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   def int_genx_va_minmax : Intrinsic<[llvm_anyint_ty], [llvm_i32_ty,
     llvm_float_ty, llvm_float_ty, llvm_i32_ty], [IntrReadMem]>;
 
-  /// ``llvm.genx.va.minmax_filter`` vISA MinMax Filter instruction
+  /// ``llvm.genx.va.minmax.filter`` vISA MinMax Filter instruction
   /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   ///
   /// * arg0: i32 sampler index
@@ -2414,6 +2414,23 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   def int_genx_va_minmax_filter : Intrinsic<[llvm_anyint_ty], [llvm_i32_ty,
     llvm_i32_ty, llvm_float_ty, llvm_float_ty, llvm_i32_ty, llvm_i32_ty,
     llvm_i32_ty], [IntrReadMem]>;
+
+  /// ``llvm.genx.va.hdc.minmax.filter`` vISA HDC MinMax Filter instruction
+  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  ///
+  /// * arg0: i32 sampler index
+  /// * arg1: i32 surface index
+  /// * arg2: float normalized x-coordinate
+  /// * arg3: float normalized y-coordinate
+  /// * arg4: i32 return data format, constant
+  /// * arg5: i32 enable the specific minmax functionality, constant
+  /// * arg6: i32 destination surface index
+  /// * arg7: i16 destination surface x-offset
+  /// * arg8: i16 destination surface y-offset
+  ///
+  def int_genx_va_hdc_minmax_filter : Intrinsic<[], [llvm_i32_ty,
+    llvm_i32_ty, llvm_float_ty, llvm_float_ty, llvm_i32_ty, llvm_i32_ty,
+    llvm_i32_ty, llvm_i16_ty, llvm_i16_ty], []>;
 
   /// ``llvm.genx.va.bool.centroid`` vISA Boolean Centroid instruction
   /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
