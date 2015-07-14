@@ -2502,6 +2502,23 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
     [llvm_i32_ty, llvm_i32_ty, llvm_float_ty, llvm_float_ty,
      llvm_i32_ty, llvm_anyint_ty], [IntrReadMem]>;
 
+  /// ``llvm.genx.va.hdc.1pixel.convolve`` vISA HDC 1 Pixel Convolve instruction
+  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  ///
+  /// * arg0: i32 sampler index
+  /// * arg1: i32 surface index
+  /// * arg2: float normalized x-coordinate
+  /// * arg3: float normalized y-coordinate
+  /// * arg4: i32 pixel size, constant
+  /// * arg5: v32i16 offsets
+  /// * arg6: i32 destination surface index
+  /// * arg7: i16 destination surface x-offset
+  /// * arg8: i16 destination surface y-offset
+  ///
+  def int_genx_va_hdc_1pixel_convolve : Intrinsic<[],
+    [llvm_i32_ty, llvm_i32_ty, llvm_float_ty, llvm_float_ty,
+     llvm_i32_ty, llvm_anyint_ty, llvm_i32_ty, llvm_i16_ty, llvm_i16_ty], []>;
+
   /// ``llvm.genx.va.1pixel.convolve.1x1mode`` vISA 1 Pixel Convolve (1x1 mode) instruction
   /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   ///
