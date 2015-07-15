@@ -2473,6 +2473,22 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
     [llvm_i32_ty, llvm_i32_ty, llvm_float_ty, llvm_float_ty, llvm_i32_ty],
     [IntrReadMem]>;
 
+  /// ``llvm.genx.va.hdc.1d.convolve.horizontal`` vISA HDC 1d convolve horizontal instruction
+  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  ///
+  /// * arg0: i32 sampler index
+  /// * arg1: i32 surface index
+  /// * arg2: float normalized x-coordinate
+  /// * arg3: float normalized y-coordinate
+  /// * arg4: i32 pixel size, constant
+  /// * arg5: i32 destination surface index
+  /// * arg6: i16 destination surface x-offset
+  /// * arg7: i16 destination surface y-offset
+  ///
+  def int_genx_va_hdc_1d_convolve_horizontal : Intrinsic<[],
+    [llvm_i32_ty, llvm_i32_ty, llvm_float_ty, llvm_float_ty, llvm_i32_ty,
+     llvm_i32_ty, llvm_i16_ty, llvm_i16_ty], []>;
+
   /// ``llvm.genx.va.1d.convolve.vertical`` vISA 1d convolve vertical instruction
   /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   ///
@@ -2486,6 +2502,22 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   def int_genx_va_1d_convolve_vertical : Intrinsic<[llvm_anyint_ty],
     [llvm_i32_ty, llvm_i32_ty, llvm_float_ty, llvm_float_ty, llvm_i32_ty],
     [IntrReadMem]>;
+
+  /// ``llvm.genx.va.hdc.1d.convolve.vertical`` vISA HDC 1d convolve vertical instruction
+  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  ///
+  /// * arg0: i32 sampler index
+  /// * arg1: i32 surface index
+  /// * arg2: float normalized x-coordinate
+  /// * arg3: float normalized y-coordinate
+  /// * arg4: i32 pixel size, constant
+  /// * arg5: i32 destination surface index
+  /// * arg6: i16 destination surface x-offset
+  /// * arg7: i16 destination surface y-offset
+  ///
+  def int_genx_va_hdc_1d_convolve_vertical : Intrinsic<[],
+    [llvm_i32_ty, llvm_i32_ty, llvm_float_ty, llvm_float_ty, llvm_i32_ty,
+     llvm_i32_ty, llvm_i16_ty, llvm_i16_ty], []>;
 
   /// ``llvm.genx.va.1pixel.convolve`` vISA 1 Pixel Convolve instruction
   /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
