@@ -1230,31 +1230,31 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   def int_genx_typed_atomic_add : Intrinsic<[llvm_anyvector_ty],
     [llvm_anyvector_ty, llvm_i32_ty, LLVMMatchType<0>,
     llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty], []>;
-  def int_genx_typed_atomic_sub : Intrinsic<[],
+  def int_genx_typed_atomic_sub : Intrinsic<[llvm_anyvector_ty],
     [llvm_anyvector_ty, llvm_i32_ty, LLVMMatchType<0>,
     llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty], []>;
-  def int_genx_typed_atomic_min : Intrinsic<[],
+  def int_genx_typed_atomic_min : Intrinsic<[llvm_anyvector_ty],
     [llvm_anyvector_ty, llvm_i32_ty, LLVMMatchType<0>,
     llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty], []>;
-  def int_genx_typed_atomic_max : Intrinsic<[],
+  def int_genx_typed_atomic_max : Intrinsic<[llvm_anyvector_ty],
     [llvm_anyvector_ty, llvm_i32_ty, LLVMMatchType<0>,
     llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty], []>;
-  def int_genx_typed_atomic_xchg : Intrinsic<[],
+  def int_genx_typed_atomic_xchg : Intrinsic<[llvm_anyvector_ty],
     [llvm_anyvector_ty, llvm_i32_ty, LLVMMatchType<0>,
     llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty], []>;
-  def int_genx_typed_atomic_and : Intrinsic<[],
+  def int_genx_typed_atomic_and : Intrinsic<[llvm_anyvector_ty],
     [llvm_anyvector_ty, llvm_i32_ty, LLVMMatchType<0>,
     llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty], []>;
-  def int_genx_typed_atomic_or : Intrinsic<[],
+  def int_genx_typed_atomic_or : Intrinsic<[llvm_anyvector_ty],
     [llvm_anyvector_ty, llvm_i32_ty, LLVMMatchType<0>,
     llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty], []>;
-  def int_genx_typed_atomic_xor : Intrinsic<[],
+  def int_genx_typed_atomic_xor : Intrinsic<[llvm_anyvector_ty],
     [llvm_anyvector_ty, llvm_i32_ty, LLVMMatchType<0>,
     llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty], []>;
-  def int_genx_typed_atomic_imin : Intrinsic<[],
+  def int_genx_typed_atomic_imin : Intrinsic<[llvm_anyvector_ty],
     [llvm_anyvector_ty, llvm_i32_ty, LLVMMatchType<0>,
     llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty], []>;
-  def int_genx_typed_atomic_imax : Intrinsic<[],
+  def int_genx_typed_atomic_imax : Intrinsic<[llvm_anyvector_ty],
     [llvm_anyvector_ty, llvm_i32_ty, LLVMMatchType<0>,
     llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty], []>;
 
