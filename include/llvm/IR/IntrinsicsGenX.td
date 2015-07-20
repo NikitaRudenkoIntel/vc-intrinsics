@@ -419,11 +419,11 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// ``llvm.genx.cbit`` : count set bits
   /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   ///
-  /// * arg0: first input, any scalar/vector i32 type
+  /// * arg0: first input, any scalar/vector integer type
   ///
-  /// * Return value: result, same type as arg0
+  /// * Return value: result, int32 of same width as arg0
   ///
-  def int_genx_cbit : Intrinsic<[llvm_anyint_ty], [LLVMMatchType<0>], [IntrNoMem]>;
+  def int_genx_cbit : Intrinsic<[llvm_anyint_ty], [llvm_anyint_ty], [IntrNoMem]>;
 
   /// cmp
   /// ^^^
