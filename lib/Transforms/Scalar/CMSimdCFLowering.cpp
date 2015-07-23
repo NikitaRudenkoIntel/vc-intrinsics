@@ -342,7 +342,7 @@ private:
   void predicateCall(CallInst *CI, Region *R);
   CallInst *addCallMaskToCall(CallInst *CI, Function *Callee, Value *CM);
   Instruction *loadExecutionMask(Instruction *InsertBefore, unsigned Width);
-  AllocaInst *getExecutionMask(Function *F, unsigned Width);
+  AllocaInst *getExecutionMask(Function *F, unsigned Width, bool NoInit = false);
   AllocaInst *getReenableMask(BasicBlock *BB, unsigned Width = 0);
 };
 } // namespace
@@ -512,15 +512,15 @@ void CMSimdCFLowering::processFunction(Function *F, unsigned CMWidth)
     DEBUG(dbgs() << "CMSimdCFLowering: adding predication " << F->getName() << "\n");
     EMs.resize(6, nullptr); // space for EMs up to 2^(6-1) in size.
     if (CMWidth) {
-      // This is a subroutine with predicated calls. First create the alloca for
-      // the EM, and initialize it from the CM arg. Do not insert the store into
-      // code yet so it does not itself get predicated.
-      auto EM = getExecutionMask(F, CMWidth);
-      auto Store = new StoreInst(&F->getArgumentList().back(), EM);
+      // This is a subroutine with predicated calls. First create the alloca
+      // for the EM. Do not insert the initialization from the CM arg yet so it
+      // does not itself get predicated.
+      auto EM = getExecutionMask(F, CMWidth, /*NoInit=*/true);
       // Add predication to the whole function.
       for (auto i = F->begin(), e = F->end(); i != e; ++i)
         predicateBlock(&*i, Root);
       // Now insert the store just after the alloca of the execution mask.
+      auto Store = new StoreInst(&F->getArgumentList().back(), EM);
       Store->insertAfter(EM);
     } else {
       // Add predication to the whole range of each top-level simd CF construct.
@@ -994,7 +994,9 @@ void CMSimdCFLowering::predicateInst(Instruction *Inst, Region *R)
     return;
   }
   if (auto SI = dyn_cast<StoreInst>(Inst)) {
-    predicateStore(SI, R);
+    // No need to predicate a store in the root of a predicated subroutine.
+    if (R->getKind() != Region::ROOT)
+      predicateStore(SI, R);
     return;
   }
 }
@@ -1365,11 +1367,14 @@ Instruction *CMSimdCFLowering::loadExecutionMask(Instruction *InsertBefore,
  *
  * Enter:   F = Function
  *          Width = width of EM to get
+ *          NoInit = do not insert initialization to all 1s (used in a
+ *                   predicated subroutine)
  *
  * This returns the alloca instruction for the variable, creating it if
  * necessary at the start of the function.
  */
-AllocaInst *CMSimdCFLowering::getExecutionMask(Function *F, unsigned Width)
+AllocaInst *CMSimdCFLowering::getExecutionMask(Function *F, unsigned Width,
+      bool NoInit)
 {
   unsigned LogWidth = 31 - countLeadingZeros(Width, ZB_Undefined);
   if (!EMs[LogWidth]) {
@@ -1379,7 +1384,8 @@ AllocaInst *CMSimdCFLowering::getExecutionMask(Function *F, unsigned Width)
     auto InsertBefore = F->front().getFirstNonPHI();
     EMs[LogWidth] = new AllocaInst(EMTy,
         "EM" + Twine(Width) + ".simdcf", InsertBefore);
-    new StoreInst(Constant::getAllOnesValue(EMTy), EMs[LogWidth], InsertBefore);
+    if (!NoInit)
+      new StoreInst(Constant::getAllOnesValue(EMTy), EMs[LogWidth], InsertBefore);
   }
   return EMs[LogWidth];
 }
