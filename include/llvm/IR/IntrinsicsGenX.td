@@ -1839,7 +1839,8 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// The data read must have a size that is a power of two from 16 to 128
   /// bytes.
   ///
-  def int_genx_svm_block_ld : Intrinsic<[llvm_anyvector_ty], [llvm_i64_ty], []>;
+  def int_genx_svm_block_ld : Intrinsic<[llvm_anyvector_ty], [llvm_i64_ty],
+    [IntrReadMem]>;
   def int_genx_svm_block_ld_unaligned : Intrinsic<[llvm_anyvector_ty],
     [llvm_i64_ty], [IntrReadMem]>;
 
@@ -1853,7 +1854,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// The data to write must have a size that is a power of two from 16 to 128
   /// bytes.
   ///
-  def int_genx_svm_block_st : Intrinsic<[llvm_anyvector_ty], [llvm_i64_ty], []>;
+  def int_genx_svm_block_st : Intrinsic<[], [llvm_i64_ty, llvm_anyvector_ty], []>;
 
   /// ``llvm.genx.svm.gather`` : vISA SVM GATHER instruction
   /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
