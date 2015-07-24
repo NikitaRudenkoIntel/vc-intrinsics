@@ -2274,7 +2274,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// * (exec_size inferred from predicate vector width, defaulting to 16
   ///          if predicate is i1)
   /// * arg1: i1/vXi1 predicate
-  /// * arg2: i32 extended message descriptor, constant
+  /// * arg2: i32 extended message descriptor
   /// * (numsrc inferred from src size)
   /// * (numsrc2 inferred from src2 size)
   /// * (numdst is 0)
