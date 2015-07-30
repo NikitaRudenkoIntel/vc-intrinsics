@@ -249,36 +249,12 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   def int_genx_acos :
               Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>], [IntrNoMem]>;
 
-  /// ``llvm.genx.*add`` : integer add instruction, no saturation
-  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  /// * ``llvm.genx.ssadd`` : result signed, operands signed
-  /// * ``llvm.genx.suadd`` : result signed, operands unsigned
-  /// * ``llvm.genx.usadd`` : result unsigned, operands signed
-  /// * ``llvm.genx.uuadd`` : result unsigned, operands unsigned
+  /// add
+  /// ^^^
+  /// Non-saturating add intrinsic is not needed. A vISA non-saturating add
+  /// where the result type is different to the operand type is represented
+  /// by trunc/zext/sext of each operand and then an LLVM IR Add instruction.
   ///
-  /// * arg0: first input, any scalar/vector integer type, even i64
-  /// * arg1: second input, same type as arg0
-  ///
-  /// * Return value: result, any scalar or vector integer type with same
-  ///               vector width
-  ///
-  /// The signedness of a non-saturating add only makes a difference if the
-  /// element type of the result is bigger than the element type of the args.
-  ///
-  /// For an integer add where the result and the sources are the same type,
-  /// and is not saturating, use the LLVM IR Add instruction.
-  ///
-  /// For an fp add, use the LLVM IR FAdd instruction, followed by
-  /// llvm.genx.sat if saturation is required.
-  ///
-  def int_genx_ssadd : Intrinsic<[llvm_anyint_ty],
-                [llvm_anyint_ty, LLVMMatchType<1>], [IntrNoMem]>;
-  def int_genx_suadd : Intrinsic<[llvm_anyint_ty],
-                [llvm_anyint_ty, LLVMMatchType<1>], [IntrNoMem]>;
-  def int_genx_usadd : Intrinsic<[llvm_anyint_ty],
-                [llvm_anyint_ty, LLVMMatchType<1>], [IntrNoMem]>;
-  def int_genx_uuadd : Intrinsic<[llvm_anyint_ty],
-                [llvm_anyint_ty, LLVMMatchType<1>], [IntrNoMem]>;
 
   /// ``llvm.genx.*add.sat`` : add instruction with saturation
   /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -292,6 +268,9 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   ///
   /// * Return value: result, any scalar or vector integer type with same
   ///               vector width
+  ///
+  /// For an fp add, use the LLVM IR FAdd instruction, followed by
+  /// llvm.genx.sat if saturation is required.
   ///
   def int_genx_ssadd_sat : Intrinsic<[llvm_anyint_ty],
                 [llvm_anyint_ty, LLVMMatchType<1>], [IntrNoMem]>;
@@ -702,33 +681,12 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// cover vISA functionality
   ///
 
-  /// ``llvm.genx.*mul`` : mul instruction, no saturation
-  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  /// * ``llvm.genx.ssmul`` : result signed, operands signed
-  /// * ``llvm.genx.sumul`` : result signed, operands unsigned
-  /// * ``llvm.genx.usmul`` : result unsigned, operands signed
-  /// * ``llvm.genx.uumul`` : result unsigned, operands unsigned
+  /// mul
+  /// ^^^
+  /// Non-saturating mul intrinsic is not needed. A vISA non-saturating mul
+  /// where the result type is different to the operand type is represented
+  /// by trunc/zext/sext of each operand and then an LLVM IR Mul instruction.
   ///
-  /// * arg0: first input, any scalar/vector integer type (not i64)
-  /// * arg1: second input, same type as arg0
-  ///
-  /// * Return value: result, any scalar or vector integer type with same
-  ///               vector width, even i64
-  ///
-  /// For an integer mul where the result and the sources are the same type,
-  /// and is not saturating, use the LLVM IR Mul instruction.
-  ///
-  /// For an fp mul, use the LLVM IR FMul instruction, followed by
-  /// llvm.genx.sat if saturation is required.
-  ///
-  def int_genx_ssmul : Intrinsic<[llvm_anyint_ty],
-                [llvm_anyint_ty, LLVMMatchType<1>], [IntrNoMem]>;
-  def int_genx_sumul : Intrinsic<[llvm_anyint_ty],
-                [llvm_anyint_ty, LLVMMatchType<1>], [IntrNoMem]>;
-  def int_genx_usmul : Intrinsic<[llvm_anyint_ty],
-                [llvm_anyint_ty, LLVMMatchType<1>], [IntrNoMem]>;
-  def int_genx_uumul : Intrinsic<[llvm_anyint_ty],
-                [llvm_anyint_ty, LLVMMatchType<1>], [IntrNoMem]>;
 
   /// ``llvm.genx.*mul.sat`` : mul instruction with saturation
   /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -742,6 +700,9 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   ///
   /// * Return value: result, any scalar/vector integer type with same
   ///               vector width, even i64
+  ///
+  /// For an fp mul, use the LLVM IR FMul instruction, followed by
+  /// llvm.genx.sat if saturation is required.
   ///
   def int_genx_ssmul_sat : Intrinsic<[llvm_anyint_ty],
                 [llvm_anyint_ty, LLVMMatchType<1>], [IntrNoMem]>;
