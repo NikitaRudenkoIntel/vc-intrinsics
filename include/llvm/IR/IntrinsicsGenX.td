@@ -1013,6 +1013,21 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   ///
   def int_genx_get_color : Intrinsic<[llvm_i16_ty], [], [IntrNoMem]>;
 
+  /// ``llvm.genx.set.pause`` : set the pause register (v11.4)
+  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  ///
+  /// arg0: length of pause 10 bits (0-4 must be 0)
+  ///
+  /// Return Value: none
+  /// 
+  ///
+  /// Set the pause value - this pauses instruction issue until the value has been
+  /// decremented to 0 (decrements every 32 clocks)
+  ///
+  /// We set this intrinsic to have side-effects (last field empty) to stop it being removed as it
+  /// otherwise looks dead
+  def int_genx_set_pause : Intrinsic<[], [llvm_i16_ty], []>;
+
   // --------------------------
   /// Shared function intrinsics
   /// --------------------------
