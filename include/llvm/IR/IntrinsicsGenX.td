@@ -973,10 +973,10 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
 
   /// ``llvm.genx.group.*`` : read group ID register
   /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  /// ``llvm.genx.group.id.x`` : read vISA v7 (%local_id_x)
-  /// ``llvm.genx.group.id.y`` : read vISA v8 (%local_id_y)
-  /// ``llvm.genx.group.count.x`` : read vISA v9 (%local_id_x)
-  /// ``llvm.genx.group.count.y`` : read vISA v10 (%local_id_y)
+  /// ``llvm.genx.group.id.x`` : read vISA v7 (%group_id_x)
+  /// ``llvm.genx.group.id.y`` : read vISA v8 (%group_id_y)
+  /// ``llvm.genx.group.count.x`` : read vISA v9 (%group_count_x)
+  /// ``llvm.genx.group.count.y`` : read vISA v10 (%group_count_y)
   ///
   /// * Return value:  i32 the value read
   ///
