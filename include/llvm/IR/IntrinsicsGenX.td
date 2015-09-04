@@ -2104,6 +2104,27 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
     llvm_i32_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty],
     [IntrReadMem]>;
 
+  /// ``llvm.genx.3d.sample`` : vISA 3D_SAMPLE instruction
+  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  ///
+  /// * arg0: i32 opcode, constant
+  /// * arg1: vXi1 predicate mask, used to determine execution size
+  /// * arg2: i32 channel mask, constant
+  /// * arg3: i32 aoffimmi, constant
+  /// * arg4: i32 sampler index
+  /// * arg5: i32 surface index
+  /// * argN: vXf or vXhf operand, for 6 <= N <= 20
+  ///
+  /// * Return value: the data read
+  ///
+  def int_genx_3d_sample : Intrinsic<[llvm_anyvector_ty], [llvm_i32_ty,
+    llvm_anyvector_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty,
+    llvm_anyvector_ty, llvm_anyvector_ty, llvm_anyvector_ty,
+    llvm_anyvector_ty, llvm_anyvector_ty, llvm_anyvector_ty,
+    llvm_anyvector_ty, llvm_anyvector_ty, llvm_anyvector_ty,
+    llvm_anyvector_ty, llvm_anyvector_ty, llvm_anyvector_ty,
+    llvm_anyvector_ty, llvm_anyvector_ty, llvm_anyvector_ty], [IntrReadMem]>;
+
   /// ``llvm.genx.avs`` : vISA AVS instruction
   /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   ///
