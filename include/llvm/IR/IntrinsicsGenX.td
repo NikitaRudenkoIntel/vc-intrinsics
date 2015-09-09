@@ -1044,6 +1044,23 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// otherwise looks dead
   def int_genx_set_pause : Intrinsic<[], [llvm_i16_ty], []>;
 
+  /// ``llvm.genx.dummy.mov`` : insert a dummy mov to v0
+  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  ///
+  /// arg0: a value that we want to mov to v0 (usually to trigger a scoreboard dependency)
+  ///
+  /// Return Value: none
+  /// 
+  ///
+  /// This is primarily used to set up scoreboard dependencies. If a value is mov'ed to v0 then it
+  /// will trigger a scoreboard dependency check.
+  /// As a word (16 bits) is usually the basic type of value that is worked with, you only need to
+  /// dummy mov one of these from any payload to correctly trigger the dependency
+  ///
+  /// We set this intrinsic to have side-effects (last field empty) to stop it being removed as it
+  /// otherwise looks dead and also to prevent any kind of code motion optimisation
+  def int_genx_dummy_mov : Intrinsic<[], [llvm_i16_ty], []>;
+
   // --------------------------
   /// Shared function intrinsics
   /// --------------------------
