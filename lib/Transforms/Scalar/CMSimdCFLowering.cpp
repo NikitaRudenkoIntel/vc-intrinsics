@@ -929,7 +929,9 @@ static CallInst *createWrRegion(ArrayRef<Value *> Args, const Twine &Name,
   Type *OverloadedTypes[] = { Args[0]->getType(), Args[1]->getType(),
       Args[5]->getType(), Args[7]->getType() };
   Module *M = InsertBefore->getParent()->getParent()->getParent();
-  Function *Decl = Intrinsic::getDeclaration(M, Intrinsic::genx_wrregion,
+  Function *Decl = Intrinsic::getDeclaration(M,
+      OverloadedTypes[0]->isFPOrFPVectorTy()
+        ? llvm::Intrinsic::genx_wrregionf : llvm::Intrinsic::genx_wrregioni,
       OverloadedTypes);
   auto WrRegion = CallInst::Create(Decl, Args, Name, InsertBefore);
   WrRegion->setDebugLoc(InsertBefore->getDebugLoc());
@@ -950,8 +952,10 @@ void CMSimdCFLowering::predicateInst(Instruction *Inst, Region *R)
     if (Callee)
       IntrinsicID = Callee->getIntrinsicID();
     switch (IntrinsicID) {
-      case Intrinsic::genx_rdregion:
-      case Intrinsic::genx_wrregion:
+      case Intrinsic::genx_rdregioni:
+      case Intrinsic::genx_rdregionf:
+      case Intrinsic::genx_wrregioni:
+      case Intrinsic::genx_wrregionf:
       case Intrinsic::genx_simdcf_any:
         return; // ignore these intrinsics
       case Intrinsic::genx_simdcf_predicate:
@@ -1062,7 +1066,8 @@ void CMSimdCFLowering::predicateStore(StoreInst *SI, Region *R)
     if (!WrRegion)
       break;
     auto Callee = WrRegion->getCalledFunction();
-    if (!Callee || Callee->getIntrinsicID() != Intrinsic::genx_wrregion)
+    if (!Callee || (Callee->getIntrinsicID() != Intrinsic::genx_wrregioni
+         && Callee->getIntrinsicID() != Intrinsic::genx_wrregionf))
       break;
     // We have a wrregion. Check its input width.
     unsigned Width = 0;
