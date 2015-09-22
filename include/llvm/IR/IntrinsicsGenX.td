@@ -33,8 +33,10 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// Region/element access intrinsics
   /// --------------------------------
   ///
-  /// ``llvm.genx.rdregion`` : read a region, direct or single-indirect
+  /// ``llvm.genx.rdregion*`` : read a region, direct or single-indirect
   /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  /// * ``llvm.genx.rdregioni`` : integer element type (not i1)
+  /// * ``llvm.genx.rdregionf`` : fp element type
   ///
   /// * arg0: vector to read region out of
   /// * arg1: i32 vstride in elements, constant
@@ -47,6 +49,12 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   ///
   /// The return type must be a vector with the same element type as the input
   /// vector, and number of elements giving the total size of the region.
+  /// A scalar can be used instead of a 1-vector.
+  ///
+  /// There are two variants, an integer one and an fp one, because the
+  /// intrinsic declaration language does not let us declare the return type
+  /// as any scalar or vector int or fp type.
+  ///
   /// The element type must be an integral power of two number of bytes up to
   /// and including 8 bytes in size, thus one of i8, i16, i32, i64, half,
   /// float, double. In particular i1 is not allowed.
@@ -59,27 +67,26 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// its vector width must be the height of the region, i.e. the total
   /// size of the region divided by the width.
   ///
-  // This paragraph does not have a triple slash line introduction, so it is
-  // not part of the GenX language reference:
-  // After lowering, the return type can be a scalar of the same type as the
-  // element type of the input, indicating that the region has one element.
-  // (Lowering lowers an extractelement to this type of rdregion.)
-  //
   /// The parent width arg is ignored if the offset arg is constant. If the
   /// offset arg is variable, then a non-undef parent width is a statement
   /// that the value of offset is such that a row of the region does not
   /// cross a multiple of parent width boundary. This is used by the backend
   /// to determine whether the region can be collapsed into another region.
   ///
-  def int_genx_rdregion : Intrinsic<[llvm_anyvector_ty], [llvm_anyvector_ty,
+  def int_genx_rdregioni : Intrinsic<[llvm_anyint_ty], [llvm_anyvector_ty,
+      llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_anyint_ty, llvm_i32_ty],
+      [IntrNoMem]>;
+  def int_genx_rdregionf : Intrinsic<[llvm_anyfloat_ty], [llvm_anyvector_ty,
       llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_anyint_ty, llvm_i32_ty],
       [IntrNoMem]>;
 
-  /// ``llvm.genx.wrregion`` : write a region, direct or single-indirect
+  /// ``llvm.genx.wrregion*`` : write a region, direct or single-indirect
   /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  /// * ``llvm.genx.wrregioni`` : integer element type (not i1)
+  /// * ``llvm.genx.wrregionf`` : fp element type
   ///
   /// * arg0: vector to write region in to
-  /// * arg1: subvector to write into the region
+  /// * arg1: subvector or scalar to write into the region
   /// * arg2: i32 vstride in elements, constant
   /// * arg3: i32 width in elements, constant
   /// * arg4: i32 stride in elements, constant
@@ -91,7 +98,13 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   ///
   /// The return type must be a vector with the same type as the arg0 vector.
   /// The arg1 subvector must have the same element type as the arg0 vector
-  /// and be no larger.
+  /// and be no larger. Arg1 can be a scalar if the number of elements in
+  /// the subregion is 1.
+  ///
+  /// There are two variants, an integer one and an fp one, because the
+  /// intrinsic declaration language does not let us declare the arg1 type
+  /// as any scalar or vector int or fp type.
+  ///
   /// The element type must be an integral power of two number of bytes up to
   /// and including 8 bytes in size, thus one of i8, i16, i32, i64, half,
   /// float, double. In particular i1 is not allowed.
@@ -124,8 +137,11 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// cross a multiple of parent width boundary. This is used by the backend
   /// to determine whether the region can be collapsed into another region.
   ///
-  def int_genx_wrregion : Intrinsic<[llvm_anyvector_ty], [LLVMMatchType<0>,
-      llvm_anyvector_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_anyint_ty,
+  def int_genx_wrregioni : Intrinsic<[llvm_anyvector_ty], [LLVMMatchType<0>,
+      llvm_anyint_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_anyint_ty,
+      llvm_i32_ty, llvm_anyint_ty], [IntrNoMem]>;
+  def int_genx_wrregionf : Intrinsic<[llvm_anyvector_ty], [LLVMMatchType<0>,
+      llvm_anyfloat_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_anyint_ty,
       llvm_i32_ty, llvm_anyint_ty], [IntrNoMem]>;
 
   // ------------------------------
