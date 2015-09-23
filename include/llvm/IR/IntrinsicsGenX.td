@@ -975,31 +975,31 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
 
   /// ``llvm.genx.local.*`` : read local ID register
   /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  /// * ``llvm.genx.local.id.x`` : read vISA v3 (%local_id_x)
-  /// * ``llvm.genx.local.id.y`` : read vISA v4 (%local_id_y)
-  /// * ``llvm.genx.local.size.x`` : read vISA v5 (%local_size_x)
-  /// * ``llvm.genx.local.size.y`` : read vISA v6 (%local_size_y)
+  /// * ``llvm.genx.local.id`` : read implicit arg local_id 
+  /// * ``llvm.genx.local.size`` : read implicit arg local_size
   ///
-  /// * Return value:  i32 the value read
+  /// * Return value:  v3i32 - allows for x, y and z components
   ///
-  def int_genx_local_id_x : Intrinsic<[llvm_i32_ty], [], [IntrNoMem]>;
-  def int_genx_local_id_y : Intrinsic<[llvm_i32_ty], [], [IntrNoMem]>;
-  def int_genx_local_size_x : Intrinsic<[llvm_i32_ty], [], [IntrNoMem]>;
-  def int_genx_local_size_y : Intrinsic<[llvm_i32_ty], [], [IntrNoMem]>;
+  def int_genx_local_id : Intrinsic<[llvm_anyvector_ty] , [], [IntrNoMem]>;
+  def int_genx_local_size : Intrinsic<[llvm_anyvector_ty], [], [IntrNoMem]>;
 
-  /// ``llvm.genx.group.*`` : read group ID register
-  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  /// ``llvm.genx.group.id.*`` : read group ID register
+  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   /// ``llvm.genx.group.id.x`` : read vISA v7 (%group_id_x)
   /// ``llvm.genx.group.id.y`` : read vISA v8 (%group_id_y)
-  /// ``llvm.genx.group.count.x`` : read vISA v9 (%group_count_x)
-  /// ``llvm.genx.group.count.y`` : read vISA v10 (%group_count_y)
   ///
   /// * Return value:  i32 the value read
   ///
   def int_genx_group_id_x : Intrinsic<[llvm_i32_ty], [], [IntrNoMem]>;
   def int_genx_group_id_y : Intrinsic<[llvm_i32_ty], [], [IntrNoMem]>;
-  def int_genx_group_count_x : Intrinsic<[llvm_i32_ty], [], [IntrNoMem]>;
-  def int_genx_group_count_y : Intrinsic<[llvm_i32_ty], [], [IntrNoMem]>;
+
+  /// ``llvm.genx.group.count`` : read group count register
+  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  /// ``llvm.genx.group.count`` : read vISA v9 (%group_count_x)
+  ///
+  /// * Return value:  3xi32 the value read (allows for x, y and z components)
+  ///
+  def int_genx_group_count : Intrinsic<[llvm_anyvector_ty], [], [IntrNoMem]>;
 
   /// ``llvm.genx.timestamp`` : read vISA v11 (%timestamp)
   /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1070,6 +1070,22 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// We set this intrinsic to have side-effects (last field empty) to stop it being removed as it
   /// otherwise looks dead and also to prevent any kind of code motion optimisation
   def int_genx_dummy_mov : Intrinsic<[], [llvm_i16_ty], []>;
+
+  /// ``llvm.genx.get.scoreboard.bti`` : get scoreboard surface implicit
+  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  ///
+  /// Return Value: i32 the surfaceindex of the scoreboard bti
+  ///
+  ///
+  def int_genx_get_scoreboard_bti : Intrinsic<[llvm_i32_ty], [], [IntrNoMem]>;
+
+  /// ``llvm.genx.get.scoreboard.deltas`` : get scoreboard deltas
+  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  ///
+  /// Return Value: vector of 16 i8 values (8 x and 8 y)
+  ///
+  ///
+  def int_genx_get_scoreboard_deltas : Intrinsic<[llvm_v16i8_ty], [], [IntrNoMem]>;
 
   // --------------------------
   /// Shared function intrinsics
