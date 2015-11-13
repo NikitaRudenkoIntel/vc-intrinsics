@@ -34,7 +34,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// --------------------------------
   ///
   /// ``llvm.genx.rdregion*`` : read a region, direct or single-indirect
-  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   /// * ``llvm.genx.rdregioni`` : integer element type (not i1)
   /// * ``llvm.genx.rdregionf`` : fp element type
   ///
@@ -81,7 +81,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
       [IntrNoMem]>;
 
   /// ``llvm.genx.wrregion*`` : write a region, direct or single-indirect
-  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   /// * ``llvm.genx.wrregioni`` : integer element type (not i1)
   /// * ``llvm.genx.wrregionf`` : fp element type
   ///
@@ -1020,7 +1020,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   def int_genx_r0 : Intrinsic<[llvm_anyint_ty], [], [IntrReadMem]>;
 
   /// ``llvm.genx.sr0`` : read vISA v18 (%sr0)
-  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   ///
   /// * Return value:  vxi32 the value read
   ///
@@ -2457,6 +2457,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// * arg3: i32 enable specific minmax functionality
   ///
   /// * Return: v32i8 or v16i16 depending on the surface format
+  ///
   def int_genx_va_minmax : Intrinsic<[llvm_anyint_ty], [llvm_i32_ty,
     llvm_float_ty, llvm_float_ty, llvm_i32_ty], [IntrReadMem]>;
 
@@ -2472,6 +2473,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// * arg6: i32 enable specific minmax functionality
   ///
   /// * Return: vXi8 or vXi16 depending on return data size and format
+  ///
   def int_genx_va_minmax_filter : Intrinsic<[llvm_anyint_ty], [llvm_i32_ty,
     llvm_i32_ty, llvm_float_ty, llvm_float_ty, llvm_i32_ty, llvm_i32_ty,
     llvm_i32_ty], [IntrReadMem]>;
@@ -2503,6 +2505,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// * arg4: i8 horizontal size
   ///
   /// * Return: v16i8 or v16i16 depending on surface format
+  ///
   def int_genx_va_bool_centroid : Intrinsic<[llvm_anyint_ty],
     [llvm_i32_ty, llvm_float_ty, llvm_float_ty, llvm_i8_ty, llvm_i8_ty],
     [IntrReadMem]>;
@@ -2516,6 +2519,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// * arg3: i8 vertical size
   ///
   /// * Return: v32i32
+  ///
   def int_genx_va_centroid : Intrinsic<[llvm_anyint_ty],
     [llvm_i32_ty, llvm_float_ty, llvm_float_ty, llvm_i8_ty],
     [IntrReadMem]>;
@@ -2530,6 +2534,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// * arg4: i32 mode, constant
   ///
   /// * Return: v16i16 or v64i16 depending on mode
+  ///
   def int_genx_va_1d_convolve_horizontal : Intrinsic<[llvm_anyint_ty],
     [llvm_i32_ty, llvm_i32_ty, llvm_float_ty, llvm_float_ty, llvm_i32_ty],
     [IntrReadMem]>;
@@ -2560,6 +2565,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// * arg4: i32 mode, constant
   ///
   /// * Return: v16i16 or v64i16 depending on mode
+  ///
   def int_genx_va_1d_convolve_vertical : Intrinsic<[llvm_anyint_ty],
     [llvm_i32_ty, llvm_i32_ty, llvm_float_ty, llvm_float_ty, llvm_i32_ty],
     [IntrReadMem]>;
@@ -2591,6 +2597,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// * arg5: v32i16 offsets
   ///
   /// * Return: v64i16 or v16i16 depending on mode.
+  ///
   def int_genx_va_1pixel_convolve : Intrinsic<[llvm_anyint_ty],
     [llvm_i32_ty, llvm_i32_ty, llvm_float_ty, llvm_float_ty,
      llvm_i32_ty, llvm_anyint_ty], [IntrReadMem]>;
@@ -2621,6 +2628,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// * arg3: float normalized y-coordinate
   ///
   /// * Return: v64i16 or v16i16 depending on mode.
+  ///
   def int_genx_va_1pixel_convolve_1x1mode : Intrinsic<[llvm_anyint_ty],
     [llvm_i32_ty, llvm_i32_ty, llvm_float_ty, llvm_float_ty], [IntrReadMem]>;
 
@@ -2633,6 +2641,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// * arg3: mode, constant
   ///
   /// * Return: v64i8 or v128i8 depending on mode
+  ///
   def int_genx_va_lbp_creation : Intrinsic<[llvm_anyint_ty],
     [llvm_i32_ty, llvm_float_ty, llvm_float_ty, llvm_i32_ty], [IntrReadMem]>;
 
@@ -2660,6 +2669,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// * arg3: i16 horizontal disparity
   ///
   /// * Return: v64i8
+  ///
   def int_genx_va_lbp_correlation : Intrinsic<[llvm_anyint_ty],
     [llvm_i32_ty, llvm_float_ty, llvm_float_ty, llvm_i16_ty], [IntrReadMem]>;
 
@@ -2692,6 +2702,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// * arg8: i8 y-direction search size
   ///
   /// * Return: vXi32
+  ///
   def int_genx_va_correlation_search : Intrinsic<[llvm_anyint_ty],
     [llvm_i32_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty,
     llvm_i8_ty, llvm_i8_ty, llvm_i8_ty, llvm_i8_ty], [IntrReadMem]>;
@@ -2706,6 +2717,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// * arg4: i16 loop count
   ///
   /// * Return: v8i16
+  ///
   def int_genx_va_flood_fill : Intrinsic<[llvm_anyint_ty],
     [llvm_i8_ty, llvm_anyint_ty, llvm_i16_ty, llvm_i16_ty, llvm_i16_ty],
     [IntrReadMem]>;
