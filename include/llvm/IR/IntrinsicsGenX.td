@@ -983,6 +983,23 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   def int_genx_local_id : Intrinsic<[llvm_anyvector_ty] , [], [IntrNoMem]>;
   def int_genx_local_size : Intrinsic<[llvm_anyvector_ty], [], [IntrNoMem]>;
 
+  /// ``llvm.genx.local.*`` : read local ID register
+  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  /// * ``llvm.genx.local.ids.x`` : read vISA v3 (%local_id_x)
+  /// * ``llvm.genx.local.ids.y`` : read vISA v4 (%local_id_y)
+  /// * ``llvm.genx.local.sizes.x`` : read vISA v5 (%local_size_x)
+  /// * ``llvm.genx.local.sizes.y`` : read vISA v6 (%local_size_y)
+  ///
+  /// * Return value:  i32 the value read
+  ///
+  /// These are the old style intrinsics, only used if
+  /// -enable-cm-imp-param is off.
+  ///
+  def int_genx_local_ids_x : Intrinsic<[llvm_i32_ty], [], [IntrNoMem]>;
+  def int_genx_local_ids_y : Intrinsic<[llvm_i32_ty], [], [IntrNoMem]>;
+  def int_genx_local_sizes_x : Intrinsic<[llvm_i32_ty], [], [IntrNoMem]>;
+  def int_genx_local_sizes_y : Intrinsic<[llvm_i32_ty], [], [IntrNoMem]>;
+
   /// ``llvm.genx.group.id.*`` : read group ID register
   /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   /// ``llvm.genx.group.id.x`` : read vISA v7 (%group_id_x)
@@ -1000,6 +1017,19 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// * Return value:  3xi32 the value read (allows for x, y and z components)
   ///
   def int_genx_group_count : Intrinsic<[llvm_anyvector_ty], [], [IntrNoMem]>;
+
+  /// ``llvm.genx.group.counts.*`` : read group count register
+  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  /// ``llvm.genx.group.counts.x`` : read vISA v9 (%group_count_x)
+  /// ``llvm.genx.group.counts.y`` : read vISA v10 (%group_count_y)
+  ///
+  /// * Return value:  i32 the value read
+  ///
+  /// These are the old style intrinsics, only used if
+  /// -enable-cm-imp-param is off.
+  ///
+  def int_genx_group_counts_x : Intrinsic<[llvm_i32_ty], [], [IntrNoMem]>;
+  def int_genx_group_counts_y : Intrinsic<[llvm_i32_ty], [], [IntrNoMem]>;
 
   /// ``llvm.genx.timestamp`` : read vISA v11 (%timestamp)
   /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
