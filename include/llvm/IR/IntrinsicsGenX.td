@@ -1004,11 +1004,13 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   /// ``llvm.genx.group.id.x`` : read vISA v7 (%group_id_x)
   /// ``llvm.genx.group.id.y`` : read vISA v8 (%group_id_y)
+  /// ``llvm.genx.group.id.z`` : read vISA v23 (%group_id_z)
   ///
   /// * Return value:  i32 the value read
   ///
   def int_genx_group_id_x : Intrinsic<[llvm_i32_ty], [], [IntrNoMem]>;
   def int_genx_group_id_y : Intrinsic<[llvm_i32_ty], [], [IntrNoMem]>;
+  def int_genx_group_id_z : Intrinsic<[llvm_i32_ty], [], [IntrNoMem]>;
 
   /// ``llvm.genx.group.count`` : read group count register
   /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
