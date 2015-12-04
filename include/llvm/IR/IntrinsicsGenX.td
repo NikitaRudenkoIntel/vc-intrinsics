@@ -544,16 +544,6 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   def int_genx_inv :
               Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>], [IntrNoMem]>;
 
-  /// ``llvm.genx.inv.ieee`` : reciprocal, IEEE result
-  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  ///
-  /// * arg0: input value, any scalar/vector half/float type
-  ///
-  /// * Return value: result, same type
-  ///
-  def int_genx_inv_ieee :
-              Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>], [IntrNoMem]>;
-
   /// ``llvm.genx.line`` : linear equation
   /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   ///
@@ -944,14 +934,14 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   def int_genx_sqrt :
               Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>], [IntrNoMem]>;
 
-  /// ``llvm.genx.sqrt_ieee`` : reciprocal square root
-  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  /// ``llvm.genx.ieee_sqrt`` : reciprocal square root, IEEE variant
+  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   ///
-  /// * arg0: input value, any scalar/vector half/float type
+  /// * arg0: input value, any scalar/vector float/double type
   ///
   /// * Return value: result, same type
   ///
-  def int_genx_sqrt_ieee :
+  def int_genx_ieee_sqrt :
               Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>], [IntrNoMem]>;
 
   /// No intrinsic for subb as it has two results.
