@@ -934,7 +934,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   def int_genx_sqrt :
               Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>], [IntrNoMem]>;
 
-  /// ``llvm.genx.ieee_sqrt`` : reciprocal square root, IEEE variant
+  /// ``llvm.genx.ieee.sqrt`` : reciprocal square root, IEEE variant
   /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   ///
   /// * arg0: input value, any scalar/vector float/double type
@@ -943,6 +943,17 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   ///
   def int_genx_ieee_sqrt :
               Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>], [IntrNoMem]>;
+
+  /// ``llvm.genx.ieee.div`` : Divide, IEEE variant
+  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  ///
+  /// * arg0: first input, any scalar/vector float/double type
+  /// * arg1: second input, same type
+  ///
+  /// * Return value: result, same type
+  ///
+  def int_genx_ieee_div : Intrinsic<[llvm_anyfloat_ty],
+              [LLVMMatchType<0>, LLVMMatchType<0>], [IntrNoMem]>;
 
   /// No intrinsic for subb as it has two results.
 
