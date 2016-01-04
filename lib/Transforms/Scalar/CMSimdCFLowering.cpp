@@ -1059,9 +1059,15 @@ void CMSimdCFLowering::predicateStore(StoreInst *SI, Region *R)
   // but there is a wrregion with the right width.
   // Also allow for a chain of multiple wrregions, as clang can generate
   // two, one for the columns and one for the rows.
+  // Also skip any bitcasts.
   CallInst *WrRegionToPredicate = nullptr;
   Use *U = &SI->getOperandUse(0);
   for (;;) {
+    if (auto BC = dyn_cast<BitCastInst>(V)) {
+      U = &BC->getOperandUse(0);
+      V = *U;
+      continue;
+    }
     auto WrRegion = dyn_cast<CallInst>(V);
     if (!WrRegion)
       break;
