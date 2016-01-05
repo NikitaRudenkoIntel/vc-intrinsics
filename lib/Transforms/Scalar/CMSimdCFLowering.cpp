@@ -1196,12 +1196,15 @@ CallInst *CMSimdCFLowering::convertScatterGather(CallInst *CI, unsigned IID)
   // Gather the args for the new intrinsic. First the all ones predicate.
   SmallVector<Value *, 8> Args;
   Args.push_back(Constant::getAllOnesValue(PredTy));
-  // Block size for non-4 variants, channel mask for 4 variants.
+  // Block size for non-4 variants, channel mask (inverted) for 4 variants.
   if (!Is4)
     Args.push_back(ConstantInt::get(GlobalOffset->getType(),
         countTrailingZeros(EltSize, ZB_Undefined)));
-  else
-    Args.push_back(CI->getArgOperand(0));
+  else {
+    unsigned Mask = cast<ConstantInt>(CI->getArgOperand(0))->getSExtValue();
+    Mask ^= 0xf;
+    Args.push_back(ConstantInt::get(CI->getArgOperand(0)->getType(), Mask));
+  }
   // Scale -- always 0.
   Args.push_back(ConstantInt::get(Type::getInt16Ty(CI->getContext()), 0));
   // Surface index.
