@@ -966,10 +966,10 @@ void CMSimdCFLowering::predicateInst(Instruction *Inst, Region *R)
       case Intrinsic::genx_simdcf_predicate:
         rewritePredication(CI, R);
         return;
-      case Intrinsic::genx_gather:
-      case Intrinsic::genx_gather4:
-      case Intrinsic::genx_scatter:
-      case Intrinsic::genx_scatter4:
+      case Intrinsic::genx_gather_orig:
+      case Intrinsic::genx_gather4_orig:
+      case Intrinsic::genx_scatter_orig:
+      case Intrinsic::genx_scatter4_orig:
         CI = convertScatterGather(CI, IntrinsicID);
         predicateScatterGather(CI, R, 0);
         return;
@@ -1148,9 +1148,9 @@ void CMSimdCFLowering::predicateStore(StoreInst *SI, Region *R)
  */
 CallInst *CMSimdCFLowering::convertScatterGather(CallInst *CI, unsigned IID)
 {
-  bool IsScatter = IID == Intrinsic::genx_scatter
-                || IID == Intrinsic::genx_scatter4;
-  bool Is4 = IID == Intrinsic::genx_gather4 || IID == Intrinsic::genx_scatter4;
+  bool IsScatter = IID == Intrinsic::genx_scatter_orig
+                || IID == Intrinsic::genx_scatter4_orig;
+  bool Is4 = IID == Intrinsic::genx_gather4_orig || IID == Intrinsic::genx_scatter4_orig;
   unsigned NumArgs = CI->getNumArgOperands();
   auto GlobalOffset = CI->getArgOperand(NumArgs - 3);
   auto EltOffsets = CI->getArgOperand(NumArgs - 2);
@@ -1166,10 +1166,10 @@ CallInst *CMSimdCFLowering::convertScatterGather(CallInst *CI, unsigned IID)
     Tys.push_back(CI->getArgOperand(NumArgs - 1)->getType()); // data type
   unsigned NewIID = 0;
   switch (IID) {
-    case Intrinsic::genx_gather: NewIID = Intrinsic::genx_gather_scaled; break;
-    case Intrinsic::genx_gather4: NewIID = Intrinsic::genx_gather4_scaled; break;
-    case Intrinsic::genx_scatter: NewIID = Intrinsic::genx_scatter_scaled; break;
-    case Intrinsic::genx_scatter4: NewIID = Intrinsic::genx_scatter4_scaled; break;
+    case Intrinsic::genx_gather_orig: NewIID = Intrinsic::genx_gather_scaled; break;
+    case Intrinsic::genx_gather4_orig: NewIID = Intrinsic::genx_gather4_scaled; break;
+    case Intrinsic::genx_scatter_orig: NewIID = Intrinsic::genx_scatter_scaled; break;
+    case Intrinsic::genx_scatter4_orig: NewIID = Intrinsic::genx_scatter4_scaled; break;
     default: llvm_unreachable("invalid intrinsic ID"); break;
   }
   Function *Decl = Intrinsic::getDeclaration(
