@@ -129,6 +129,7 @@
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Intrinsics.h"
 #include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/ValueHandle.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/MathExtras.h"
@@ -307,6 +308,8 @@ class CMSimdCFLowering : public FunctionPass {
   // Subroutines that are predicated, mapping to the replacement one that
   // has an extra arg for the call mask.
   std::map<Function *, Function *> PredicatedSubroutines;
+  // Set of intrinsic calls (other than wrregion) that have been predicated.
+  std::set<AssertingVH<Value>> AlreadyPredicated;
 public:
   static char ID;
 
@@ -469,6 +472,7 @@ void CMSimdCFLowering::calculateVisitOrder(Module *M,
  */
 void CMSimdCFLowering::processFunction(Function *F, unsigned CMWidth)
 {
+  DEBUG(dbgs() << "CMSimdCFLowering::processFunction:\n" << *F << "\n");
   if (!CMWidth) {
     // Check if this is a function that was called in predicated code, so needs
     // to be replaced by its new version with an extra call mask arg.
@@ -545,6 +549,7 @@ void CMSimdCFLowering::processFunction(Function *F, unsigned CMWidth)
   delete Root;
   ReenableMasks.clear();
   EMs.clear();
+  AlreadyPredicated.clear();
 }
 
 /***********************************************************************
@@ -1072,9 +1077,18 @@ void CMSimdCFLowering::predicateStore(StoreInst *SI, Region *R)
     if (!WrRegion)
       break;
     auto Callee = WrRegion->getCalledFunction();
-    if (!Callee || (Callee->getIntrinsicID() != Intrinsic::genx_wrregioni
-         && Callee->getIntrinsicID() != Intrinsic::genx_wrregionf))
+    if (!Callee)
       break;
+    unsigned IID = Callee->getIntrinsicID();
+    if (IID != Intrinsic::genx_wrregioni
+         && Callee->getIntrinsicID() != Intrinsic::genx_wrregionf) {
+      // Not wrregion. See if it is an intrinsic that has already been
+      // predicated; if so do not attempt to predicate the store.
+      if (AlreadyPredicated.find(WrRegion) != AlreadyPredicated.end())
+        return;
+      // Otherwise break out of the wrregion-and-bitcast-traversing loop.
+      break;
+    }
     // We have a wrregion. Check its input width.
     unsigned Width = 0;
     Value *Input = WrRegion->getArgOperand(ValueToWriteOperandNum);
@@ -1232,6 +1246,7 @@ void CMSimdCFLowering::predicateScatterGather(CallInst *CI, Region *R,
     NewPred = And;
   }
   CI->setArgOperand(PredOperandNum, NewPred);
+  AlreadyPredicated.insert(CI);
 }
 
 /***********************************************************************
