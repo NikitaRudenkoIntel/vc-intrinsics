@@ -1421,8 +1421,8 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
     [llvm_anyvector_ty, llvm_i32_ty, LLVMMatchType<0>,LLVMMatchType<0>,
     llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty], []>;
 
-  /// ``llvm.genx.gather`` : vISA GATHER instruction
-  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  /// ``llvm.genx.gather.orig`` : vISA GATHER instruction
+  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   ///
   /// * arg0: Elt_size inferred from argument type
   /// * arg1: i32 is_modified, constant
@@ -1439,7 +1439,8 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   ///
   /// The element offset arg must have the same vector width.
   ///
-  def int_genx_gather : Intrinsic<[llvm_anyvector_ty], [llvm_anyvector_ty,
+  // (Silly name because of LLVM prefix bug.)
+  def int_genx_gather_orig : Intrinsic<[llvm_anyvector_ty], [llvm_anyvector_ty,
     llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_anyint_ty, LLVMMatchType<0>],
     [IntrReadMem]>;
 
@@ -1478,8 +1479,8 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
     [llvm_anyvector_ty, llvm_i32_ty, llvm_i16_ty, llvm_i32_ty, llvm_i32_ty,
     llvm_anyint_ty, LLVMMatchType<0>], [IntrReadMem]>;
 
-  /// ``llvm.genx.gather4`` : vISA GATHER4 instruction
-  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  /// ``llvm.genx.gather4.orig`` : vISA GATHER4 instruction
+  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   ///
   /// * arg0: i32 channel mask, constant
   /// * arg1: i32 is_modified, constant
@@ -1502,7 +1503,8 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// times the number of channels to read per element.
   /// The element type of the return value must be i32 or float.
   ///
-  def int_genx_gather4 : Intrinsic<[llvm_anyvector_ty], [llvm_i32_ty,
+  // (Silly name because of LLVM prefix bug.)
+  def int_genx_gather4_orig : Intrinsic<[llvm_anyvector_ty], [llvm_i32_ty,
     llvm_i32_ty, llvm_anyvector_ty, llvm_i32_ty, llvm_i32_ty, llvm_anyint_ty,
     LLVMMatchType<0>], [IntrReadMem]>;
 
@@ -1644,8 +1646,8 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   def int_genx_oword_st :
     Intrinsic<[], [llvm_i32_ty, llvm_i32_ty, llvm_anyvector_ty], []>;
 
-  /// ``llvm.genx.scatter`` : vISA SCATTER instruction
-  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  /// ``llvm.genx.scatter.orig`` : vISA SCATTER instruction
+  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   ///
   /// * arg0: Elt_size from argument element type
   /// * arg1: i32 surface index
@@ -1660,7 +1662,8 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// which must be 1, 8 or 16.
   /// The element offset arg must have the same vector width.
   ///
-  def int_genx_scatter : Intrinsic<[], [llvm_anyvector_ty, llvm_i32_ty,
+  // (Silly name because of LLVM prefix bug.)
+  def int_genx_scatter_orig : Intrinsic<[], [llvm_anyvector_ty, llvm_i32_ty,
     llvm_i32_ty, llvm_anyint_ty, llvm_anyvector_ty], []>;
 
   /// ``llvm.genx.scatter.scaled`` : vISA SCATTER_SCALED instruction
@@ -1695,8 +1698,8 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
     llvm_i32_ty, llvm_i16_ty, llvm_i32_ty, llvm_i32_ty, llvm_anyint_ty,
     llvm_anyvector_ty], []>;
 
-  /// ``llvm.genx.scatter4`` : vISA SCATTER4 instruction
-  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  /// ``llvm.genx.scatter4.orig`` : vISA SCATTER4 instruction
+  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   ///
   /// * arg0: i32 channel mask, constant
   /// * arg1: vXi1 predicate (Num_elts inferred from element offset type)
@@ -1717,7 +1720,8 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// times the number of channels to write per element.
   /// The element type of the data to write must be i32 or float.
   ///
-  def int_genx_scatter4 : Intrinsic<[], [llvm_i32_ty, llvm_anyvector_ty,
+  // (Silly name because of LLVM prefix bug.)
+  def int_genx_scatter4_orig : Intrinsic<[], [llvm_i32_ty, llvm_anyvector_ty,
     llvm_i32_ty, llvm_i32_ty, llvm_anyint_ty, llvm_anyvector_ty], []>;
 
   /// ``llvm.genx.scatter4.scaled`` : vISA SCATTER4_SCALED instruction
