@@ -1552,7 +1552,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   ///
   /// The vector widths of the U pixel address, V pixel address and R pixel
   /// address args must be equal and are the number of elements to read, which
-  /// must be 8.
+  /// must be 8 or 16. (16 is split into 2x 8 by the GenX backend.)
   /// The predicate arg must have the same vector width.
   /// The instruction reads up to 4 channels per element, with the lowest 4
   /// bits of the channel mask arg giving the mask of channels to read.
@@ -1563,8 +1563,8 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// The element type of the return value must be i32 or float.
   ///
   def int_genx_gather4_typed : Intrinsic<[llvm_anyvector_ty], [llvm_i32_ty,
-    llvm_anyvector_ty, llvm_i32_ty, llvm_v8i32_ty, llvm_v8i32_ty,
-    llvm_v8i32_ty, LLVMMatchType<0>], [IntrReadMem]>;
+    llvm_anyvector_ty, llvm_i32_ty, llvm_anyvector_ty, LLVMMatchType<2>,
+    LLVMMatchType<2>, LLVMMatchType<0>], [IntrReadMem]>;
 
   /// ``llvm.genx.media.ld`` : vISA MEDIA_LD instruction
   /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1765,7 +1765,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   ///
   /// The vector widths of the U pixel address, V pixel address and R pixel
   /// address args must be equal and are the number of elements to write, which
-  /// must be 8.
+  /// must be 8 or 16. (16 is split into 2x 8 by the GenX backend.)
   /// The predicate arg must have the same vector width.
   /// The instruction writes up to 4 channels per element, with the lowest 4
   /// bits of the channel mask arg giving the mask of channels to write.
@@ -1776,7 +1776,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// The element type of the source value must be i32 or float.
   ///
   def int_genx_scatter4_typed : Intrinsic<[], [llvm_i32_ty, llvm_anyvector_ty,
-    llvm_i32_ty, llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty,
+    llvm_i32_ty, llvm_anyvector_ty, LLVMMatchType<1>, LLVMMatchType<1>,
     llvm_anyvector_ty], []>;
 
   /// ``llvm.genx.transpose.ld`` : vISA TRANSPOSE_LD instruction
