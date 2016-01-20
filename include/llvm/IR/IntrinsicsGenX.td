@@ -255,16 +255,6 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// ALU intrinsics
   /// --------------
 
-  /// ``llvm.genx.acos`` : acos instruction
-  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  ///
-  /// * arg0: input value, scalar/vector half/float 
-  ///
-  /// * Return value: result, same type
-  ///
-  def int_genx_acos :
-              Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>], [IntrNoMem]>;
-
   /// add
   /// ^^^
   /// Non-saturating add intrinsic is not needed. A vISA non-saturating add
@@ -302,32 +292,12 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// No intrinsic for addc as it has two results.
   ///
 
-  /// ``llvm.genx.asin`` : asin instruction
-  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  ///
-  /// * arg0: input value, any scalar/vector half/float type
-  ///
-  /// * Return value: result, same type
-  ///
-  def int_genx_asin :
-              Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>], [IntrNoMem]>;
-
   /// asr
   /// ^^^
   /// asr intrinsic is not needed. Because asr cannot overflow, an asr that
   /// saturates with a smaller result type than the execution type can be
   /// represented by an LLVM IR Asr instruction then an llvm.genx.sstrunc.sat.
   ///
-
-  /// ``llvm.genx.atan`` : atan instruction
-  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  ///
-  /// * arg0: input value, any scalar/vector half/float type
-  ///
-  /// * Return value: result, same type
-  ///
-  def int_genx_atan :
-              Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>], [IntrNoMem]>;
 
   /// ``llvm.genx.*avg`` : integer averaging, no saturation
   /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
