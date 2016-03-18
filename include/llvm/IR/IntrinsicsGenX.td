@@ -110,15 +110,12 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// float, double. In particular i1 is not allowed.
   /// The width must be non-zero and must divide the total size evenly.
   ///
-  /// The arg7 mask is a vector of booleans, at least as wide as the
-  /// * arg1 subvector, such that an element of the subvector is written into
+  /// The arg7 mask is a vector of booleans, exactly as wide as the
+  /// arg1 subvector, such that an element of the subvector is written into
   /// its place in the vector only if the corresponding element of the mask
   /// is true.
   /// Alternatively, arg7 can be a single i1 constant with value 1,
   /// meaning that the wrregion is unconditional.
-  /// Alternatively, arg7 can be a v32i1. If the arg1 subvector is wider than
-  /// 32 elements, then the mask is replicated enough times to cover the
-  /// required number of elements.
   ///
   /// There is no requirement on vstride, width, stride or total size being
   /// a power of two or having any maximum.
