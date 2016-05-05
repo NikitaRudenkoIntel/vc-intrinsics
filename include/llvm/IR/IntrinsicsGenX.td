@@ -3102,6 +3102,28 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   def int_genx_wrpredregion : Intrinsic<[llvm_anyint_ty],
       [LLVMMatchType<0>, llvm_anyint_ty, llvm_i32_ty], [IntrNoMem]>;
 
+  // llvm.genx.wrpredpredregion : predicated write region at specified offset
+  // into a predicate
+  //
+  // arg0: vXi1 old value of vector
+  // arg1: vYi1 subvector to write into region
+  // arg2: constant i32 offset (in elements)
+  // arg3: vXi1 predicate
+  //
+  // Return value: vXi1 result of region write
+  //
+  // The number of elements to write is determined from the number of elements
+  // in the "subvector to write" arg, and must be 4, 8 or 16.
+  // The offset must be a multiple of the number of elements.
+  //
+  // The constant offset indexes both the vector itself and the predicate. This
+  // intrinsic is valid only if the predicate is an EM value, and the subvector
+  // operand is the result of a cmp (which is then baled in).
+  //
+  def int_genx_wrpredpredregion : Intrinsic<[llvm_anyint_ty],
+      [LLVMMatchType<0>, llvm_anyint_ty, llvm_i32_ty, LLVMMatchType<0>],
+      [IntrNoMem]>;
+
   // ``llvm.genx.wrconstregion`` : write a constant region
   // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   //
