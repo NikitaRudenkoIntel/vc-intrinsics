@@ -1,7 +1,7 @@
 //===- CMSimdCFLowering.cpp - Lower CM SIMD control flow ------------------===//
 //
 //  INTEL CONFIDENTIAL
-//  Copyright 2015 Intel Corporation All Rights Reserved.
+//  Copyright 2016 Intel Corporation All Rights Reserved.
 //
 //  The source code contained or described herein and all documents related to
 //  the source code ("Material") are owned by Intel Corporation or its suppliers
@@ -49,78 +49,31 @@
 //  * Each SIMD control flow join point has a vXi1 re-enable mask (RM)
 //    variable. It is initialized to 0.
 //
-//  * A SIMD conditional branch does the following:
+//  * A SIMD conditional branch is always forward, and does the following:
 //
 //    - For a channel that is enabled (bit set in EM) and wants to take the
 //      branch, its bit is cleared in EM and set in the branch target's RM.
 //
-//    - For a forward branch, if all bits in EM are now zero, it branches to
+//    - If all bits in EM are now zero, it branches to
 //      the next join point where any currently disabled channel could be
 //      re-enabled. For structured control flow, this is the join point of
 //      the current or next outer construct.
 //
-//    - For a backward branch, if any bit in EM is 1, it branches to the
-//      earliest point where any currently disabled channel could be
-//      re-enabled. For structured control flow, this is the top of the
-//      innermost loop.
-//
 //   * A join point does the following:
 //
-//    - re-enables channels from its RM variable: EM |= RM. (If we know from
-//      the control flow structure that EM==0, as we do at an "else" and a
-//      loop exit, then we can instead use EM = RM, which makes the resulting
-//      optimized IR considerably simpler.)
+//    - re-enables channels from its RM variable: EM |= RM
 //
 //    - resets its RM to 0
 //
 //    - if EM is still all zero, it branches to the next join point where any
 //      currently disabled channel could be re-enabled.
 //
-// Currently this pass assumes and attempts to enforce the CM restrictions on
-// SIMD control flow, in that it must be structured and must not be mixed with
-// scalar control flow.
-//
-// Because the pass runs so early, we can assume that basic blocks are in the
-// same order as in the source, and so find the structured SIMD control flow
-// with a simple linear scan through the blocks.
-//
-// Knowing the structure allows us to determine which join point to branch to
-// in the model above, avoiding code where a completely false outer if has to
-// skip through the join points of inner ifs.
-//
-// Code inside SIMD control flow, or all code in a subroutine with at least one
-// call inside SIMD control flow, needs to be predicated. Predication assumes
-// that this pass runs so early that all variables are in allocas. It works
-// as follows:
-//
-//    * A store of a vector of the same width as the SIMD CF width has a load
-//      and a select (switching on the EM) inserted, so only enabled channels
-//      of the variable get updated.
-//
-//    * For a store of a vector that is wider than the SIMD CF width, we need
-//      to trace back through wrregions to find the one that writes a region
-//      of the right size. That wrregion is then predicated by the EM.
-//
-//    * An intrinsic with a predicate argument is modified to use EM as the
-//      predicate ("and"ing it with the original predicate if any). This covers
-//      scatter/gather.
-//
-// A possible future enhancement is to allow arbitrary SIMD control flow in CM.
-// The pass would need to do something like this:
-//
-//    * construct an assumed code order using a pre-order DFS of the control
-//      flow graph
-//
-//    * construct a control dependence graph
-//
-//    * use that to determine which join point a SIMD control flow branch or join
-//      point needs to branch to, and to determine when scalar control flow
-//      needs to be vectorized.
-//
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "cmsimdcflowering"
 
+#include "llvm/ADT/MapVector.h"
+#include "llvm/Analysis/PostDominators.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DebugInfo.h"
 #include "llvm/IR/DiagnosticInfo.h"
@@ -128,6 +81,7 @@
 #include "llvm/IR/GlobalVariable.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Intrinsics.h"
+#include "llvm/IR/IntrinsicsGenX.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/ValueHandle.h"
 #include "llvm/Pass.h"
@@ -141,19 +95,43 @@ using namespace llvm;
 
 namespace {
 
-// Operand numbers for wrregion
-enum {
-  ValueToWriteOperandNum = 1,
-  PredicateOperandNum = 7,
+// Grouping : utility class to maintain a grouping, a partition of a set of
+// items into disjoint groups. The initial state is that each item is in its
+// own group, then you call joinGroups to join two groups together.
+template<typename T> class Grouping {
+  std::map<T, T> Group;
+public:
+  // joinGroups : join the groups that Block1 and Block2 are in
+  void joinGroups(T Block1, T Block2) {
+    auto G1 = getGroup(Block1);
+    auto G2 = getGroup(Block2);
+    if (G1 != G2)
+      Group[G2] = G1;
+  }
+  // getGroup : get the group for Block
+  // The chain of blocks between Block and its group are modified to point
+  // directly to the group at the end of the chain.
+  T getGroup(T Block) {
+    SmallVector<T, 4> Chain;
+    T G;
+    for (;;) {
+      G = Group[Block];
+      if (!G)
+        Group[Block] = G = Block; // never seen before, initialize
+      if (G == Block)
+        break;
+      Chain.push_back(Block);
+      Block = G;
+    }
+    for (auto i = Chain.begin(), e = Chain.end(); i != e; ++i)
+      *i = G;
+    return G;
+  }
 };
 
 /// Diagnostic information for error/warning relating to SIMD control flow.
-class DiagnosticInfoSimdCF : public DiagnosticInfo {
+class DiagnosticInfoSimdCF : public DiagnosticInfoOptimizationBase {
 private:
-  const Twine &Description;
-  StringRef Filename;
-  unsigned Line;
-  unsigned Col;
   static int KindID;
   static int getKindID() {
     if (KindID == 0)
@@ -161,10 +139,13 @@ private:
     return KindID;
   }
 public:
-  // Initialize from an Instruction, possibly an llvm.genx.simdcf.any.
-  DiagnosticInfoSimdCF(Instruction *Inst, const Twine &Desc, DiagnosticSeverity Severity = DS_Error);
-  void print(DiagnosticPrinter &DP) const override;
-
+  static void emit(Instruction *Inst, const Twine &Msg, DiagnosticSeverity Severity = DS_Error);
+  DiagnosticInfoSimdCF(DiagnosticSeverity Severity, const Function &Fn,
+      const DebugLoc &DLoc, const Twine &Msg)
+      : DiagnosticInfoOptimizationBase((DiagnosticKind)getKindID(), Severity,
+          /*PassName=*/nullptr, Fn, DLoc, Msg) {}
+  // This kind of message is always enabled, and not affected by -rpass.
+  virtual bool isEnabled() const override { return true; }
   static bool classof(const DiagnosticInfo *DI) {
     return DI->getKind() == getKindID();
   }
@@ -178,142 +159,34 @@ struct CGNode {
   std::set<CGNode *> Callees;
 };
 
-// Region tree node
-// This region tree represents only simd control flow, with a root node
-// that has all outermost simd control flow constructs as its children.
-class Region {
-public:
-  enum { ROOT, IF, ELSE, DO, BREAK, CONTINUE };
-private:
-  bool Errored;
-  unsigned Kind;
-  Region *Parent;
-  BasicBlock *Entry; // if block, or loop header block
-  BasicBlock *Exit; // endif block, or loop exit block
-  unsigned SimdWidth;
-  SmallVector<Region *, 4> Children;
-  unsigned NumBreaks :16;
-  unsigned NumContinues :16;
-  Region(unsigned Kind, Region *Parent, BasicBlock *Entry, BasicBlock *Exit)
-    : Errored(false), Kind(Kind), Parent(Parent), Entry(Entry), Exit(Exit),
-      SimdWidth(!Parent ? 0 : Parent->SimdWidth), NumBreaks(0),
-      NumContinues(0) {}
-public:
-  ~Region();
-  static Region *createRegionTree(Function *F, unsigned CMWidth);
-  bool hasError() const { return Errored; }
-  unsigned getKind() const { return Kind; }
-  BasicBlock *getEntry() const { return Entry; }
-  BasicBlock *getExit() const { return Exit; }
-  BasicBlock *getElse() const;
-  unsigned getSimdWidth() const { return SimdWidth; }
-  Region *getRoot();
-  Region *getParent() const { return Parent; }
-  unsigned getNumContinues() const { return NumContinues; }
-  // iterator iterates through children.
-  typedef SmallVectorImpl<Region *>::iterator iterator;
-  typedef SmallVectorImpl<Region *>::const_iterator const_iterator;
-  iterator begin() { return Children.begin(); }
-  const_iterator begin() const { return Children.begin(); }
-  iterator end() { return Children.end(); }
-  const_iterator end() const { return Children.end(); }
-  size_t size() const { return Children.size(); }
-  // postorder_iterator does a post-order depth first traversal of the tree.
-  // I could have used LLVM's po_iterator, but that seemed like overkill given
-  // that this is a tree, rather than a general graph, so there is no need for
-  // the iterator to keep track of visited nodes.
-  class PostOrderIterator {
-    // If the stack is empty and Root is not 0, the iterator is in a special
-    // case state of pointing at the Root. Incrementing it from there stores
-    // 0 in Root, which is the end() state.
-    Region *Root;
-    // Each stack entry has an iterator in .first and the end() in .second.
-    SmallVector<std::pair<iterator, iterator>, 8> Stack;
-    void push(Region *R) {
-      while (R->begin() != R->end()) {
-        Stack.push_back(std::pair<iterator, iterator>(R->begin(), R->end()));
-        R = *R->begin();
-      }
-    }
-  public:
-    // Constructor for end()
-    PostOrderIterator() : Root(nullptr) {}
-    // Constructor for begin()
-    PostOrderIterator(Region *R) : Root(R) { push(R); }
-    // Pre-increment
-    PostOrderIterator &operator++() {
-      if (!Stack.size()) {
-        assert(Root);
-        Root = nullptr;
-      } else {
-        if (++Stack.back().first == Stack.back().second)
-          Stack.pop_back();
-        else
-          push(*Stack.back().first);
-      }
-      return *this;
-    }
-    // Deref
-    Region &operator *() const { if (!Stack.size()) return *Root; return **Stack.back().first; }
-    // Comparison
-    bool operator==(const PostOrderIterator &Rhs) const {
-      if (Stack.size() != Rhs.Stack.size())
-        return false;
-      if (!Stack.size())
-        return Root == Rhs.Root;
-      return *Stack.back().first == *Rhs.Stack.back().first;
-    }
-    bool operator!=(const PostOrderIterator &Rhs) const {
-      return !(*this == Rhs);
-    }
-  };
-  typedef PostOrderIterator postorder_iterator;
-  postorder_iterator postorder_begin() { return PostOrderIterator(this); }
-  postorder_iterator postorder_end() { return PostOrderIterator(); }
-  // Error reporting
-  void reportIllegal(Instruction *Inst);
-  void reportError(const char *Text, Instruction *Inst);
-  // Debug dump/print
-#if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
-  void dump() const;
-#endif
-  void print(raw_ostream &OS, bool Deep = true, unsigned Depth = 0) const;
-private:
-  // Create a new region and push it into its parent's child list.
-  Region *push(unsigned Kind, BasicBlock *Entry, BasicBlock *Exit) {
-    Region *NewR = new Region(Kind, this, Entry, Exit);
-    Children.push_back(NewR);
-    return NewR;
-  }
-  void setSimdWidth(Value *Predicate);
-};
-
-/// Pending join point.
-struct PendingJoin {
-  BasicBlock *BB;
-  BasicBlock *Join;
-  bool IsEMZero; // whether EM is guaranteed to be 0 on reaching this point
-  PendingJoin(BasicBlock *BB, BasicBlock *Join, bool IsEMZero = false)
-      : BB(BB), Join(Join), IsEMZero(IsEMZero) {}
-};
-
 /// The CM SIMD CF lowering pass (a function pass)
 class CMSimdCFLowering : public FunctionPass {
-  // An EM (execution mask) variable for each possible SIMD width.
-  SmallVector<AllocaInst *, 6> EMs;
-  // A map giving the RM (re-enable mask) variable for each join point.
-  std::map<BasicBlock *, AllocaInst *> ReenableMasks;
-  // Pending joins to action after the CFG analysis.
-  SmallVector<PendingJoin, 4> PendingJoins;
-  // Subroutines that are predicated, mapping to the replacement one that
-  // has an extra arg for the call mask.
-  std::map<Function *, Function *> PredicatedSubroutines;
+  const unsigned MAX_SIMD_CF_WIDTH = 32;
+  Function *F;
+  // A map giving the basic blocks ending with a simd branch, and the simd
+  // width of each one.
+  MapVector<BasicBlock *, unsigned> SimdBranches;
+  // A map giving the basic blocks to be predicated, and the simd width of
+  // each one.
+  MapVector<BasicBlock *, unsigned> PredicatedBlocks;
+  // The join points, together with the simd width of each one.
+  MapVector<BasicBlock *, unsigned> JoinPoints;
+  // The JIP for each simd branch and join point.
+  std::map<BasicBlock *, BasicBlock *> JIPs;
+  // Subroutines that are predicated, mapping to the simd width.
+  std::map<Function *, unsigned> PredicatedSubroutines;
+  // Execution mask variable.
+  GlobalVariable *EMVar;
+  // Resume mask for each join point.
+  std::map<BasicBlock *, AllocaInst *> RMAddrs;
   // Set of intrinsic calls (other than wrregion) that have been predicated.
   std::set<AssertingVH<Value>> AlreadyPredicated;
+  // Mask for shufflevector to extract part of EM.
+  SmallVector<Constant *, 32> ShuffleMask;
 public:
   static char ID;
 
-  CMSimdCFLowering() : FunctionPass(ID) {
+  CMSimdCFLowering() : FunctionPass(ID), EMVar(nullptr) {
     initializeCMSimdCFLoweringPass(*PassRegistry::getPassRegistry());
   }
   void getAnalysisUsage(AnalysisUsage &AU) const {
@@ -323,30 +196,32 @@ public:
   virtual bool doInitialization(Module &M);
   virtual bool runOnFunction(Function &F) { return false; }
   static CallInst *isSimdCFAny(Value *V);
-  static Value *getSimdCondition(Value *Cond);
+  static Use *getSimdConditionUse(Value *Cond);
 private:
   void calculateVisitOrder(Module *M, std::vector<Function *> *VisitOrder);
-  void processFunction(Function *F, unsigned SimdWidth);
-  void processRegion(Region *R);
-  Value* ensureSIMDCondition(Region *R, Value *Cond, Instruction *Branch, DebugLoc DL);
-  void lowerIf(Region *R);
-  void lowerDo(Region *R);
-  BasicBlock *getJoinPoint(Region *R);
-  void addJoins();
-  void addBranch(Value *Cond, bool BranchOn, BasicBlock *Target, BasicBlock *Join, BasicBlock *BB);
-  CallInst *createAny(Value *In, const Twine &Name, Instruction *InsertBefore, DebugLoc DL);
-  void predicateBlock(BasicBlock *BB, Region *R);
-  void predicateInst(Instruction *Inst, Region *R);
-  void rewritePredication(CallInst *CI, Region *R);
-  void predicateStore(StoreInst *SI, Region *R);
+  void processFunction(Function *F);
+  void findSimdBranches(unsigned CMWidth);
+  void determinePredicatedBlocks();
+  void markPredicatedBranches();
+  void fixSimdBranches();
+  void findAndSplitJoinPoints();
+  void determineJIPs();
+  void determineJIP(BasicBlock *BB, std::map<BasicBlock *, unsigned> *Numbers, bool IsJoin);
+
+  // Methods to add predication to the code
+  void predicateCode(unsigned CMWidth);
+  void predicateBlock(BasicBlock *BB, unsigned SimdWidth, bool PredicateStores);
+  void predicateInst(Instruction *Inst, unsigned SimdWidth, bool PredicateStores);
+  void rewritePredication(CallInst *CI, unsigned SimdWidth);
+  void predicateStore(StoreInst *SI, unsigned SimdWidth);
   CallInst *convertScatterGather(CallInst *CI, unsigned IID);
-  void predicateScatterGather(CallInst *CI, Region *R, unsigned PredOperandNum);
-  CallInst *predicateWrRegion(CallInst *WrR, Region *R);
-  void predicateCall(CallInst *CI, Region *R);
-  CallInst *addCallMaskToCall(CallInst *CI, Function *Callee, Value *CM);
-  Instruction *loadExecutionMask(Instruction *InsertBefore, unsigned Width);
-  AllocaInst *getExecutionMask(Function *F, unsigned Width, bool NoInit = false);
-  AllocaInst *getReenableMask(BasicBlock *BB, unsigned Width = 0);
+  void predicateScatterGather(CallInst *CI, unsigned SimdWidth, unsigned PredOperandNum);
+  CallInst *predicateWrRegion(CallInst *WrR, unsigned SimdWidth);
+  void predicateCall(CallInst *CI, unsigned SimdWidth);
+
+  void lowerSimdCF();
+  Instruction *loadExecutionMask(Instruction *InsertBefore, unsigned SimdWidth);
+  Value *getRMAddr(BasicBlock *JP, unsigned SimdWidth);
 };
 } // namespace
 
@@ -369,7 +244,7 @@ bool CMSimdCFLowering::doInitialization(Module &M)
   // See if simd CF is used anywhere in this module.
   // We have to try each overload of llvm.genx.simdcf.any separately.
   bool HasSimdCF = false;
-  for (unsigned Width = 2; Width <= 32; Width <<= 1) {
+  for (unsigned Width = 2; Width <= MAX_SIMD_CF_WIDTH; Width <<= 1) {
     auto VT = VectorType::get(Type::getInt1Ty(M.getContext()), Width);
     Function *SimdCFAny = Intrinsic::getDeclaration(
         &M, Intrinsic::genx_simdcf_any, VT);
@@ -380,28 +255,30 @@ bool CMSimdCFLowering::doInitialization(Module &M)
   }
 
   if (HasSimdCF) {
+    // Create the global variable for the execution mask.
+    auto EMTy = VectorType::get(Type::getInt1Ty(M.getContext()),
+        MAX_SIMD_CF_WIDTH);
+    EMVar = new GlobalVariable(M, EMTy, false/*isConstant*/,
+        GlobalValue::InternalLinkage, Constant::getAllOnesValue(EMTy), "EM");
     // Derive an order to process functions such that a function is visited
     // after anything that calls it.
     std::vector<Function *> VisitOrder;
     calculateVisitOrder(&M, &VisitOrder);
     // Process functions in that order.
     for (auto i = VisitOrder.begin(), e = VisitOrder.end(); i != e; ++i)
-      processFunction(*i, 0);
+      processFunction(*i);
   }
 
   // Any predication calls which remain are not in SIMD CF regions,
   // so can be deleted.
   for (auto mi = M.begin(), me = M.end(); mi != me; ++ mi) {
     Function *F = &*mi;
-
     unsigned IntrinsicID = F->getIntrinsicID();
     if (IntrinsicID != Intrinsic::genx_simdcf_predicate)
       continue;
-
     while (!F->use_empty()) {
       auto CI = cast<CallInst>(F->use_begin()->getUser());
       auto EnabledValues = CI->getArgOperand(0);
-
       CI->replaceAllUsesWith(EnabledValues);
       CI->eraseFromParent();
     }
@@ -465,445 +342,413 @@ void CMSimdCFLowering::calculateVisitOrder(Module *M,
 
 /***********************************************************************
  * processFunction : process CM SIMD CF in a function
- *
- * Because this pass runs so early, we can rely on the basic blocks being
- * in the same order as the source code, and we can just scan linearly
- * through them to find structured CM SIMD control flow.
  */
-void CMSimdCFLowering::processFunction(Function *F, unsigned CMWidth)
+void CMSimdCFLowering::processFunction(Function *ArgF)
 {
+  F = ArgF;
   DEBUG(dbgs() << "CMSimdCFLowering::processFunction:\n" << *F << "\n");
-  if (!CMWidth) {
-    // Check if this is a function that was called in predicated code, so needs
-    // to be replaced by its new version with an extra call mask arg.
-    auto PSIterator = PredicatedSubroutines.find(F);
-    if (PSIterator != PredicatedSubroutines.end()) {
-      Function *NewF = PSIterator->second;
-      // Process the new function, passing the simd width, which we get from the
-      // vector width of the final arg, which is the call mask arg added on when
-      // this new function was created.
-      processFunction(NewF, cast<VectorType>(
-            NewF->getArgumentList().back().getType())->getNumElements());
-      // Change remaining call sites of the old function to the new function.
-      SmallVector<CallInst *, 4> CallSites;
-      for (auto ui = F->use_begin(), ue = F->use_end(); ui != ue; ++ui)
-        CallSites.push_back(cast<CallInst>(ui->getUser()));
-      unsigned NumArgs = NewF->getArgumentList().size();
-      Type *CMTy = NewF->getArgumentList().back().getType();
-      for (auto i = CallSites.begin(), e = CallSites.end(); i != e; ++i) {
-        CallInst *CI = *i;
-        if (CI->getNumArgOperands() != NumArgs) {
-          // CI is not predicated. It needs an extra call mask arg adding.
-          assert(CI->getNumArgOperands() + 1 == NumArgs);
-          addCallMaskToCall(CI, NewF, Constant::getAllOnesValue(CMTy));
-        }
-      }
-      // Remove the old function.
-      assert(F->use_empty());
-      F->eraseFromParent();
-      return;
-    }
-  }
-
   DEBUG(F->print(dbgs()));
-  Region *Root = Region::createRegionTree(F, CMWidth);
-  if (!Root->hasError()) {
-    DEBUG(
-      dbgs() << "CMSimdCFLowering: simd region tree:\n";
-      Root->print(dbgs())
-    );
-    // Add predication as required.
-    DEBUG(dbgs() << "CMSimdCFLowering: adding predication " << F->getName() << "\n");
-    EMs.resize(6, nullptr); // space for EMs up to 2^(6-1) in size.
-    if (CMWidth) {
-      // This is a subroutine with predicated calls. First create the alloca
-      // for the EM. Do not insert the initialization from the CM arg yet so it
-      // does not itself get predicated.
-      auto EM = getExecutionMask(F, CMWidth, /*NoInit=*/true);
-      // Add predication to the whole function.
-      for (auto i = F->begin(), e = F->end(); i != e; ++i)
-        predicateBlock(&*i, Root);
-      // Now insert the store just after the alloca of the execution mask.
-      auto Store = new StoreInst(&F->getArgumentList().back(), EM);
-      Store->insertAfter(EM);
-    } else {
-      // Add predication to the whole range of each top-level simd CF construct.
-      for (auto i = Root->begin(), e = Root->end(); i != e; ++i) {
-        Region *R = *i;
-        auto BB = R->getEntry();
-        if (R->getKind() == Region::IF)
-          BB = BB->getNextNode();
-        for (auto BBE = R->getExit(); BB != BBE; BB = BB->getNextNode())
-          predicateBlock(BB, R);
-      }
-    }
-    // Lower the simd CF constructs themselves.
-    DEBUG(dbgs() << "CMSimdCFLowering: lowering CF " << F->getName() << "\n");
-    for (auto pi = Root->postorder_begin(), pe = Root->postorder_end();
-        pi != pe; ++pi) {
-      Region *R = &*pi;
-      processRegion(R);
-    }
-    addJoins();
-  }
-  delete Root;
-  ReenableMasks.clear();
-  EMs.clear();
+  unsigned CMWidth = PredicatedSubroutines[F];
+  // Find the simd branches.
+  findSimdBranches(CMWidth);
+  // Determine which basic blocks need to be predicated.
+  determinePredicatedBlocks();
+  // Mark the branch at the end of any to-be-predicated block as a simd branch.
+  markPredicatedBranches();
+  // Fix simd branches:
+  //  - remove backward simd branches
+  //  - ensure that the false leg is fallthrough
+  fixSimdBranches();
+  // Find the join points, and split out any join point into its own basic
+  // block.
+  findAndSplitJoinPoints();
+  // Determine the JIPs for the gotos and joins.
+  determineJIPs();
+  // Predicate the code.
+  predicateCode(CMWidth);
+  // Lower the control flow.
+  lowerSimdCF();
+
+  SimdBranches.clear();
+  PredicatedBlocks.clear();
+  JoinPoints.clear();
+  RMAddrs.clear();
   AlreadyPredicated.clear();
 }
 
 /***********************************************************************
- * processRegion : process one simd CF region
- */
-void CMSimdCFLowering::processRegion(Region *R)
-{
-  switch (R->getKind()) {
-    case Region::IF:
-      lowerIf(R);
-      break;
-    case Region::DO:
-      lowerDo(R);
-      break;
-  }
-}
-
-/***********************************************************************
- * ensureSIMDConditional : make sure a conditional value is suitable
- * for use in a SIMD CF region.
+ * findSimdBranches : find the simd branches in the function
  *
- * Enter:   R = the SIMD region the condition pertains to.
- *          Cond = the condition
- *          Branch = the instruction that branches on the condition,
- *                   any new instructions should be inserted before this
- *          DL = the debug location for any new instructions
+ * Enter:   CMWidth = 0 normally, or call mask width if in predicated subroutine
  *
- * Return:  A condition value known to be suitable for R's SIMD context
+ * This adds blocks to SimdBranches.
  */
-
-Value* CMSimdCFLowering::ensureSIMDCondition(Region *R, Value *Cond, Instruction *Branch, DebugLoc DL)
+void CMSimdCFLowering::findSimdBranches(unsigned CMWidth)
 {
-  if (auto VT = dyn_cast<VectorType>(Cond->getType())) {
-    if (VT->getNumElements() == 1) {
-      // A vector of size one. This is a scalar condition in a SIMD
-      // context. Splat the condition value to the required size.
-
-      auto NewVT = VectorType::get(Type::getInt32Ty(Cond->getContext()), R->getSimdWidth());
-      auto UndefVal = UndefValue::get(Cond->getType());
-      auto IdxVal = Constant::getNullValue(NewVT);
-
-      auto NewCond = new ShuffleVectorInst(Cond, UndefVal, IdxVal, "splatsimdcf", Branch);
-
-      NewCond->setDebugLoc(DL);
-      Cond = NewCond;
-    } else
-      assert(VT->getNumElements() == R->getSimdWidth() &&
-             "condition width does not match the required SIMD context width");
-  }
-
-  return Cond;
-}
-
-/***********************************************************************
- * lowerIf : lower the simd "if" on the top of the stack
- *
- * At the conditional branch, we have already checked that the true successor
- * is the following block and the false successor is the else/endif.
- */
-void CMSimdCFLowering::lowerIf(Region *R)
-{
-  BasicBlock *If = R->getEntry();
-  BasicBlock *Endif = R->getExit();
-  BasicBlock *Else = R->getElse();
-  auto Branch = cast<BranchInst>(If->getTerminator());
-  auto OldAny = isSimdCFAny(Branch->getCondition());
-  auto Cond = ensureSIMDCondition(R, OldAny->getOperand(0), Branch,
-        OldAny->getDebugLoc());
-
-  // Change the if code and erase the old simdcf.any.
-  BasicBlock *Target = Else ? Else : Endif;
-  addBranch(Cond, /*BranchOn=*/false, /*Target=*/Target, /*Join=*/Target, If);
-  if (OldAny->use_empty())
-    OldAny->eraseFromParent();
-  if (Else) {
-    // Change the branch at the end of the then leg. This is a simd branch
-    // always to Endif with the next join at Else, which means that it disables
-    // all channels for re-enabling at Endif, and then unconditionally branches
-    // to Else.
-    addBranch(Constant::getNullValue(Cond->getType()), /*BranchOn*/false,
-        /*Target=*/Endif, /*Join=*/Else, /*BB=*/Else->getPrevNode());
-    // Add a join point at the start of Else, skipping to Endif if all channels
-    // disabled. We can guarantee EM==0 on reaching the else join point, making
-    // the code a little better.
-    PendingJoins.push_back(PendingJoin(Else, Endif, /*IsEMZero=*/true));
-  }
-  // Add a join point at Endif, skipping to the next outer control flow end.
-  PendingJoins.push_back(PendingJoin(Endif, getJoinPoint(R->getParent())));
-}
-
-/***********************************************************************
- * lowerDo : lower the simd do..while on the top of the stack
- *
- * At the conditional branch, we have already checked that the true successor
- * is the backedge and the false successor is the following block.
- */
-void CMSimdCFLowering::lowerDo(Region *R)
-{
-  BasicBlock *Do = R->getEntry();
-  BasicBlock *Exit = R->getExit();
-  BasicBlock *While = Exit->getPrevNode();
-  auto Branch = cast<BranchInst>(While->getTerminator());
-  auto OldAny = isSimdCFAny(Branch->getCondition());
-  auto Cond = ensureSIMDCondition(R, OldAny->getOperand(0), Branch,
-        OldAny->getDebugLoc());
-
-  // Change the while code and erase the old simdcf.any.
-  // Passing Join=nullptr to addBranch makes it generate a simd backward branch.
-  addBranch(Cond, /*BranchOn=*/true, /*Target=*/Do, /*Join=*/nullptr, While);
-  if (OldAny->use_empty())
-    OldAny->eraseFromParent();
-  // Add a simd branch for each break/continue. We need to do it here, rather
-  // than when we encounter the break/continue in the post-order depth first
-  // traversal in processFunction(), because we need to do if after any
-  // enclosing if..endif is lowered.
-  bool GotContinue = false;
-  for (auto i = R->postorder_begin(), e = R->postorder_end(); i != e; ++i) {
-    Region *R2 = &*i;
-    switch (R2->getKind()) {
-      default:
-        continue;
-      case Region::CONTINUE:
-        GotContinue = true;
-        break;
-      case Region::BREAK:
-        break;
-    }
-    // We want a branch !never to the target, so all currently enabled
-    // channels get disabled until the target (just before or after the
-    // while).
-    addBranch(Constant::getNullValue(Cond->getType()), /*BranchOn=*/false,
-        /*Target=*/R2->getEntry()->getTerminator()->getSuccessor(0),
-        getJoinPoint(R2->getParent()), R2->getEntry());
-  }
-  if (GotContinue) {
-    // If we had any continues, the while block needs a join point.
-    // Ensure it has an RM for addJoins to find.
-    getReenableMask(While, Cond->getType()->getVectorNumElements());
-    PendingJoins.push_back(PendingJoin(While, Exit));
-  }
-  // Add a join point after the loop, skipping to the next outer control
-  // flow end.
-  // We can guarantee EM==0 on reaching the join point, making the code a
-  // little better.
-  PendingJoins.push_back(PendingJoin(Exit, getJoinPoint(R->getParent()),
-        /*IsEMZero=*/true));
-}
-
-/***********************************************************************
- * getJoinPoint : get the join point for code in the given region
- *
- * Return:  nullptr if not in simd CF
- *          the else block if in the then leg of an if with an else
- *          the exit block if R is otherwise in an if
- *          the while block if R is a do..while with continues
- *          the exit block if R is a do..while without continues
- */
-BasicBlock *CMSimdCFLowering::getJoinPoint(Region *R)
-{
-  for (;;) {
-    switch (R->getKind()) {
-      case Region::BREAK:
-      case Region::CONTINUE:
-        R = R->getParent();
-        continue;
-      case Region::ROOT:
-        return nullptr;
-      case Region::ELSE:
-        return R->getParent()->getExit();
-      case Region::IF: {
-          auto BB = R->getElse();
-          if (!BB)
-            BB = R->getExit();
-          return BB;
-        }
-      case Region::DO:
-        if (R->getNumContinues())
-          return R->getExit()->getPrevNode();
-        return R->getExit();
-      default:
-        assert(0);
-        return nullptr;
+  for (auto fi = F->begin(), fe = F->end(); fi != fe; ++fi) {
+    BasicBlock *BB = &*fi;
+    auto Br = dyn_cast<BranchInst>(BB->getTerminator());
+    if (!Br || !Br->isConditional())
+      continue;
+    if (auto SimdCondUse = getSimdConditionUse(Br->getCondition())) {
+      unsigned SimdWidth = (*SimdCondUse)->getType()->getVectorNumElements();
+      if (CMWidth && SimdWidth != CMWidth)
+        DiagnosticInfoSimdCF::emit(Br, "mismatching SIMD CF width inside SIMD call");
+      SimdBranches[BB] = SimdWidth;
     }
   }
 }
 
 /***********************************************************************
- * addJoins : add pending simd join points
+ * determinePredicatedBlocks : determine which blocks need to be predicated
+ *
+ * We need to find blocks that are control dependent on a simd branch.
+ *
+ * This adds blocks to PredicatedBlocks. It also errors when a block is control
+ * dependent on more than one simd branch with disagreeing simd width.
+ *
+ * See Muchnick section 9.5 Program-Dependence Graphs. For each edge m->n in
+ * the control flow graph where n does not post-dominate m, find l, the
+ * closest common ancestor in the post-dominance tree of m and n. All nodes
+ * in the post-dominance tree from l to n except l itself are control dependent
+ * on m.
  */
-void CMSimdCFLowering::addJoins()
+void CMSimdCFLowering::determinePredicatedBlocks()
 {
-  for (auto i = PendingJoins.begin(), e = PendingJoins.end(); i != e; ++i) {
-    BasicBlock *BB = i->BB;
-    BasicBlock *JIP = i->Join;
-    bool IsEMZero = i->IsEMZero;
-    assert(!isa<PHINode>(&BB->front()));
-    auto RM = getReenableMask(BB);
-    // Get execution mask of the same size as the re-enable mask for this
-    // join point.
-    auto EM = getExecutionMask(BB->getParent(),
-        RM->getType()->getPointerElementType()->getPrimitiveSizeInBits());
-    if (!JIP) {
-      // Handle the case that this is the end of the outermost simd CF.
-      // Just set EM to all ones and clear the RM.
-      auto EMTy = EM->getType()->getPointerElementType();
-      auto InsertBefore = &BB->front();
-      new StoreInst(Constant::getAllOnesValue(EMTy), EM, InsertBefore);
-      new StoreInst(Constant::getNullValue(EMTy), getReenableMask(BB), InsertBefore);
-    } else {
-      // Split the block such that the instructions are all after the split.
-      BB->splitBasicBlock(BB->begin(), BB->getName() + ".simdcfjoin");
-      auto InsertBefore = &BB->front();
-      // Re-enable channels in EM. (If the PendingJoin has IsEMZero true,
-      // we know that EM is zero on reaching the join point, so we don't
-      // need an Or instruction.
-      Instruction *LoadedEM = nullptr;
-      auto LoadedRM = new LoadInst(RM, RM->getName(), InsertBefore);
-      if (IsEMZero)
-        LoadedEM = LoadedRM;
-      else {
-        LoadedEM = new LoadInst(EM, EM->getName(), InsertBefore);
-        LoadedEM = BinaryOperator::Create(Instruction::Or, LoadedEM,
-            LoadedRM, LoadedEM->getName(), InsertBefore);
+  PostDominatorTree *PDT = nullptr;
+  for (auto sbi = SimdBranches.begin(), sbe = SimdBranches.end();
+      sbi != sbe; ++sbi) {
+    BasicBlock *BlockM = sbi->first;
+    auto Br = cast<BranchInst>(BlockM->getTerminator());
+    unsigned SimdWidth = sbi->second;
+    DEBUG(dbgs() << "simd branch (width " << SimdWidth << ") at " << BlockM->getName() << "\n");
+    if (SimdWidth < 2 || SimdWidth > MAX_SIMD_CF_WIDTH || !isPowerOf2_32(SimdWidth))
+      DiagnosticInfoSimdCF::emit(Br, "illegal SIMD CF width");
+    // BlockM has a simd conditional branch. Get the postdominator tree if we
+    // do not already have it.
+    if (!PDT) {
+      PDT = (PostDominatorTree *)createPostDomTree();
+      PDT->runOnFunction(*F);
+    }
+    // For each successor BlockN of BlockM...
+    for (unsigned si = 0, se = Br->getNumSuccessors(); si != se; ++si) {
+      auto BlockN = Br->getSuccessor(si);
+      // Get BlockL, the closest common postdominator.
+      auto BlockL = PDT->findNearestCommonDominator(BlockM, BlockN);
+      // Trace up the postdominator tree from BlockN (inclusive) to BlockL
+      // (exclusive) to find blocks control dependent on BlockM. This also
+      // handles the case that BlockN does postdominate BlockM; no blocks
+      // are control dependent on BlockM.
+      for (auto Node = PDT->getNode(BlockN); Node && Node->getBlock() != BlockL;
+            Node = Node->getIDom()) {
+        auto BB = Node->getBlock();
+        DEBUG(dbgs() << "  " << BB->getName() << " needs predicating\n");
+        auto PBEntry = &PredicatedBlocks[BB];
+        if (*PBEntry && *PBEntry != SimdWidth)
+          DiagnosticInfoSimdCF::emit(Br, "mismatching SIMD CF width");
+        *PBEntry = SimdWidth;
       }
-      new StoreInst(LoadedEM, EM, InsertBefore);
-      new StoreInst(Constant::getNullValue(LoadedEM->getType()), RM, InsertBefore);
-      // Add an any(EM).
-      auto Any = createAny(LoadedEM, LoadedEM->getName() + ".any",
-          InsertBefore, DebugLoc());
-      // Change BB's branch to BB2 to a conditional branch using Any.
-      auto OldTerm = BB->getTerminator();
-      BranchInst::Create(BB->getNextNode(), JIP, Any, InsertBefore);
-      OldTerm->eraseFromParent();
     }
   }
-  PendingJoins.clear();
+  delete PDT;
 }
 
 /***********************************************************************
- * addBranch : add a simd branch
+ * markPredicatedBranches : mark the branch in any to-be-predicated block
+ *    as a simd branch, even if it is unconditional
  *
- * Enter:   Cond = vector condition to branch on
- *          BranchOn = true to branch when cond true, or false when false
- *          Target = target of branch (falls through if branch not taken)
- *          Join = join point to branch to if all channels off, nullptr for
- *                backward branch which joins at the immediately following
- *                block
- *          BB = block to put branch at the end of, replacing whatever
- *              branch it had there before
+ * This errors if it finds anything other than a BranchInst. Using switch or
+ * return inside simd control flow is not allowed.
  */
-
-void CMSimdCFLowering::addBranch(Value *Cond, bool BranchOn,
-    BasicBlock *Target, BasicBlock *Join, BasicBlock *BB)
+void CMSimdCFLowering::markPredicatedBranches()
 {
-  Instruction *InsertBefore = BB->getTerminator();
-  DebugLoc DL = InsertBefore->getDebugLoc();
-  unsigned Width = Cond->getType()->getPrimitiveSizeInBits();
-  auto EM = getExecutionMask(BB->getParent(), Width);
-  auto RM = getReenableMask(Join ? Target : BB->getNextNode(), Width);
-  auto C = dyn_cast<Constant>(Cond);
-  if (C && C->isNullValue()) {
-    // Handle the constant case first.
-    if (!BranchOn) {
-      // If BranchOn is false, this is "branch always", which does this:
-      //  RM |= EM
-      //  EM = 0
-      //  unconditional branch to Join
-      Instruction *LoadedEM = new LoadInst(EM, EM->getName(), InsertBefore);
-      LoadedEM->setDebugLoc(DL);
-      Instruction *LoadedRM = new LoadInst(RM, RM->getName(), InsertBefore);
-      LoadedRM->setDebugLoc(DL);
-      LoadedRM = BinaryOperator::Create(Instruction::Or, LoadedRM,
-          LoadedEM, RM->getName(), InsertBefore);
-      LoadedRM->setDebugLoc(DL);
-      auto Store = new StoreInst(LoadedRM, RM, InsertBefore);
-      Store->setDebugLoc(DL);
-      Store = new StoreInst(Constant::getNullValue(LoadedEM->getType()),
-          EM, InsertBefore);
-      Store->setDebugLoc(DL);
-      // Change the branch to branch unconditionally to Join.
-      auto OldTerm = BB->getTerminator();
-      auto NewBr = BranchInst::Create(Join, InsertBefore);
-      NewBr->setDebugLoc(DL);
-      OldTerm->eraseFromParent();
-      return;
-    }
-    // If BranchOn is true, this is "branch never", which is pointless
-    // so we don't use it.
-    assert(0);
-    return;
+  for (auto pbi = PredicatedBlocks.begin(), pbe = PredicatedBlocks.end();
+      pbi != pbe; ++pbi) {
+    auto BB = pbi->first;
+    unsigned SimdWidth = pbi->second;
+    auto Term = BB->getTerminator();
+    if (!isa<BranchInst>(Term))
+      DiagnosticInfoSimdCF::emit(Term, "return or switch not allowed in SIMD control flow");
+    if (!SimdBranches[BB])
+      DEBUG(dbgs() << "branch at " << BB->getName() << " becomes simd\n");
+    SimdBranches[BB] = SimdWidth;
   }
-  // Insert code:
-  //    RM |= EM & ~Cond
-  //    EM &= Cond
-  // assuming BranchOn is false; if it is true, then Cond and ~Cond are
-  // swapped. This sets bits in RM for channels that want to take the branch,
-  // and leaves bits set in EM for channels that do not want to take the
-  // branch.
-  // For a backward branch, the sense of BranchOn is the other way up here.
-  auto NotCondInst = BinaryOperator::Create(Instruction::Xor, Cond,
-      Constant::getAllOnesValue(Cond->getType()), Cond->getName() + ".not",
-      InsertBefore);
-  NotCondInst->setDebugLoc(DL);
-  Value *NotCond = NotCondInst;
-  if (BranchOn)
-    std::swap(Cond, NotCond);
-  if (!Join)
-    std::swap(Cond, NotCond);
-  Instruction *LoadedEM = new LoadInst(EM, EM->getName(), InsertBefore);
-  LoadedEM->setDebugLoc(DL);
-  auto DisablingBits = BinaryOperator::Create(Instruction::And, LoadedEM,
-      NotCond, "disablechannels.simdcf", InsertBefore);
-  DisablingBits->setDebugLoc(DL);
-  Instruction *LoadedRM = new LoadInst(RM, RM->getName(), InsertBefore);
-  LoadedRM->setDebugLoc(DL);
-  LoadedRM = BinaryOperator::Create(Instruction::Or, LoadedRM,
-      DisablingBits, RM->getName(), InsertBefore);
-  LoadedRM->setDebugLoc(DL);
-  auto Store = new StoreInst(LoadedRM, RM, InsertBefore);
-  Store->setDebugLoc(DL);
-  LoadedEM = BinaryOperator::Create(Instruction::And, LoadedEM, Cond,
-      EM->getName(), InsertBefore);
-  LoadedEM->setDebugLoc(DL);
-  Store = new StoreInst(LoadedEM, EM, InsertBefore);
-  Store->setDebugLoc(DL);
-  // Modify the branch.
-  auto OldTerm = BB->getTerminator();
-  auto Any = createAny(LoadedEM, LoadedEM->getName() + ".any",
-      InsertBefore, DL);
-  BranchInst *NewBr = nullptr;
-  if (Join) {
-    // Forward branch. Change the branch to
-    //  branch !any(EM), Join
-    NewBr = BranchInst::Create(BB->getNextNode(), Join, Any, InsertBefore);
-  } else {
-    // Backward branch. Change the branch to
-    //  branch any(EM), Target
-    NewBr = BranchInst::Create(Target, BB->getNextNode(), Any, InsertBefore);
-  }
-  NewBr->setDebugLoc(DL);
-  OldTerm->eraseFromParent();
 }
 
 /***********************************************************************
- * createAny : create an "any" instruction
+ * fixSimdBranches : fix simd branches ready for JIP determination
+ *
+ * - remove backward simd branches
+ * - ensure that the false leg is fallthrough
  */
-CallInst *CMSimdCFLowering::createAny(Value *In, const Twine &Name,
-    Instruction *InsertBefore, DebugLoc DL)
+void CMSimdCFLowering::fixSimdBranches()
 {
-  Module *M = InsertBefore->getParent()->getParent()->getParent();
-  auto Decl = Intrinsic::getDeclaration(M, Intrinsic::genx_any, In->getType());
-  auto CI = CallInst::Create(Decl, In, Name, InsertBefore);
-  CI->setDebugLoc(DL);
-  return CI;
+  // Scan through all basic blocks, remembering which ones we have seen.
+  std::set<BasicBlock *> Seen;
+  for (auto fi = F->begin(), fe = F->end(); fi != fe; ++fi) {
+    BasicBlock *BB = &*fi;
+    Seen.insert(BB);
+    if (!SimdBranches.count(BB))
+      continue;
+    // This is a simd branch.
+    auto Br = cast<BranchInst>(BB->getTerminator());
+    // Check for backward branch in either leg.
+    for (unsigned si = 0, se = Br->getNumSuccessors(); si != se; ++si) {
+      BasicBlock *Succ = Br->getSuccessor(si);
+      if (Seen.find(Succ) != Seen.end()) {
+        DEBUG(dbgs() << "simd branch at " << BB->getName() << " succ " << si << " is backward\n");
+        if (!Br->isConditional()) {
+          // Unconditional simd backward branch. We can just remove its simdness.
+          DEBUG(dbgs() << " unconditional, so unsimding\n");
+          SimdBranches.erase(SimdBranches.find(BB));
+        } else {
+          // Conditional simd branch where a leg is backward. Insert an extra
+          // block.
+          auto NextBB = BB->getNextNode();
+          auto NewBB = BasicBlock::Create(BB->getContext(),
+                BB->getName() + ".backward", BB->getParent(), NextBB);
+          BranchInst::Create(Succ, NewBB)->setDebugLoc(Br->getDebugLoc());
+          Br->setSuccessor(si, NewBB);
+        }
+      }
+    }
+    if (Br->isConditional()) {
+      // Ensure that the false leg is fallthrough.
+      auto NextBB = BB->getNextNode();
+      if (Br->getSuccessor(1) != NextBB) {
+        if (Br->getSuccessor(0) != NextBB) {
+          // Neither leg is fallthrough. Add an extra basic block to make the
+          // false one fallthrough.
+          DEBUG(dbgs() << "simd branch at " << BB->getName() << ": inserted fallthrough\n");
+          auto NewBB = BasicBlock::Create(BB->getContext(),
+                BB->getName() + ".fallthrough", BB->getParent(), NextBB);
+          PredicatedBlocks[NewBB] = PredicatedBlocks[Br->getSuccessor(0)];
+          BranchInst::Create(Br->getSuccessor(1), NewBB)
+              ->setDebugLoc(Br->getDebugLoc());
+          Br->setSuccessor(1, NewBB);
+        } else {
+          // The true leg is fallthrough. Invert the branch.
+          DEBUG(dbgs() << "simd branch at " << BB->getName() << ": inverting\n");
+          Use *U = getSimdConditionUse(Br->getCondition());
+          if (!U)
+            U = &Br->getOperandUse(0);
+          Value *Cond = *U;
+          auto Xor = BinaryOperator::Create(Instruction::Xor, *U,
+              Constant::getAllOnesValue(Cond->getType()),
+              "invert", cast<Instruction>(U->getUser()));
+          Xor->setDebugLoc(Br->getDebugLoc());
+          *U = Xor;
+          Br->setSuccessor(0, Br->getSuccessor(1));
+          Br->setSuccessor(1, NextBB);
+        }
+      }
+    }
+  }
+}
+
+/***********************************************************************
+ * findAndSplitJoinPoints : find the join points, and split out any join point
+ *      into its own basic block
+ */
+void CMSimdCFLowering::findAndSplitJoinPoints()
+{
+  for (auto sbi = SimdBranches.begin(), sbe = SimdBranches.end();
+      sbi != sbe; ++sbi) {
+    auto Br = sbi->first->getTerminator();
+    unsigned SimdWidth = sbi->second;
+    DEBUG(dbgs() << *Br << "\n");
+    auto JP = Br->getSuccessor(0);
+    if (JoinPoints.count(JP))
+      continue;
+    // This is a new join point.
+    DEBUG(dbgs() << "new join point " << JP->getName() << "\n");
+    // We need to split it into its own basic block, so later we can modify
+    // the join to do a branch to its JIP.
+    auto SplitBB = BasicBlock::Create(JP->getContext(),
+        JP->getName() + ".joinpoint", JP->getParent(), JP);
+    if (PredicatedBlocks.find(JP) != PredicatedBlocks.end())
+      PredicatedBlocks[SplitBB] = PredicatedBlocks[JP];
+    JP->replaceAllUsesWith(SplitBB);
+    BranchInst::Create(JP, SplitBB)->setDebugLoc(JP->front().getDebugLoc());
+    DEBUG(dbgs() << "split join point " << JP->getName() << " out to " << SplitBB->getName() << "\n");
+    JP = SplitBB;
+    JoinPoints[JP] = SimdWidth;
+  }
+}
+
+/***********************************************************************
+ * determineJIPs : determine the JIPs for the gotos and joins
+ */
+void CMSimdCFLowering::determineJIPs()
+{
+  DEBUG(dbgs() << "determineJIPs: " << F->getName() << "\n");
+  // Number the basic blocks.
+  std::map<BasicBlock *, unsigned> Numbers;
+  unsigned Num = 0;
+  for (auto fi = F->begin(), fe = F->end(); fi != fe; ++fi) {
+    BasicBlock *BB = &*fi;
+    Numbers[BB] = Num++;
+  }
+  // Work out which joins do not need a JIP at all. Doing that helps avoid
+  // problems in the GenX backend where a join that turns out to be a branching
+  // join label needs to be in a basic block by itself, so other code has to be
+  // moved out, which is not always possible.
+  //
+  // A join does not need a JIP if we can guarantee that any path reaching the
+  // join will result in at least one channel being enabled.
+  //
+  // As a proxy for that, which is sufficient but maybe not necessary, we
+  // divide the control flow up into groups. Two groups are either disjoint, or
+  // one is nested inside the other. Then the join at the end of a group does
+  // not need a JIP.
+  //
+  // We find the groups as follows: any edge that is not a fallthrough edge
+  // causes the target block and the block after the branch block to be in the
+  // same group.
+  Grouping<BasicBlock *> Groups;
+  for (auto NextBB = &F->front(), EndBB = &F->back(); NextBB;) {
+    auto BB = NextBB;
+    NextBB = BB == EndBB ? nullptr : BB->getNextNode();
+    auto Term = BB->getTerminator();
+    for (unsigned si = 0, se = Term->getNumSuccessors(); si != se; ++si) {
+      BasicBlock *Succ = Term->getSuccessor(si);
+      if (Succ == NextBB)
+        continue;
+      // We have a non-fallthrough edge BB -> Succ. Thus NextBB and Succ need
+      // to be in the same group.
+      DEBUG(dbgs() << "joinGroups " << NextBB->getName() << " " << Succ->getName() << "\n");
+      Groups.joinGroups(NextBB, Succ);
+    }
+  }
+  // Repeat until we stop un-simding branches...
+  for (;;) {
+    // Determine the JIPs for the SIMD branches.
+    for (auto sbi = SimdBranches.begin(), sbe = SimdBranches.end();
+        sbi != sbe; ++sbi)
+      determineJIP(sbi->first, &Numbers, /*IsJoin=*/false);
+    // Determine the JIPs for the joins. A join does not need a JIP if it is the
+    // last block in its group.
+    std::set<BasicBlock *> SeenGroup;
+    for (auto BB = &F->back();;) {
+      DEBUG(dbgs() << "  " << BB->getName() << " is group " << Groups.getGroup(BB)->getName() << "\n");
+      if (JoinPoints.count(BB)) {
+        if (!SeenGroup.insert(Groups.getGroup(BB)).second)
+          determineJIP(BB, &Numbers, /*IsJoin=*/true);
+        else
+          DEBUG(dbgs() << BB->getName() << " does not need JIP\n");
+      }
+      if (BB == &F->front())
+        break;
+      BB = BB->getPrevNode();
+    }
+
+    // See if we have any unconditional branch with UIP == JIP or no JIP. If so,
+    // it can stay as a scalar unconditional branch.
+    SmallVector<BasicBlock *, 4> BranchesToUnsimd;
+    std::set<BasicBlock *> UIPs;
+    for (auto sbi = SimdBranches.begin(), sbe = SimdBranches.end();
+        sbi != sbe; ++sbi) {
+      BasicBlock *BB = sbi->first;
+      auto Br = cast<BranchInst>(BB->getTerminator());
+      BasicBlock *UIP = Br->getSuccessor(0);
+      BasicBlock *JIP = JIPs[BB];
+      if (!Br->isConditional() && (!JIP || UIP == JIP)) {
+        DEBUG(dbgs() << BB->getName() << ": converting back to unconditional branch to " << UIP->getName() << "\n");
+        BranchesToUnsimd.push_back(BB);
+      } else
+        UIPs.insert(UIP);
+    }
+    // If we did not un-simd any branch, we are done.
+    if (BranchesToUnsimd.empty())
+      break;
+    for (auto i = BranchesToUnsimd.begin(), e = BranchesToUnsimd.end(); i != e; ++i)
+      SimdBranches.erase(SimdBranches.find(*i));
+
+    // For each join, see if it is still the UIP of any goto. If not, remove it.
+    SmallVector<BasicBlock *, 4> JoinsToRemove;
+    for (auto i = JoinPoints.begin(), e = JoinPoints.end(); i != e; ++i)
+      if (UIPs.find(i->first) == UIPs.end())
+        JoinsToRemove.push_back(i->first);
+    for (auto i = JoinsToRemove.begin(), e = JoinsToRemove.end(); i != e; ++i) {
+      DEBUG(dbgs() << (*i)->getName() << ": removing now unreferenced join\n");
+      JoinPoints.erase(JoinPoints.find(*i));
+    }
+  }
+}
+
+/***********************************************************************
+ * determineJIP : determine the JIP for a goto or join
+ */
+void CMSimdCFLowering::determineJIP(BasicBlock *BB,
+      std::map<BasicBlock *, unsigned> *Numbers, bool IsJoin)
+{
+  BasicBlock *UIP = nullptr;
+  auto Br = cast<BranchInst>(BB->getTerminator());
+  if (!IsJoin)
+    UIP = Br->getSuccessor(0); // this is a goto with a UIP, not a join
+  DEBUG(dbgs() << BB->getName() << ": UIP is " << (UIP ? UIP->getName() : "(none)") << "\n");
+  // Scan forwards to find the next join point that could be resumed by any
+  // code before or at BB.
+  unsigned BBNum = (*Numbers)[BB];
+  bool NeedNextJoin = false;
+  BasicBlock *JP = BB->getNextNode();
+  unsigned JPNum = BBNum + 1;
+  for (;; JP = JP->getNextNode(), ++JPNum) {
+    assert(JP);
+    if ((*Numbers)[JP] != JPNum)
+      DEBUG(dbgs() << JP->getName() << " number " << (*Numbers)[JP] << " does not match " << JPNum << " for " << JP->getName() << "\n");
+    assert((*Numbers)[JP] == JPNum);
+    // If we have reached UIP, then that is also JIP.
+    if (JP == UIP)
+      break;
+    // See if JP is a basic block with a branch from before BB.
+    for (auto ui = JP->use_begin(), ue = JP->use_end(); ui != ue; ++ui) {
+      auto BranchBlock = cast<Instruction>(ui->getUser())->getParent();
+      if ((*Numbers)[BranchBlock] < BBNum) {
+        NeedNextJoin = true;
+        break;
+      }
+    }
+    if (NeedNextJoin && JoinPoints.count(JP))
+      break; // found join point
+    // See if JP finishes with a branch to BB or before.
+    auto Term = JP->getTerminator();
+    for (unsigned si = 0, se = Term->getNumSuccessors(); si != se; ++si) {
+      auto Succ = Term->getSuccessor(si);
+      if ((*Numbers)[Succ] <= BBNum) {
+        NeedNextJoin = true;
+        break;
+      }
+    }
+    assert(JP != &BB->getParent()->back() && "reached end");
+  }
+  DEBUG(dbgs() << BB->getName() << ": JIP is " << JP->getName() << "\n");
+  JIPs[BB] = JP;
+}
+
+/***********************************************************************
+ * predicateCode : predicate the instructions in the code
+ */
+void CMSimdCFLowering::predicateCode(unsigned CMWidth)
+{
+  if (CMWidth) {
+    // Inside a predicated call, also predicate all other blocks, but without
+    // predicating the stores. We do this first so the entry block gets done
+    // before any other block, avoiding a problem that code we insert to set up
+    // the EMs and RMs accidentally gets predicated.
+    for (auto fi = F->begin(), fe = F->end(); fi != fe; ++fi) {
+      BasicBlock *BB = &*fi;
+      if (PredicatedBlocks.find(BB) == PredicatedBlocks.end())
+        predicateBlock(BB, CMWidth, /*PredicateStores=*/false);
+    }
+  }
+  // Predicate all basic blocks that need it.
+  for (auto pbi = PredicatedBlocks.begin(), pbe = PredicatedBlocks.end();
+      pbi != pbe; ++pbi) {
+    BasicBlock *BB = pbi->first;
+    unsigned SimdWidth = pbi->second;
+    predicateBlock(BB, SimdWidth, /*PredicateStores=*/true);
+  }
 }
 
 /***********************************************************************
@@ -912,12 +757,13 @@ CallInst *CMSimdCFLowering::createAny(Value *In, const Twine &Name,
  * Enter:   BB = basic block
  *          R = outermost simd CF region containing it
  */
-void CMSimdCFLowering::predicateBlock(BasicBlock *BB, Region *R)
+void CMSimdCFLowering::predicateBlock(BasicBlock *BB, unsigned SimdWidth,
+    bool PredicateStores)
 {
   for (auto bi = BB->begin(), be = BB->end(); bi != be; ) {
     Instruction *Inst = &*bi;
     ++bi; // Increment here in case Inst is removed
-    predicateInst(Inst, R);
+    predicateInst(Inst, SimdWidth, PredicateStores);
   }
 }
 
@@ -947,9 +793,11 @@ static CallInst *createWrRegion(ArrayRef<Value *> Args, const Twine &Name,
  * predicateInst : add predication to an Instruction if necessary
  *
  * Enter:   Inst = the instruction
- *          R = outermost simd CF region containing it
+ *          SimdWidth = simd cf width in force
+ *          PredicateStores = whether to predicate store instructions
  */
-void CMSimdCFLowering::predicateInst(Instruction *Inst, Region *R)
+void CMSimdCFLowering::predicateInst(Instruction *Inst, unsigned SimdWidth,
+    bool PredicateStores)
 {
   if (auto CI = dyn_cast<CallInst>(Inst)) {
     unsigned IntrinsicID = Intrinsic::not_intrinsic;
@@ -964,18 +812,18 @@ void CMSimdCFLowering::predicateInst(Instruction *Inst, Region *R)
       case Intrinsic::genx_simdcf_any:
         return; // ignore these intrinsics
       case Intrinsic::genx_simdcf_predicate:
-        rewritePredication(CI, R);
+        rewritePredication(CI, SimdWidth);
         return;
       case Intrinsic::genx_gather_orig:
       case Intrinsic::genx_gather4_orig:
       case Intrinsic::genx_scatter_orig:
       case Intrinsic::genx_scatter4_orig:
         CI = convertScatterGather(CI, IntrinsicID);
-        predicateScatterGather(CI, R, 0);
+        predicateScatterGather(CI, SimdWidth, 0);
         return;
       case Intrinsic::not_intrinsic:
         // Call to real subroutine.
-        predicateCall(CI, R);
+        predicateCall(CI, SimdWidth);
         return;
     }
     // An IntrNoMem intrinsic is an ALU intrinsic and can be ignored.
@@ -988,7 +836,7 @@ void CMSimdCFLowering::predicateInst(Instruction *Inst, Region *R)
       {
         if (VT->getElementType()->isIntegerTy(1)) {
           // We have a predicate operand.
-          predicateScatterGather(CI, R, PredNum);
+          predicateScatterGather(CI, SimdWidth, PredNum);
           return;
         }
       }
@@ -996,18 +844,12 @@ void CMSimdCFLowering::predicateInst(Instruction *Inst, Region *R)
         break;
       --PredNum;
     }
-    R->reportError(
-          (Twine("illegal instruction inside SIMD control flow: ")
-            + Intrinsic::getName((Intrinsic::ID)IntrinsicID))
-          .str().c_str(), CI);
+    DiagnosticInfoSimdCF::emit(CI, "illegal instruction inside SIMD control flow");
     return;
   }
-  if (auto SI = dyn_cast<StoreInst>(Inst)) {
-    // No need to predicate a store in the root of a predicated subroutine.
-    if (R->getKind() != Region::ROOT)
-      predicateStore(SI, R);
-    return;
-  }
+  if (PredicateStores)
+    if (auto SI = dyn_cast<StoreInst>(Inst))
+      predicateStore(SI, SimdWidth);
 }
 
 /***********************************************************************
@@ -1015,10 +857,9 @@ void CMSimdCFLowering::predicateInst(Instruction *Inst, Region *R)
  * selection based on the region's SIMD predicate mask.
  *
  * Enter:   Inst = the predication intrinsic call instruction
- *          R = the SIMD CF region containing the call.
-*/
-
-void CMSimdCFLowering::rewritePredication(CallInst *CI, Region *R)
+ *          SimdWidth = simd cf width in force
+ */
+void CMSimdCFLowering::rewritePredication(CallInst *CI, unsigned SimdWidth)
 {
   auto EnabledValues = CI->getArgOperand(0);
   auto DisabledDefaults = CI->getArgOperand(1);
@@ -1027,17 +868,14 @@ void CMSimdCFLowering::rewritePredication(CallInst *CI, Region *R)
          EnabledValues->getType() == DisabledDefaults->getType() &&
          "malformed predication intrinsic");
 
-  if (cast<VectorType>(EnabledValues->getType())->getNumElements() != R->getSimdWidth()) {
-    R->reportError("reduction intrinsic's size does not match the containing SIMD control-flow width", CI);
+  if (cast<VectorType>(EnabledValues->getType())->getNumElements() != SimdWidth) {
+    DiagnosticInfoSimdCF::emit(CI, "mismatching SIMD width inside SIMD control flow");
     return;
   }
-
-  auto EM = loadExecutionMask(CI, R->getSimdWidth());
+  auto EM = loadExecutionMask(CI, SimdWidth);
   auto Select = SelectInst::Create(EM, EnabledValues, DisabledDefaults,
       EnabledValues->getName() + ".simdcfpred", CI);
-
   Select->setDebugLoc(CI->getDebugLoc());
-
   CI->replaceAllUsesWith(Select);
   CI->eraseFromParent();
 }
@@ -1046,13 +884,13 @@ void CMSimdCFLowering::rewritePredication(CallInst *CI, Region *R)
  * predicateStore : add predication to a StoreInst
  *
  * Enter:   Inst = the instruction
- *          R = outermost simd CF region containing it
+ *          SimdWidth = simd cf width in force
  *
  * This code avoids using the utility functions and classes for the wrregion
  * intrinsic that are in the GenX backend because this pass is not part of the
  * GenX backend.
  */
-void CMSimdCFLowering::predicateStore(StoreInst *SI, Region *R)
+void CMSimdCFLowering::predicateStore(StoreInst *SI, unsigned SimdWidth)
 {
   auto V = SI->getValueOperand();
   auto StoreVT = dyn_cast<VectorType>(V->getType());
@@ -1091,17 +929,21 @@ void CMSimdCFLowering::predicateStore(StoreInst *SI, Region *R)
     }
     // We have a wrregion. Check its input width.
     unsigned Width = 0;
-    Value *Input = WrRegion->getArgOperand(ValueToWriteOperandNum);
+    Value *Input = WrRegion->getArgOperand(
+        Intrinsic::GenXRegion::NewValueOperandNum);
     if (auto VT = dyn_cast<VectorType>(Input->getType()))
       Width = VT->getNumElements();
-    if (Width == R->getSimdWidth()) {
+    if (Width == SimdWidth) {
       // This wrregion has the right width input. We could predicate it.
       if (WrRegionToPredicate)
-        U = &WrRegionToPredicate->getOperandUse(ValueToWriteOperandNum);
+        U = &WrRegionToPredicate->getOperandUse(
+            Intrinsic::GenXRegion::NewValueOperandNum);
       WrRegionToPredicate = WrRegion;
-      V = WrRegionToPredicate->getArgOperand(ValueToWriteOperandNum);
+      V = WrRegionToPredicate->getArgOperand(
+          Intrinsic::GenXRegion::NewValueOperandNum);
       // See if it is already predicated, other than by an all true constant.
-      Value *Pred = WrRegion->getArgOperand(PredicateOperandNum);
+      Value *Pred = WrRegion->getArgOperand(
+          Intrinsic::GenXRegion::PredicateOperandNum);
       if (auto C = dyn_cast<Constant>(Pred))
         if (C->isAllOnesValue())
           Pred = nullptr;
@@ -1113,27 +955,27 @@ void CMSimdCFLowering::predicateStore(StoreInst *SI, Region *R)
       // Single element wrregion. This is a scalar operation, so we do not
       // want to predicate it at all.
       return;
-    } else if (Width < R->getSimdWidth()) {
+    } else if (Width < SimdWidth) {
       // Too narrow. Predicate the last correctly sized wrregion or the store.
       break;
     }
   }
   if (WrRegionToPredicate) {
     // We found a wrregion to predicate. Replace it with a predicated one.
-    *U = predicateWrRegion(WrRegionToPredicate, R);
+    *U = predicateWrRegion(WrRegionToPredicate, SimdWidth);
     if (WrRegionToPredicate->use_empty())
       WrRegionToPredicate->eraseFromParent();
     return;
   }
-  if (StoreVT->getNumElements() != R->getSimdWidth()) {
-    R->reportError("vector size does not match the containing SIMD control-flow width", SI);
+  if (StoreVT->getNumElements() != SimdWidth) {
+    DiagnosticInfoSimdCF::emit(SI, "mismatching SIMD width inside SIMD control flow");
     return;
   }
   // Predicate the store by creating a select.
   auto Load = new LoadInst(SI->getPointerOperand(),
       SI->getPointerOperand()->getName() + ".simdcfpred.load", SI);
   Load->setDebugLoc(SI->getDebugLoc());
-  auto EM = loadExecutionMask(SI, R->getSimdWidth());
+  auto EM = loadExecutionMask(SI, SimdWidth);
   auto Select = SelectInst::Create(EM, V, Load,
       V->getName() + ".simdcfpred", SI);
   SI->setOperand(0, Select);
@@ -1228,17 +1070,16 @@ CallInst *CMSimdCFLowering::convertScatterGather(CallInst *CI, unsigned IID)
  *
  * This works on the scatter/gather intrinsics with a predicate operand.
  */
-void CMSimdCFLowering::predicateScatterGather(CallInst *CI, Region *R,
+void CMSimdCFLowering::predicateScatterGather(CallInst *CI, unsigned SimdWidth,
       unsigned PredOperandNum)
 {
   Value *OldPred = CI->getArgOperand(PredOperandNum);
   assert(OldPred->getType()->getScalarType()->isIntegerTy(1));
-  unsigned Width = R->getSimdWidth();
-  if (Width != OldPred->getType()->getVectorNumElements()) {
-    R->reportError("mismatched SIMD width of scatter/gather", CI);
+  if (SimdWidth != OldPred->getType()->getVectorNumElements()) {
+    DiagnosticInfoSimdCF::emit(CI, "mismatching SIMD width of scatter/gather inside SIMD control flow");
     return;
   }
-  auto NewPred = loadExecutionMask(CI, Width);
+  Instruction *NewPred = loadExecutionMask(CI, SimdWidth);
   if (auto C = dyn_cast<Constant>(OldPred))
     if (C->isAllOnesValue())
       OldPred = nullptr;
@@ -1257,25 +1098,25 @@ void CMSimdCFLowering::predicateScatterGather(CallInst *CI, Region *R,
  *
  * Enter:   WrR = the wrregion, whose value width must be equal to the
  *                simd CF width
- *          R = some simd CF region enclosing this wrregion
+ *          SimdWidth = simd cf width in force
  *
  * Return:  the new predicated wrregion
  *
  * If the wrregion is already predicated, the new one has a predicated that
  * is an "and" of the original predicate and our EM.
  */
-CallInst *CMSimdCFLowering::predicateWrRegion(CallInst *WrR, Region *R)
+CallInst *CMSimdCFLowering::predicateWrRegion(CallInst *WrR, unsigned SimdWidth)
 {
   // First gather the args of the original wrregion.
   SmallVector<Value *, 8> Args;
   for (unsigned i = 0, e = WrR->getNumArgOperands(); i != e; ++i)
     Args.push_back(WrR->getArgOperand(i));
   // Modify the predicate in Args.
-  Value *Pred = Args[PredicateOperandNum];
+  Value *Pred = Args[Intrinsic::GenXRegion::PredicateOperandNum];
   if (auto C = dyn_cast<Constant>(Pred))
     if (C->isAllOnesValue())
       Pred = nullptr;
-  auto EM = loadExecutionMask(WrR, R->getSimdWidth());
+  auto EM = loadExecutionMask(WrR, SimdWidth);
   if (!Pred)
     Pred = EM;
   else {
@@ -1284,174 +1125,152 @@ CallInst *CMSimdCFLowering::predicateWrRegion(CallInst *WrR, Region *R)
     And->setDebugLoc(WrR->getDebugLoc());
     Pred = And;
   }
-  Args[PredicateOperandNum] = Pred;
+  Args[Intrinsic::GenXRegion::PredicateOperandNum] = Pred;
   return createWrRegion(Args, WrR->getName(), WrR);
 }
 
 /***********************************************************************
  * predicateCall : predicate a real call to a subroutine
  */
-void CMSimdCFLowering::predicateCall(CallInst *CI, Region *R)
+void CMSimdCFLowering::predicateCall(CallInst *CI, unsigned SimdWidth)
 {
   Function *F = CI->getCalledFunction();
   assert(F);
   auto PSEntry = &PredicatedSubroutines[F];
-  Function *NewF = *PSEntry;
-  if (!NewF) {
-    // This is the first time that a call to Callee has been predicated.
-    // Create a clone of the function, with an added arg for the call mask.
-    // First get the new function type and create the new function, copying
-    // attributes across.
-    SmallVector<AttributeSet, 8> AttributesVec;
-    const AttributeSet &PAL = F->getAttributes();
-    auto FT = cast<FunctionType>(F->getType()->getPointerElementType());
-    SmallVector<Type *, 4> ParamTypes;
-    unsigned ArgIndex = 0;
-    for (auto i = FT->param_begin(), e = FT->param_end();
-        i != e; ++i, ++ArgIndex) {
-      ParamTypes.push_back(*i);
-      AttributeSet attrs = PAL.getParamAttributes(ArgIndex);
-      if (attrs.hasAttributes(ArgIndex)) {
-        AttrBuilder B(attrs, ArgIndex);
-        AttributesVec.push_back(AttributeSet::get(F->getContext(), ArgIndex, B));
+  if (!*PSEntry)
+    *PSEntry = SimdWidth;
+  else if (*PSEntry != SimdWidth)
+    DiagnosticInfoSimdCF::emit(CI, "mismatching SIMD width of called subroutine");
+}
+
+/***********************************************************************
+ * lowerSimdCF : lower the simd control flow
+ */
+void CMSimdCFLowering::lowerSimdCF()
+{
+  // First lower the simd branches.
+  for (auto sbi = SimdBranches.begin(), sbe = SimdBranches.end();
+      sbi != sbe; ++sbi) {
+    BasicBlock *BB = sbi->first;
+    auto Br = cast<BranchInst>(BB->getTerminator());
+    BasicBlock *UIP = Br->getSuccessor(0);
+    BasicBlock *JIP = JIPs[BB];
+    DEBUG(dbgs() << "lower branch at " << BB->getName() << ", UIP=" << UIP->getName() << ", JIP=" << JIP->getName() << "\n");
+    if (!Br->isConditional()) {
+      // Unconditional branch.  Turn it into a conditional branch on true,
+      // adding a fallthrough on false.
+      auto NewBr = BranchInst::Create(UIP, BB->getNextNode(),
+          Constant::getAllOnesValue(Type::getInt1Ty(BB->getContext())), BB);
+      NewBr->setDebugLoc(Br->getDebugLoc());
+      Br->eraseFromParent();
+      Br = NewBr;
+    }
+    Value *Cond = Br->getCondition();
+    Use *CondUse = getSimdConditionUse(Cond);
+    DebugLoc DL = Br->getDebugLoc();
+    if (CondUse)
+      Cond = *CondUse;
+    else {
+      // Branch is currently scalar. Splat to a vector condition.
+      unsigned SimdWidth = PredicatedBlocks[BB];
+      if (auto C = dyn_cast<Constant>(Cond))
+        Cond = ConstantVector::getSplat(SimdWidth, C);
+      else {
+        Cond = Br->getCondition();
+        Type *VecTy = VectorType::get(Cond->getType(), 1);
+        Value *Undef = UndefValue::get(VecTy);
+        Type *I32Ty = Type::getInt32Ty(Cond->getContext());
+        auto Insert = InsertElementInst::Create(Undef, Cond,
+            Constant::getNullValue(I32Ty), Cond->getName() + ".splat", Br);
+        Insert->setDebugLoc(DL);
+        auto Splat = new ShuffleVectorInst(Insert, Undef,
+            Constant::getNullValue(VectorType::get(I32Ty, SimdWidth)),
+            Insert->getName(), Br);
+        Splat->setDebugLoc(DL);
+        Cond = Splat;
       }
     }
-    auto CMTy = VectorType::get(Type::getInt1Ty(F->getContext()),
-        R->getSimdWidth());
-    ParamTypes.push_back(CMTy); // extra arg for call mask
-    auto NewFTy = FunctionType::get(FT->getReturnType(), ParamTypes, false);
-    NewF = Function::Create(NewFTy, F->getLinkage(), "", F->getParent());
-    NewF->takeName(F);
-    NewF->setAttributes(AttributeSet::get(NewF->getContext(), AttributesVec));
-    AttributesVec.clear();
-    // Since we have now created the new function, splice the body of the old
-    // function right into the new function.
-    NewF->getBasicBlockList().splice(NewF->begin(), F->getBasicBlockList());
-    // Loop over the argument list, transferring uses of the old arguments over to
-    // the new arguments, also transferring over the names as well.
-    for (Function::arg_iterator I = F->arg_begin(), E = F->arg_end(),
-                                I2 = NewF->arg_begin();
-         I != E; ++I, ++I2) {
-      I->replaceAllUsesWith(I2);
-      I2->takeName(I);
+    // Insert {NewEM,NewRM,BranchCond} = llvm.genx.simdcf.goto(OldEM,OldRM,~Cond)
+    unsigned SimdWidth = Cond->getType()->getVectorNumElements();
+    auto NotCond = BinaryOperator::Create(Instruction::Xor, Cond,
+        Constant::getAllOnesValue(Cond->getType()), Cond->getName() + ".not",
+        Br);
+    Value *RMAddr = getRMAddr(UIP, SimdWidth);
+    Instruction *OldEM = new LoadInst(EMVar, EMVar->getName(), Br);
+    OldEM->setDebugLoc(DL);
+    auto OldRM = new LoadInst(RMAddr, RMAddr->getName(), Br);
+    OldRM->setDebugLoc(DL);
+    Type *Tys[] = { OldEM->getType(), OldRM->getType() };
+    auto GotoFunc = Intrinsic::getDeclaration(BB->getParent()->getParent(),
+          Intrinsic::genx_simdcf_goto, Tys);
+    Value *Args[] = { OldEM, OldRM, NotCond };
+    auto Goto = CallInst::Create(GotoFunc, Args, "goto", Br);
+    Goto->setDebugLoc(DL);
+    Instruction *NewEM = ExtractValueInst::Create(Goto, 0, "goto.extractem", Br);
+    (new StoreInst(NewEM, EMVar, Br))->setDebugLoc(DL);
+    auto NewRM = ExtractValueInst::Create(Goto, 1, "goto.extractrm", Br);
+    (new StoreInst(NewRM, RMAddr, Br))->setDebugLoc(DL);
+    auto BranchCond = ExtractValueInst::Create(Goto, 2, "goto.extractcond", Br);
+    // Change the branch condition.
+    auto OldCond = dyn_cast<Instruction>(Br->getCondition());
+    Br->setCondition(BranchCond);
+    // Change the branch target to JIP.
+    Br->setSuccessor(0, JIP);
+    // Erase the old llvm.genx.simdcf.any.
+    if (OldCond && OldCond->use_empty())
+      OldCond->eraseFromParent();
+  }
+  // Then lower the join points.
+  for (auto jpi = JoinPoints.begin(), jpe = JoinPoints.end();
+      jpi != jpe; ++jpi) {
+    BasicBlock *JP = jpi->first;
+    unsigned SimdWidth = jpi->second;
+    DEBUG(dbgs() << "lower join point " << JP->getName() << "\n");
+    DebugLoc DL = JP->front().getDebugLoc();
+    Instruction *InsertBefore = JP->getFirstNonPHI();
+    // Insert {NewEM,BranchCond} = llvm.genx.simdcf.join(OldEM,RM)
+    Value *RMAddr = getRMAddr(JP, SimdWidth);
+    Instruction *OldEM = new LoadInst(EMVar, EMVar->getName(), InsertBefore);
+    OldEM->setDebugLoc(DL);
+    auto RM = new LoadInst(RMAddr, RMAddr->getName(), InsertBefore);
+    RM->setDebugLoc(DL);
+    Type *Tys[] = { OldEM->getType(), RM->getType() };
+    auto JoinFunc = Intrinsic::getDeclaration(JP->getParent()->getParent(),
+          Intrinsic::genx_simdcf_join, Tys);
+    Value *Args[] = { OldEM, RM };
+    auto Join = CallInst::Create(JoinFunc, Args, "join", InsertBefore);
+    Join->setDebugLoc(DL);
+    auto NewEM = ExtractValueInst::Create(Join, 0, "join.extractem", InsertBefore);
+    (new StoreInst(NewEM, EMVar, InsertBefore))->setDebugLoc(DL);
+    auto BranchCond = ExtractValueInst::Create(Join, 1, "join.extractcond", InsertBefore);
+    // Zero RM.
+    (new StoreInst(Constant::getNullValue(RM->getType()), RMAddr, InsertBefore))
+          ->setDebugLoc(DL);
+    BasicBlock *JIP = JIPs[JP];
+    if (JIP) {
+      // This join point is in predicated code, so it was separated into its
+      // own block. It needs to be turned into a conditional branch to JIP,
+      // with the condition from llvm.genx.simdcf.join.
+      auto Br = cast<BranchInst>(JP->getTerminator());
+      assert(!Br->isConditional());
+      auto NewBr = BranchInst::Create(JIP, JP->getNextNode(), BranchCond, Br);
+      NewBr->setDebugLoc(DL);
+      Br->eraseFromParent();
+      // Get the JIP's RM, just to ensure that it knows its SIMD width in case
+      // nothing else references it.
+      getRMAddr(JIP, RM->getType()->getVectorNumElements());
     }
-    // Store the new Function in the PredicatedSubroutines map.
-    *PSEntry = NewF;
-  } else {
-    // Get the replacement function and check that the simd width agrees.
-    if (NewF->getArgumentList().back().getType()->getPrimitiveSizeInBits()
-        != R->getSimdWidth()) {
-      R->reportError("mismatched SIMD width of called subroutine", CI);
-      return;
-    }
   }
-  // Construct a replacement call with an extra arg: the execution mask.
-  addCallMaskToCall(CI, NewF, loadExecutionMask(CI, R->getSimdWidth()));
 }
 
 /***********************************************************************
- * addCallMaskToCall : replace a CallInst with another one with the extra
- *    call mask arg
- *
- * Enter:   CI = the CallInst
- *          Callee = new called function
- *          CM = call mask to use as argument
- *
- * Return:  the new CallInst
+ * getSimdConditionUse : given a branch condition, if it is
+ *    llvm.genx.simdcf.any, get the vector condition
  */
-CallInst *CMSimdCFLowering::addCallMaskToCall(CallInst *CI,
-    Function *Callee, Value *CM)
-{
-  SmallVector<Value *, 8> Args;
-  for (unsigned i = 0, e = CI->getNumArgOperands(); i != e; ++i)
-    Args.push_back(CI->getArgOperand(i));
-  Args.push_back(CM);
-  auto NewCall = CallInst::Create(Callee, Args, "", CI);
-  NewCall->takeName(CI);
-  NewCall->setDebugLoc(CI->getDebugLoc());
-  CI->replaceAllUsesWith(NewCall);
-  CI->eraseFromParent();
-  return NewCall;
-}
-
-/***********************************************************************
- * loadExecutionMask : load the vXi1 EM (execution mask) for the current
- *      SIMD width
- *
- * Enter:   InsertBefore = insert the load before this instruction
- *          Width = width of EM to get
- */
-Instruction *CMSimdCFLowering::loadExecutionMask(Instruction *InsertBefore,
-    unsigned Width)
-{
-  auto EM = getExecutionMask(InsertBefore->getParent()->getParent(), Width);
-  auto Load = new LoadInst(EM, EM->getName(), InsertBefore);
-  Load->setDebugLoc(InsertBefore->getDebugLoc());
-  return Load;
-}
-
-/***********************************************************************
- * getExecutionMask : get the vXi1 EM (execution mask) for the current
- *      SIMD width
- *
- * Enter:   F = Function
- *          Width = width of EM to get
- *          NoInit = do not insert initialization to all 1s (used in a
- *                   predicated subroutine)
- *
- * This returns the alloca instruction for the variable, creating it if
- * necessary at the start of the function.
- */
-AllocaInst *CMSimdCFLowering::getExecutionMask(Function *F, unsigned Width,
-      bool NoInit)
-{
-  unsigned LogWidth = 31 - countLeadingZeros(Width, ZB_Undefined);
-  if (!EMs[LogWidth]) {
-    // Need to create a new one and initialize it to all 1s at the start
-    // of the function.
-    auto EMTy = VectorType::get(Type::getInt1Ty(F->getContext()), Width);
-    auto InsertBefore = F->front().getFirstNonPHI();
-    EMs[LogWidth] = new AllocaInst(EMTy,
-        "EM" + Twine(Width) + ".simdcf", InsertBefore);
-    if (!NoInit)
-      new StoreInst(Constant::getAllOnesValue(EMTy), EMs[LogWidth], InsertBefore);
-  }
-  return EMs[LogWidth];
-}
-
-/***********************************************************************
- * getReenableMask : get the vXi1 RM (re-enable mask) for the join point
- *      at the start of the specified block
- *
- * Enter:   BB = block to get RM for
- *          Width = width of mask, only needed if we need to create it
- *
- * This returns the alloca instruction for the variable, creating it if
- * necessary at the start of the function.
- */
-AllocaInst *CMSimdCFLowering::getReenableMask(BasicBlock *BB, unsigned Width)
-{
-  auto Entry = &ReenableMasks[BB];
-  if (!*Entry) {
-    // Need to create a new one and initialize it to all 0s at the start
-    // of the function.
-    assert(Width);
-    auto RMTy = VectorType::get(Type::getInt1Ty(BB->getContext()), Width);
-    auto InsertBefore = BB->getParent()->front().getFirstNonPHI();
-    *Entry = new AllocaInst(RMTy, BB->getName() + ".RM.simdcf", InsertBefore);
-    new StoreInst(Constant::getNullValue(RMTy), *Entry, InsertBefore);
-  }
-  return *Entry;
-}
-
-/***********************************************************************
- * getSimdCondition : given a branch condition, if it is llvm.genx.simdcf.any,
- *    get the vector condition
- */
-Value *CMSimdCFLowering::getSimdCondition(Value *Cond)
+Use *CMSimdCFLowering::getSimdConditionUse(Value *Cond)
 {
   if (auto CI = isSimdCFAny(Cond))
-    return CI->getOperand(0);
+    return &CI->getOperandUse(0);
   return nullptr;
 }
 
@@ -1472,394 +1291,65 @@ CallInst *CMSimdCFLowering::isSimdCFAny(Value *V)
 }
 
 /***********************************************************************
- * DiagnosticInfoSimdCF initializer from Instruction
- *
- * If the Instruction has a DebugLoc, then that is used for the error
- * location.
- * Otherwise, if the Instruction is an llvm.genx.simdcf.any, then its
- * filename and line args are used for the error location.
- * Otherwise, if the Instruction is a branch whose condition is an
- * llvm.genx.simdcf.any, then it works as above.
- * Otherwise, the location is unknown.
+ * loadExecutionMask : create instruction to load EM
  */
-DiagnosticInfoSimdCF::DiagnosticInfoSimdCF(Instruction *Inst,
-    const Twine &Desc, DiagnosticSeverity Severity)
-    : DiagnosticInfo(getKindID(), Severity),
-      Description(Desc), Line(0), Col(0)
+Instruction *CMSimdCFLowering::loadExecutionMask(Instruction *InsertBefore,
+    unsigned SimdWidth)
 {
-  auto DL = Inst->getDebugLoc();
-  if (!DL.isUnknown()) {
-    Filename = DIScope(DL.getScope(Inst->getContext())).getFilename();
-    Line = DL.getLine();
-    Col = DL.getCol();
-    return;
+  Instruction *EM = new LoadInst(EMVar, EMVar->getName(), InsertBefore);
+  EM->setDebugLoc(InsertBefore->getDebugLoc());
+  // If the simd width is not MAX_SIMD_CF_WIDTH, extract the part of EM we want.
+  if (SimdWidth == MAX_SIMD_CF_WIDTH)
+    return EM;
+  if (ShuffleMask.empty()) {
+    auto I32Ty = Type::getInt32Ty(F->getContext());
+    for (unsigned i = 0; i != 32; ++i)
+      ShuffleMask.push_back(ConstantInt::get(I32Ty, i));
   }
-  // See if Inst is a conditional branch whose condition might be
-  // llvm.genx.simdcf.any.
-  if (auto Br = dyn_cast<BranchInst>(Inst))
-    if (Br->isConditional())
-      Inst = dyn_cast<Instruction>(Br->getCondition());
-  // See if Inst is a call to llvm.genx.simdcf.any where operand 1 is a
-  // constant GEP of a global variable of type char[N] with an initializer
-  // that is a 0 terminated string, giving us the filename.
-  if (auto CI = CMSimdCFLowering::isSimdCFAny(Inst)) {
-    if (auto CE = dyn_cast<ConstantExpr>(CI->getOperand(1))) {
-      if (CE->getOpcode() == Instruction::GetElementPtr) {
-        if (auto Glob = dyn_cast<GlobalVariable>(CE->getOperand(0))) {
-          if (auto Init = dyn_cast_or_null<ConstantDataArray>(Glob->getInitializer())) {
-            if (Init->isCString())
-              Filename = Init->getAsCString();
-          }
-        }
-      }
-    }
-    // See if operand 2 is a constant int giving the line number.
-    if (auto C = dyn_cast<ConstantInt>(CI->getOperand(2)))
-      Line = C->getZExtValue();
+  EM = new ShuffleVectorInst(EM, UndefValue::get(EM->getType()),
+      ConstantVector::get(ArrayRef<Constant *>(ShuffleMask).slice(0, SimdWidth)),
+      Twine("EM") + Twine(SimdWidth), InsertBefore);
+  EM->setDebugLoc(InsertBefore->getDebugLoc());
+  return EM;
+}
+
+/***********************************************************************
+ * getRMAddr : get address of resume mask variable for a particular join
+ *        point, creating the variable if necessary
+ *
+ * Enter:   JP = the join point
+ *          SimdWidth = the simd width for the join point, used for creating
+ *              the RM variable. Can be 0 as long as the RM variable already
+ *              exists.
+ */
+Value *CMSimdCFLowering::getRMAddr(BasicBlock *JP, unsigned SimdWidth)
+{
+  DEBUG(dbgs() << "getRMAddr(" << JP->getName() << ", " << SimdWidth << ")\n");
+  auto RMAddr = &RMAddrs[JP];
+  if (!*RMAddr) {
+    assert(SimdWidth);
+    // Create an RM variable for this join point. Insert an alloca at the start
+    // of the function.
+    Type *RMTy = VectorType::get(Type::getInt1Ty(F->getContext()), SimdWidth);
+    Instruction *InsertBefore = &F->front().front();
+    *RMAddr = new AllocaInst(RMTy, Twine("RM.") + JP->getName(), InsertBefore);
+    // Initialize to all zeros.
+    new StoreInst(Constant::getNullValue(RMTy), *RMAddr, InsertBefore);
   }
+  assert(!SimdWidth
+      || (*RMAddr)->getType()->getPointerElementType()->getVectorNumElements()
+        == SimdWidth);
+  return *RMAddr;
 }
 
 /***********************************************************************
- * DiagnosticInfoSimdCF::print : print the error/warning message
+ * DiagnosticInfoSimdCF::emit : emit an error or warning
  */
-void DiagnosticInfoSimdCF::print(DiagnosticPrinter &DP) const
+void DiagnosticInfoSimdCF::emit(Instruction *Inst, const Twine &Msg,
+        DiagnosticSeverity Severity)
 {
-  std::string Loc(
-        (Twine(!Filename.empty() ? Filename : "<unknown>")
-        + ":" + Twine(Line)
-        + (!Col ? Twine() : Twine(":") + Twine(Col))
-        + ": ")
-      .str());
-  DP << Loc << Description;
-}
-
-/***********************************************************************
- * Region destructor. This frees all its descendants.
- */
-Region::~Region()
-{
-  if (!Children.size())
-    return;
-  for (auto pi = this->postorder_begin(); ; ++pi) {
-    Region *R = &*pi;
-    // Children have now all been deleted. Clear the Children vector
-    // so they don't get deleted again.
-    R->Children.clear();
-    if (R == this)
-      break; // Don't delete the root as we are in its destructor.
-    delete R;
-  }
-}
-
-/***********************************************************************
- * getElse : get the else block in an if..else..endif region
- *
- * Return:  the else block, nullptr if this is not an if..else..endif region
- *
- * An if that has an else has a final child whose kind is ELSE.
- */
-BasicBlock *Region::getElse() const
-{
-  if (getKind() != IF)
-    return nullptr;
-  if (!size())
-    return nullptr;
-  Region *R = Children[size() - 1];
-  if (R->getKind() != ELSE)
-    return nullptr;
-  return R->Entry;
-}
-
-/***********************************************************************
- * getNumPredecessors : count the predecessors of a basic block
- */
-static unsigned getNumPredecessors(BasicBlock *BB)
-{
-  unsigned Count = 0;
-  for (auto ui = BB->use_begin(), ue = BB->use_end(); ui != ue; ++ui)
-    ++Count;
-  return Count;
-}
-
-/***********************************************************************
- * createRegionTree : create a simd CF region tree for a function
- *
- * Enter:   F = the Function
- *          CMWidth = 0 normally, the call mask width if this function is
- *                called from predicated sites and so needs completely
- *                predicating
- *
- * Return:  the root region
- *
- * Because this pass runs so early, we can rely on the basic blocks being
- * in the same order as the source code, and we can just scan linearly
- * through them to find structured CM SIMD control flow.
- *
- * Setting CMWidth here means that we get an error if there is simd CF
- * with a different width.
- */
-Region *Region::createRegionTree(Function *F, unsigned CMWidth)
-{
-  unsigned IllegalCount = 0;
-  Region *Root = new Region(ROOT, nullptr, nullptr, nullptr);
-  Root->SimdWidth = CMWidth;
-  Region *R = Root;
-  for (auto fi = F->begin(), fe = F->end(); fi != fe; ++fi) {
-    BasicBlock *BB = &*fi;
-    if (BB == R->Exit) {
-      if (R->Kind == DO) {
-        // This is the exit from a do..while.
-        DEBUG(dbgs() << BB->getName() << ": exit from while (do=" << R->Entry->getName() << ")\n");
-        if (getNumPredecessors(BB) != 1 + (unsigned)R->NumBreaks) {
-          DEBUG(dbgs() << BB->getName() << ": illegal (loop exit has too many predecessors)\n");
-          if (!IllegalCount++)
-            R->reportIllegal(BB->getFirstNonPHI());
-        }
-      } else {
-        if (R->Kind == ELSE)
-          R = R->getParent();
-        assert(R->Kind == IF);
-        // This is an endif.
-        DEBUG(dbgs() << BB->getName() << ": endif\n");
-      }
-      R = R->getParent();
-    } else {
-      unsigned NumPred = getNumPredecessors(BB);
-      bool Illegal = false;
-      if (R->Kind != ROOT && NumPred != 1) {
-        Illegal = true;
-        // Check for this being the while block in a do..while loop
-        // with continues.
-        if (R->Kind == DO && (unsigned)R->NumContinues + 1 == NumPred)
-          Illegal = false;
-      }
-      // Check for this being the loop header of a simd do..while.
-      if (NumPred == 2) {
-        auto ui = BB->use_begin();
-        BasicBlock *Pred1 = cast<Instruction>(ui->getUser())->getParent();
-        BasicBlock *Pred2 = cast<Instruction>((++ui)->getUser())->getParent();
-        BasicBlock *WhileBlock = nullptr;
-        if (Pred1 == BB->getPrevNode())
-          WhileBlock = Pred2;
-        else if (Pred2 == BB->getPrevNode())
-          WhileBlock = Pred1;
-        if (WhileBlock) {
-          if (auto Br = dyn_cast<BranchInst>(WhileBlock->getTerminator())) {
-            Value *Predicate = nullptr;
-            if (Br->isConditional()
-                && (Predicate = CMSimdCFLowering::getSimdCondition(Br->getCondition()))
-                && Br->getSuccessor(0) == BB
-                && Br->getSuccessor(1) == WhileBlock->getNextNode()) {
-              // This is the loop header of a simd do..while.
-              R = R->push(DO, BB, WhileBlock->getNextNode());
-              DEBUG(dbgs() << BB->getName() << ": do (while=" << WhileBlock->getName() << ")\n");
-              Illegal = false;
-              R->setSimdWidth(Predicate);
-            }
-          }
-        }
-      }
-      if (Illegal) {
-        DEBUG(dbgs() << BB->getName() << ": illegal (unrecognized join block)\n");
-        if (!IllegalCount++)
-          R->reportIllegal(BB->getFirstNonPHI());
-      }
-    }
-    // Then process the edges out of the block.
-    if (auto Br = dyn_cast<BranchInst>(BB->getTerminator())) {
-      if (!Br->isConditional()) {
-        // Unconditional branch. Could be else, endif, break, continue,
-        // or just a branch into the next block for the start of a do..while.
-        auto *Succ = Br->getSuccessor(0);
-        if (R->getKind() != ROOT) {
-          if (Succ == BB->getNextNode()) {
-            // Fall through to next block.
-            // Ignore. It is either an endif, or illegally unstructured,
-            // and that all gets handled at the top of the next block.
-          } else {
-            // To check for break or continue, we need to find the innermost
-            // break/continue.
-            Region *Loop = R;
-            while (Loop && Loop->getKind() != DO)
-              Loop = Loop->getParent();
-            if (Loop && Loop->Exit == Succ->getNextNode()) {
-              // This is a continue. (Note that we push a new region into the
-              // tree, but we do not make it the current region.)
-              DEBUG(dbgs() << BB->getName() << ": continue (to " << Succ->getName() << ")\n");
-              R->push(CONTINUE, BB, nullptr);
-              ++Loop->NumContinues;
-            } else if (Loop && Loop->Exit == Succ) {
-              // This is a break. (Note that we push a new region into the
-              // tree, but we do not make it the current region.)
-              DEBUG(dbgs() << BB->getName() << ": break (to " << Succ->getName() << ")\n");
-              R->push(BREAK, BB, nullptr);
-              ++Loop->NumBreaks;
-            } else if (R->getKind() == IF && BB->getNextNode() == R->Exit) {
-              // This is the end of the then leg when there is an else.
-              R->Exit = Succ;
-              R = R->push(ELSE, BB->getNextNode(), Succ);
-              DEBUG(dbgs() << BB->getNextNode()->getName() << ": else (endif=" << Succ->getName() << ")\n");
-            } else {
-              // Illegal scalar CF inside simd CF.
-              DEBUG(dbgs() << BB->getName() << ": illegal (unconditional branch)\n");
-              if (!IllegalCount++)
-                R->reportIllegal(BB->getTerminator());
-            }
-          }
-        }
-      } else if (auto Predicate
-            = CMSimdCFLowering::getSimdCondition(Br->getCondition())) {
-        // Simd conditional branch. Could be if, while.
-        BasicBlock *True = Br->getSuccessor(0);
-        BasicBlock *False = Br->getSuccessor(1);
-        if (R->Kind != DO || BB->getNextNode() != R->Exit) {
-          // This is not the while in a do..while. It must be an if (or illegal).
-          if (True != BB->getNextNode()) {
-            DEBUG(dbgs() << BB->getName() << ": illegal (conditional branch)\n");
-            if (!IllegalCount++)
-              R->reportIllegal(BB->getTerminator());
-          }
-          R = R->push(IF, BB, False);
-          DEBUG(dbgs() << BB->getName() << ": if (else/endif=" << False->getName() << ")\n");
-          R->setSimdWidth(Predicate);
-        }
-      } else if (R->getKind() != ROOT) {
-        DEBUG(dbgs() << BB->getName() << ": illegal (non vector condition)\n");
-        if (!IllegalCount++)
-          R->reportIllegal(BB->getTerminator());
-      }
-    } else if (R->getKind() != ROOT) {
-      DEBUG(dbgs() << BB->getName() << ": illegal (not cond/uncond branch)\n");
-      if (!IllegalCount++)
-        R->reportIllegal(BB->getTerminator());
-    }
-  }
-  if (R->getKind() != ROOT) {
-    DEBUG(dbgs() << F->getName() << ": illegal (stack not empty)\n");
-    if (!IllegalCount++)
-      R->reportIllegal(F->back().getTerminator());
-  }
-  return Root;
-}
-
-/***********************************************************************
- * getRoot : get the root region
- */
-Region *Region::getRoot()
-{
-  Region *Root = this;
-  while (Root->Parent)
-    Root = Root->Parent;
-  return Root;
-}
-
-/***********************************************************************
- * reportIllegal : report illegal unstructured control flow
- *
- * We only do this once per function, otherwise we would get loads of
- * spurious messages after the first one.
- */
-void Region::reportIllegal(Instruction *Inst)
-{
-  if (getRoot()->Errored)
-    return;
-  reportError(
-      "illegal unstructured SIMD control flow (did you mix it with scalar control flow?)",
-      Inst);
-}
-
-/***********************************************************************
- * reportError : report SIMD control flow error
- *
- * Enter:   Text = text of error message
- *          Inst = instruction to report at, or 0
- *
- * If no debug info is available, it reports at the innermost simd branch
- * if possible.
- */
-void Region::reportError(const char *Text, Instruction *Inst)
-{
-  getRoot()->Errored = true;
-  while (Inst && Inst->getDebugLoc().isUnknown()) {
-    // If there is no debug info, try going up to find an instruction with
-    // debug info.
-    if (Inst == &Inst->getParent()->front())
-      break;
-    Inst = Inst->getPrevNode();
-  }
-  if (!Inst || Inst->getDebugLoc().isUnknown()) {
-    // If there is no instruction and still no debug info, attempt to pass the
-    // innermost simd branch so we can get the source location from that.
-    Region *R = this;
-    switch (R->getKind()) {
-      case ELSE:
-        R = R->getParent();
-        // fall through...
-      case IF:
-        Inst = R->Entry->getTerminator();
-        break;
-      case DO:
-        Inst = R->Exit->getPrevNode()->getTerminator();
-        break;
-    }
-  }
-  DiagnosticInfoSimdCF Err(Inst, Text);
+  DiagnosticInfoSimdCF Err(Severity, *Inst->getParent()->getParent(),
+      Inst->getDebugLoc(), Msg);
   Inst->getContext().diagnose(Err);
 }
-
-/***********************************************************************
- * setSimdWidth : set the simd with of the simd control flow region
- *
- * The region inherits its simd width from its parent, or 0 if it is
- * an outermost simd CF region. If it is an inner region, this function
- * checks that the inherited and the new widths agree. If the new width
- * is 1 then this is a scalar psuedo-simd region embedded in a real one,
- * in which case we want to preserve the existing width.
- */
-void Region::setSimdWidth(Value *Predicate)
-{
-  unsigned Width = Predicate->getType()->getPrimitiveSizeInBits();
-  if (!SimdWidth) {
-    if (Width == 1)
-      reportError("Scalar condition in outermost SIMD control flow", nullptr);
-    else
-      SimdWidth = Width;
-  } else if (Width > 1 && SimdWidth != Width)
-    reportError("mismatched SIMD width in inner SIMD control flow", nullptr);
-}
-
-/***********************************************************************
- * debug dump/print for Region
- */
-#if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
-void Region::dump() const
-{
-  print(dbgs(), true);
-}
-#endif
-
-void Region::print(raw_ostream &OS, bool Deep, unsigned Depth) const
-{
-  const char *Name = "???";
-  switch (getKind()) {
-    case ROOT: Name = "ROOT"; break;
-    case IF: Name = "IF"; break;
-    case ELSE: Name = "ELSE"; break;
-    case DO: Name = "DO"; break;
-    case BREAK: Name = "BREAK"; break;
-    case CONTINUE: Name = "CONTINUE"; break;
-  }
-  OS.indent(2 * Depth) << Name << ": [";
-  if (Entry)
-    OS << Entry->getName();
-  OS << ",";
-  if (Exit)
-    OS << Exit->getName();
-  OS << ")  (width " << SimdWidth << ")\n";
-  if (!Deep)
-    return;
-  for (auto i = begin(), e = end(); i != e; ++i)
-    (*i)->print(OS, true, Depth + 1);
-}
-
 
