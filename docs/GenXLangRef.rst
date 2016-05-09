@@ -42,8 +42,9 @@ for each kernel, containing:
 * 0: reference to Function
 * 1: kernel name
 * 2: asm name
-* 3: kernel argument kinds
+* 3: kernel argument kinds (i32 for each kernel argument)
 * 4: slm size in bytes
+* 5: kernel argument offsets (i32 for each kernel argument)
 
 Types
 -----
