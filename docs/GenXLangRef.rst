@@ -91,8 +91,315 @@ Load and store
 Load and store instructions are allowed only to load/store from/to a static
 alloca, i.e. ones that are removed by a mem2reg pass.
 
+
+Vector regions
+==============
+
+Introduction to region-based addressing
+---------------------------------------
+
+The Gen hardware, and thus vISA, provide the ability for a vector operand of an
+instruction to be a region within a register.
+
+1D region
+^^^^^^^^^
+
+A 1D region has the following parameters:
+
+* The execution size is the number of elements in the region. This is
+  determined by the instruction in which the operand appears.
+* The horizontal stride (sometimes called just the stride) is the number of
+  elements to step between each element of the region. This is 1 for a
+  contiguous region, but can take other values, including 0 (in a source
+  operand only) to splat the same scalar value across the whole operand.
+* The start index indicates which element within the register is the start of
+  the region.
+
+The stride must be a constant. The start index can be a variable (giving an indirect operand).
+
+Here is a simple contiguous 1D region (yellow), with execution size 4, stride 1
+and start index 3, in a register with 8 elements:
+
+.. image:: GenXLangRef_region_example1.png
+
+Here is a non-contiguous 1D region, with execution size 4, stride 2 and start
+index 3, in a register with 16 elements:
+
+.. image:: GenXLangRef_region_example2.png
+
+2D region
+^^^^^^^^^
+
+A 2D region has multiple rows where each row is a 1D region. It has the following parameters:
+
+* The execution size is the number of elements in the region. This is
+  determined by the instruction in which the operand appears.
+* The vertical stride (or vstride) is the number of elements to step between
+  the start of one row and the start of the next row. It can be 0 (in a source
+  operand only) to repeat the same row multiple times.
+* The width is the number of elements per row.
+* The horizontal stride (or stride) is the number of elements to step between
+  each element of the region within a row. This is 1 for a contiguous row, but
+  can take other values, including 0 (in a source operand only) to splat the
+  same scalar value across the whole row.
+* The start index indicates which element within the register is the start of
+  the region.
+
+The vstride, width and stride must be a constant. The start index can be a scalar variable (giving an indirect operand) or a vector variable with an element per row of the region (giving a multi-indirect operand).
+
+Here is a 2D region with contiguous rows, with:
+
+* execution size 8 (the number of elements in the region)
+* vstride 8 (the step between the start of one row (3) and the start of the next (11)
+* width 4 (the number of elements in a row)
+* stride 1 (the step between each element in a row)
+* start index 3
+
+.. image:: GenXLangRef_region_example3.png
+
+Here is a 2D region with:
+
+* execution size 9 (the number of elements in the region)
+* vstride 7 (the step between the start of one row (8) and the start of the next (15)
+* width 3 (the number of elements in a row)
+* stride 3 (the step between each element in a row)
+* start index 8
+
+.. image:: GenXLangRef_region_example4.png
+
+Notes
+^^^^^
+
+Some points that arise from these examples:
+
+* The execution size must be a multiple of the width. Execution size divided by
+  width is the number of rows in a 2D region. If the number of rows is 1, then
+  it is a 1D region.
+
+* Gen and vISA only support powers of two within certain limits for the region
+  parameters other than start index. Also 2D regions are allowed only in a
+  source operand. But source languages like CM using regions do not have these
+  restrictions, and the compiler needs to allow for the more general case.
+
+* The matrix representation shown in the last two examples is not a property of
+  the register from/into which the region is read/written. Rather, it is a
+  property of the region parameters. We show a matrix whose width is the
+  vstride of the region. In the last example, the register is not even a
+  multiple of vstride number of elements, so we have some left-over elements at
+  the bottom.
+
+
+Region access in LLVM IR
+------------------------
+
+Region access is represented in LLVM IR by intrinsics with the same region
+parameters as above. The representation is close to the hardware capabilities,
+but:
+
+* The vISA/hardware restrictions on the region parameters being powers of 2
+  within certain ranges are not initially imposed. The GenX backend includes a
+  legalization pass that imposes these restrictions, and other gen-specific
+  ones such as not being allowed to cross 2 GRF boundaries and not being
+  allowed a 2D region as a destination, by splitting up region accesses.
+
+* There is an extra *parent width* region parameter used for optimizations
+  when the GenX backend collapses and legalizes region accesses.
+
+* To make the parent width parameter effective when a variable start index is
+  involved, a compiler frontend should compile a 2D region access as two
+  separate accesses, one for the rows and one for the columns within the rows.
+
+The restriction still needs to be imposed that the region is entirely contained
+within the vector it is being read from or written to, otherwise undefined
+behavior ensues at runtime.
+
+Reading a region
+^^^^^^^^^^^^^^^^
+
+Reading a region, that is extracting certain elements from a vector to make a
+new smaller vector, is represented by the ``llvm.genx.rdregioni`` or
+``llvm.genx.rdregionf`` intrinsic. (There are integer and fp variants simply
+because the tablegen language for declaring an overloaded intrinsic does not
+allow an "any scalar or vector type".
+
+The operands to this intrinsic are:
+
+* the vector being read from;
+* vstride (ignored for a 1D region, that is width == execution size);
+* width;
+* stride;
+* start index;
+* parent width (see below).
+  
+The execution
+size is implied by the vector width of the return value of the intrinsic call.
+
+The vstride, width and stride are expressed in elements. But the start index is
+expressed in bytes, as this is what the hardware does in the variable index
+case.
+
+A read from the first example region from above:
+
+.. image:: GenXLangRef_region_example1.png
+
+is represented by the following LLVM IR (assuming the start index is constant, and the element type is i32):
+
+.. code-block:: llvm
+
+  %v1 = <8 x i32> something
+  %region1 = call <4 x i32> @llvm.genx.rdregioni.v4i32.v8i32(<8 x i32> %v1, i32 0, i32 4, i32 1, i16 12, i32 undef)
+
+The vstride is set to 0, but is ignored because it is a 1D region.
+
+The width is 4 (elements) and the stride is 1.
+
+The start index is 12, but remember this is in bytes, so it means 3 elements. (The elements have type i32.)
+
+A read from the fourth example region from above:
+
+.. image:: GenXLangRef_region_example2.png
+
+is represented by this LLVM IR (assuming constant start index and i32 element
+type):
+
+.. code-block:: llvm
+
+  %v2 = <30 x i32> something
+  %region2 = call <9 x i32> @llvm.genx.rdregioni.v9i32.v30i32(<30 x i32> %v2, i32 7, i32 3, i32 2, i16 32)
+
+With:
+
+* execution size 9 (the number of elements in the region)
+* vstride 7 (the step between the start of one row (8) and the start of the next (15)
+* width 3 (the number of elements in a row)
+* stride 3 (the step between each element in a row)
+* start index 32 bytes, which is 8 elements.
+
+The diagram above shows the input vector %v2 as a matrix of width 7 with two elements left over in a partial row. This 7 is not a property of the input vector value, which is just a vector (LLVM IR does not represent matrices). Instead it is the vstride of the region we are reading.
+
+Writing a region
+^^^^^^^^^^^^^^^^
+
+Writing a region, that is inserting the elements of a vector into certain
+positions of another vector, yielding a new value for the latter vector,
+is represented by the ``llvm.genx.wrregioni`` or
+``llvm.genx.wrregionf`` intrinsic. (There are integer and fp variants simply
+because the tablegen language for declaring an overloaded intrinsic does not
+allow an "any scalar or vector type".
+
+In SSA, each value is defined exactly once. Since we are representing a vector
+value as an LLVM IR value, the only way of representing a write to a region,
+which is a partial write, is for the operation to take the old value of the
+vector as an input, and to return the updated value of the vector. It is then up to
+the GenX backend to ensure that the two values are allocated to the same register.
+
+The operands to this intrinsic are:
+
+* the "old value" of the vector being written into;
+* the "new value", that is, the vector or scalar value to write into the region;
+* vstride;
+* width;
+* stride;
+* start index;
+* parent width (see below);
+* mask.
+
+The execution size is the vector width of the "new value" input.
+For a 1D region (width == execution size), vstride is ignored.
+
+As above in llvm.genx.rdregion, the vstride, width and stride are expressed in
+elements, but the start index is expressed in bytes.
+
+Using the same two example regions as above in llvm.genx.rdregion:
+
+.. image:: GenXLangRef_region_example1.png
+
+Writing the elements of %region3 into the region in %v3, generating a new value %v3.new is represented by:
+
+.. code-block:: llvm
+
+  %v3 = <8 x i32> something
+  %region3 = <4 x i32> something
+  %v3.new = call <8 x i32> @llvm.genx.wrregion.v8i32.v4i32.i1(<8 x i32> %v3, <4 x i32> %region3, i32 0, i32 4, i32 1, i16 12, i32 undef, i1 1)
+
+The .v8i32.v4i32.i1 decoration on the intrinsic name arises from LLVM’s
+intrinsic overloading mechanism. The v8i32 is the type of the return value, and
+the v4i32 is the type of the value being written in to the region. The i1 is
+the type of the mask operand; see below.
+
+The vstride is set to 0, but is ignored because it is a 1D region.
+
+The width is 4 (elements) and the stride is 1.
+
+The start index is 12, but remember this is in bytes, so it means 3 elements. (The elements have type i32.)
+
+.. image:: GenXLangRef_region_example4.png
+
+Writing the elements of %region4 into the region in %v4, generating a new value %v4.new is represented by:
+
+.. code-block:: llvm
+
+  %v4 = <30 x i32> something
+  %region4 = <9 x i32> something
+  %v4.new = call <30 x i32> @llvm.genx.wrregion.v30i32.v9i32.i1(<30 x i32> %v4, <9 x i32> %region4, i32 7, i32 3, i32 2, i16 32, i32 undef, i1 1)
+
+With:
+
+* execution size 9 (the number of elements in the region)
+* vstride 7 (the step between the start of one row (8) and the start of the next (15)
+* width 3 (the number of elements in a row)
+* stride 3 (the step between each element in a row)
+* start index 32 bytes, which is 8 elements.
+
+The mask operand
+^^^^^^^^^^^^^^^^
+
+The wrregion* intrinsics have an extra mask operand. This is used to control
+which elements in the region are actually written, for use in predication and
+SIMD control flow.
+
+Most generally, the mask operand is a vector of i1 with the same vector width
+as the value being written in to the region, and it is variable. If any element
+of the mask is 0, the corresponding element of the value is not written in to
+the region, leaving that element unchanged.
+
+The most common case, used when there is no predication, is that the mask is all
+ones. As a shorthand, this is represented by a single constant i1 value of 1,
+rather than the whole vector.
+
+Single element region
+^^^^^^^^^^^^^^^^^^^^^
+
+A single element could be a scalar value or a 1-vector. It is convenient to
+allow both in LLVM IR, because CM allows both as distinct types.
+
+The rdregion and wrregion intrinsics are defined such that
+a single element region can be represented as either a scalar or a 1-vector.
+However, for the scalar case, it is recommended to use the LLVM IR instructions
+extractelement and insertelement instead, as core LLVM optimizations understand
+them.
+
+The parent width operand
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+For a 2D region, certain parts of the GenX backend can optimize better if it is
+known that a row of the region cannot cross certain boundaries:
+
+* Collapsing two 2D regions is possible only if it is known that a row of the
+  inner 2D region cannot cross a row boundary of the outer 2D region.
+
+* Knowing that a row of a 2D region cannot cross a GRF boundary can help to
+  avoid splitting it up so much in legalization.
+
+For a region with a constant start index, this can all be calculated from the
+start index and region parameters. For a region with a variable start index,
+the *parent width* operand is set to value N to make a statement
+that the semantics of the language being compiled say that a row of the region
+cannot cross a multiple of N boundary.
+
+
 SIMD control flow
------------------
+=================
 
 ``goto`` and ``join`` instructions are represented by ``llvm.genx.simdcf.goto``
 and ``llvm.genx.simdcf.join`` instructions.
