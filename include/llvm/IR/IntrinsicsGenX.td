@@ -3035,15 +3035,20 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   // llvm.genx.convert.addr : convert to address register category
   //
   // arg0: input value (i16 or vector of i16)
+  // arg1: constant offset (i16)
   //
   // Return value: converted value (same type)
   //
   // This intrinsic is inserted by the GenXCatgoryConversion pass to represent
   // a value being converted from a general value to an address, used as the
-  // variable index in an element or region access.
+  // variable index in an element or region access. There it is created with
+  // offset set to 0; GenXAddressCommoning may adjust that offset to try and
+  // stop the address conversion falling outside of the register into which it
+  // points to avoid going out of spec (bug 4395).
   //
   def int_genx_convert_addr :
-              Intrinsic<[llvm_anyint_ty], [LLVMMatchType<0>], [IntrNoMem]>;
+              Intrinsic<[llvm_anyint_ty], [LLVMMatchType<0>, llvm_i16_ty],
+                [IntrNoMem]>;
 
   // llvm.genx.constantpred : load constant predicate (i1 or vector of i1)
   //
