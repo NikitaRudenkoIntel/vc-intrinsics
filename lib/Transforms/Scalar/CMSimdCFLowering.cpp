@@ -161,7 +161,7 @@ struct CGNode {
 
 /// The CM SIMD CF lowering pass (a function pass)
 class CMSimdCFLowering : public FunctionPass {
-  const unsigned MAX_SIMD_CF_WIDTH = 32;
+  static const unsigned MAX_SIMD_CF_WIDTH = 32;
   Function *F;
   // A map giving the basic blocks ending with a simd branch, and the simd
   // width of each one.
