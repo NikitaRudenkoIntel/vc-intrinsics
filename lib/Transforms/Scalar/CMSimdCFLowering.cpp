@@ -21,53 +21,56 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This pass lowers CM SIMD control flow into a form where the IR reflects
-// the semantics.
-//
-// On entry, any SIMD control flow conditional branch is a br instruction with
-// a scalar condition that is the result of an llvm.genx.simdcf.any intrinsic.
-// The IR in this state does not reflect the real semantics, and would thus be
-// prone to LLVM optimizations misanalyzing and misoptimizing it.
-//
-// This pass runs very early, straight after Clang codegen has generated the
-// IR.
-//
-// After this pass, the LLVM IR reflects the semantics using a model of Gen
-// unstructured SIMD control flow (goto/join instructions). The idea is that
-// the IR generates code that works but is suboptimal, but we can then have a
-// pass late in the GenX backend that spots this code and turns it into real
-// goto/join instructions.
-//
-// The model is as follows:
-//
-//  * There is a vXi1 execution mask (EM) (for SIMD width X). Within SIMD
-//    control flow, vector instructions that affect state are predicated by
-//    EM. (SIMD control flow of different widths cannot be mixed, although
-//    it can appear separately in the same function, so there is a separate
-//    EM for each width used in the function.)
-//
-//  * Each SIMD control flow join point has a vXi1 re-enable mask (RM)
-//    variable. It is initialized to 0.
-//
-//  * A SIMD conditional branch is always forward, and does the following:
-//
-//    - For a channel that is enabled (bit set in EM) and wants to take the
-//      branch, its bit is cleared in EM and set in the branch target's RM.
-//
-//    - If all bits in EM are now zero, it branches to
-//      the next join point where any currently disabled channel could be
-//      re-enabled. For structured control flow, this is the join point of
-//      the current or next outer construct.
-//
-//   * A join point does the following:
-//
-//    - re-enables channels from its RM variable: EM |= RM
-//
-//    - resets its RM to 0
-//
-//    - if EM is still all zero, it branches to the next join point where any
-//      currently disabled channel could be re-enabled.
-//
+/// CMSimdCFLowering
+/// ----------------
+///
+/// This pass lowers CM SIMD control flow into a form where the IR reflects
+/// the semantics.
+///
+/// On entry, any SIMD control flow conditional branch is a br instruction with
+/// a scalar condition that is the result of an llvm.genx.simdcf.any intrinsic.
+/// The IR in this state does not reflect the real semantics, and would thus be
+/// prone to LLVM optimizations misanalyzing and misoptimizing it.
+///
+/// This pass runs very early, straight after Clang codegen has generated the
+/// IR.
+///
+/// After this pass, the LLVM IR reflects the semantics using a model of Gen
+/// unstructured SIMD control flow (goto/join instructions). The idea is that
+/// the IR generates code that works but is suboptimal, but we can then have a
+/// pass late in the GenX backend that spots this code and turns it into real
+/// goto/join instructions.
+///
+/// The model is as follows:
+///
+/// * There is a vXi1 execution mask (EM) (for SIMD width X). Within SIMD
+///   control flow, vector instructions that affect state are predicated by
+///   EM. (SIMD control flow of different widths cannot be mixed, although
+///   it can appear separately in the same function, so there is a separate
+///   EM for each width used in the function.)
+///
+/// * Each SIMD control flow join point has a vXi1 re-enable mask (RM)
+///   variable. It is initialized to 0.
+///
+/// * A SIMD conditional branch is always forward, and does the following:
+///
+///   - For a channel that is enabled (bit set in EM) and wants to take the
+///     branch, its bit is cleared in EM and set in the branch target's RM.
+///
+///   - If all bits in EM are now zero, it branches to
+///     the next join point where any currently disabled channel could be
+///     re-enabled. For structured control flow, this is the join point of
+///     the current or next outer construct.
+///
+/// * A join point does the following:
+///
+///   - re-enables channels from its RM variable by ORing RM into EM
+///
+///   - resets its RM to 0
+///
+///   - if EM is still all zero, it branches to the next join point where any
+///     currently disabled channel could be re-enabled.
+///
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "cmsimdcflowering"
@@ -129,7 +132,7 @@ public:
   }
 };
 
-/// Diagnostic information for error/warning relating to SIMD control flow.
+// Diagnostic information for error/warning relating to SIMD control flow.
 class DiagnosticInfoSimdCF : public DiagnosticInfoOptimizationBase {
 private:
   static int KindID;
@@ -152,14 +155,14 @@ public:
 };
 int DiagnosticInfoSimdCF::KindID = 0;
 
-/// Call graph node
+// Call graph node
 struct CGNode {
   Function *F;
   std::set<CGNode *> UnvisitedCallers;
   std::set<CGNode *> Callees;
 };
 
-/// The CM SIMD CF lowering pass (a function pass)
+// The CM SIMD CF lowering pass (a function pass)
 class CMSimdCFLowering : public FunctionPass {
   static const unsigned MAX_SIMD_CF_WIDTH = 32;
   Function *F;
