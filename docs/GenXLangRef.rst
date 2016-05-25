@@ -398,6 +398,23 @@ that the semantics of the language being compiled say that a row of the region
 cannot cross a multiple of N boundary.
 
 
+Predicates and predication
+==========================
+
+Certain vector operations can be *predicated*, that is, a vector of i1
+predicate controls whether the corresponding element of the operation is
+written into its result element.
+
+LLVM IR already has ``select`` with a vector condition.
+
+As outlined above, the wrregion intrinsics have a mask operand. If a bit is
+not set in the mask, then the corresponding element of the "new value" input
+is not written into the result.
+
+The intrinsics corresponding to predicated send messages (e.g. gather), and
+the raw send intrinsics, have a predicate operand.
+
+
 SIMD control flow
 =================
 
