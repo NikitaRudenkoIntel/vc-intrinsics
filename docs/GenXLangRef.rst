@@ -416,28 +416,19 @@ The intrinsics corresponding to predicated send messages (e.g. gather), and
 the raw send intrinsics, have a predicate operand.
 
 
-SIMD control flow
-=================
+Non-GenX intrinsics
+===================
 
-``goto`` and ``join`` instructions are represented by ``llvm.genx.simdcf.goto``
-and ``llvm.genx.simdcf.join`` instructions.
+In general the GenX backend does not implement non-GenX intrinsics, with the
+following exceptions:
 
-The EM (execution mask) result of the two intrinsics is then used to mask
-execution inside the SIMD control flow:
+* ``llvm.uadd.with.overflow`` -- the GenX backend does not implement the other
+  arithmetic-with-overflow intrinsics, but I found a case where LLVM was
+  transforming a CM program to use this one, so I had to implement it.
 
-* EM can be used as the predicate in wrregion, or the condition in a select,
-  to mask the write of a result to a vector;
-
-* to mask the result of a compare, use the EM result as the condition in a
-  select whose "true" input is the compare, and whose "false" input is the
-  old value of the predicate being written;
-
-EM is fixed at v32i1. To use a subset of it (e.g. v16i1 in SIMD16 control flow),
-use a shufflevector that extracts the subset, then use that as above.
-
-As described in the spec for the SIMD control flow intrinsics, there is a set
-of rules governing how the intrinsics and the EM values are used. The GenX
-backend generates actual ``goto`` instructions only if the rules are adhered to.
+* ``llvm.fma`` -- this intrinsic is generated in the GenXPatternMatch pass,
+  but I think the GenX backend would be able to cope with it being in the IR
+  already.
 
 
 GenX intrinsics
