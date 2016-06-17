@@ -12,8 +12,32 @@ The GenX backend accepts
 :doc:`LLVM intermediate representation <../LangRef>`
 with certain restrictions, and with additional GenX-specific intrinsics.
 
-LLVM IR representation of vISA code
-===================================
+LLVM IR representation of EU code
+=================================
+
+Whole thread representation
+---------------------------
+
+When using LLVM with the GenX backend, the LLVM IR represents execution on a
+whole EU thread. This is distinct from IGC and Beignet (the OpenCL compiler for
+the Intel open source driver), in which the LLVM IR represents just a single
+work item, and a later stage of the compiler after LLVM IR parallelizes that
+into simd4,8,16 or 32.
+
+The GenX backend thus gives more flexibility for a client that needs full
+control over what is executed in the EU thread for one of these reasons:
+
+#. the compiler needs to expose that control in the language (like CM);
+   
+#. the compiler wants to do some parallelization, but in a more
+   flexible way (e.g. different SIMD width for different parts of the code).
+   This could be done as an LLVM pass before reaching the GenX backend, or
+   it could be done even before reaching LLVM;
+
+#. the compiler wants to expose "cross lane" functionality, where an algorithm
+   can be executed in parallel within a single EU thread, but the separate lanes
+   need to access each other's data at some points.
+
 
 Linkage
 -------
