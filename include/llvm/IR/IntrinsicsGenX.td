@@ -1221,6 +1221,13 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   ///
   def int_genx_get_color : Intrinsic<[llvm_i16_ty], [], [IntrNoMem]>;
 
+  /// ``llvm.genx.get.hwid`` : read hw_id value
+  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  ///
+  /// Return Value: i32 the value read
+  ///
+  def int_genx_get_hwid: Intrinsic<[llvm_i32_ty], [], [IntrNoMem]>;
+
   /// ``llvm.genx.set.pause`` : set the pause register (v11.4)
   /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   ///
