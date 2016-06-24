@@ -2330,7 +2330,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// * arg0: i32 opcode, constant
   /// * arg1: vXi1 predicate mask, used to determine execution size
   /// * arg2: i32 channel mask, constant
-  /// * arg3: i32 aoffimmi, constant
+  /// * arg3: i16 aoffimmi
   /// * arg4: i32 sampler index
   /// * arg5: i32 surface index
   /// * argN: vXf or vXhf operand, for 6 <= N <= 20
@@ -2338,7 +2338,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// * Return value: the data read
   ///
   def int_genx_3d_sample : Intrinsic<[llvm_anyvector_ty], [llvm_i32_ty,
-    llvm_anyvector_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty,
+    llvm_anyvector_ty, llvm_i32_ty, llvm_i16_ty, llvm_i32_ty, llvm_i32_ty,
     llvm_anyvector_ty, llvm_anyvector_ty, llvm_anyvector_ty,
     llvm_anyvector_ty, llvm_anyvector_ty, llvm_anyvector_ty,
     llvm_anyvector_ty, llvm_anyvector_ty, llvm_anyvector_ty,
@@ -2351,14 +2351,14 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// * arg0: i32 opcode, constant
   /// * arg1: vXi1 predicate mask, used to determine execution size
   /// * arg2: i32 channel mask, constant
-  /// * arg3: i32 aoffimmi, constant
+  /// * arg3: i16 aoffimmi
   /// * arg4: i32 surface index
   /// * argN: vXf or vXhf operand, for 5 <= N <= 19 
   ///
   /// * Return value: the data read
   ///
   def int_genx_3d_load : Intrinsic<[llvm_anyvector_ty], [llvm_i32_ty,
-    llvm_anyvector_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty,
+    llvm_anyvector_ty, llvm_i32_ty, llvm_i16_ty, llvm_i32_ty,
     llvm_anyvector_ty, llvm_anyvector_ty, llvm_anyvector_ty,
     llvm_anyvector_ty, llvm_anyvector_ty, llvm_anyvector_ty,
     llvm_anyvector_ty, llvm_anyvector_ty, llvm_anyvector_ty,
