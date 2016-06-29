@@ -307,6 +307,7 @@ private:
   void rewritePredication(CallInst *CI, unsigned SimdWidth);
   void predicateStore(StoreInst *SI, unsigned SimdWidth);
   CallInst *convertScatterGather(CallInst *CI, unsigned IID);
+  void predicateSend(CallInst *CI, unsigned IntrinsicID, unsigned SimdWidth);
   void predicateScatterGather(CallInst *CI, unsigned SimdWidth, unsigned PredOperandNum);
   CallInst *predicateWrRegion(CallInst *WrR, unsigned SimdWidth);
   void predicateCall(CallInst *CI, unsigned SimdWidth);
@@ -916,6 +917,12 @@ void CMSimdCFLowering::predicateInst(Instruction *Inst, unsigned SimdWidth,
         CI = convertScatterGather(CI, IntrinsicID);
         predicateScatterGather(CI, SimdWidth, 0);
         return;
+      case Intrinsic::genx_raw_send:
+      case Intrinsic::genx_raw_send_noresult:
+      case Intrinsic::genx_raw_sends:
+      case Intrinsic::genx_raw_sends_noresult:
+        predicateSend(CI, IntrinsicID, SimdWidth);
+        return;
       case Intrinsic::not_intrinsic:
         // Call to real subroutine.
         predicateCall(CI, SimdWidth);
@@ -1158,6 +1165,75 @@ CallInst *CMSimdCFLowering::convertScatterGather(CallInst *CI, unsigned IID)
   CI->replaceAllUsesWith(NewCI);
   CI->eraseFromParent();
   return NewCI;
+}
+
+/***********************************************************************
+ * predicateSend : predicate a raw send
+ *
+ * This has to cope with the case that the predicate is a scalar i1 constant
+ * 1. We first convert the predicate to whatever width matches current simd
+ * control flow.
+ */
+void CMSimdCFLowering::predicateSend(CallInst *CI, unsigned IntrinsicID,
+      unsigned SimdWidth)
+{
+  unsigned PredOperandNum = 1;
+  if (isa<VectorType>(CI->getOperand(PredOperandNum)->getType())) {
+    // We already have a vector predicate.
+    predicateScatterGather(CI, SimdWidth, PredOperandNum);
+    return;
+  }
+  // Need to convert scalar predicate to vector. We need to get a new intrinsic
+  // declaration from an array of overloaded types, and that depends on exactly
+  // which send intrinsic we have.
+  auto Pred = ConstantVector::getSplat(SimdWidth,
+      cast<Constant>(CI->getOperand(PredOperandNum)));
+  Function *Decl = nullptr;
+  switch (IntrinsicID) {
+    case Intrinsic::genx_raw_send: {
+      Type *Tys[] = { CI->getType(), Pred->getType(),
+          CI->getOperand(4)->getType() };
+      Decl = Intrinsic::getDeclaration(CI->getParent()->getParent()->getParent(),
+            (Intrinsic::ID)IntrinsicID, Tys);
+      break;
+    }
+    case Intrinsic::genx_raw_send_noresult: {
+      Type *Tys[] = { Pred->getType(), CI->getOperand(4)->getType() };
+      Decl = Intrinsic::getDeclaration(CI->getParent()->getParent()->getParent(),
+            (Intrinsic::ID)IntrinsicID, Tys);
+      break;
+    }
+    case Intrinsic::genx_raw_sends: {
+      Type *Tys[] = { CI->getType(), Pred->getType(),
+          CI->getOperand(4)->getType(), CI->getOperand(5)->getType() };
+      Decl = Intrinsic::getDeclaration(CI->getParent()->getParent()->getParent(),
+            (Intrinsic::ID)IntrinsicID, Tys);
+      break;
+    }
+    case Intrinsic::genx_raw_sends_noresult: {
+      Type *Tys[] = { Pred->getType(), CI->getOperand(4)->getType(),
+          CI->getOperand(5)->getType() };
+      Decl = Intrinsic::getDeclaration(CI->getParent()->getParent()->getParent(),
+            (Intrinsic::ID)IntrinsicID, Tys);
+      break;
+    }
+    default:
+      llvm_unreachable("unexpected send intrinsic");
+      break;
+  }
+  SmallVector<Value *, 8> Args;
+  for (unsigned i = 0, e = CI->getNumArgOperands(); i != e; ++i)
+    if (i == PredOperandNum)
+      Args.push_back(Pred);
+    else
+      Args.push_back(CI->getOperand(i));
+  auto NewCI = CallInst::Create(Decl, Args, "", CI);
+  NewCI->takeName(CI);
+  NewCI->setDebugLoc(CI->getDebugLoc());
+  CI->replaceAllUsesWith(NewCI);
+  CI->eraseFromParent();
+  // Now we can predicate the new send instruction.
+  predicateScatterGather(NewCI, SimdWidth, PredOperandNum);
 }
 
 /***********************************************************************
