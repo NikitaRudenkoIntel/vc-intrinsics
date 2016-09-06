@@ -269,7 +269,7 @@ A read from the first example region from above:
 
 is represented by the following LLVM IR (assuming the start index is constant, and the element type is i32):
 
-.. code-block:: llvm
+.. code-block:: text
 
   %v1 = <8 x i32> something
   %region1 = call <4 x i32> @llvm.genx.rdregioni.v4i32.v8i32(<8 x i32> %v1, i32 0, i32 4, i32 1, i16 12, i32 undef)
@@ -287,7 +287,7 @@ A read from the fourth example region from above:
 is represented by this LLVM IR (assuming constant start index and i32 element
 type):
 
-.. code-block:: llvm
+.. code-block:: text
 
   %v2 = <30 x i32> something
   %region2 = call <9 x i32> @llvm.genx.rdregioni.v9i32.v30i32(<30 x i32> %v2, i32 7, i32 3, i32 2, i16 32)
@@ -341,7 +341,7 @@ Using the same two example regions as above in llvm.genx.rdregion:
 
 Writing the elements of %region3 into the region in %v3, generating a new value %v3.new is represented by:
 
-.. code-block:: llvm
+.. code-block:: text
 
   %v3 = <8 x i32> something
   %region3 = <4 x i32> something
@@ -362,7 +362,7 @@ The start index is 12, but remember this is in bytes, so it means 3 elements. (T
 
 Writing the elements of %region4 into the region in %v4, generating a new value %v4.new is represented by:
 
-.. code-block:: llvm
+.. code-block:: text
 
   %v4 = <30 x i32> something
   %region4 = <9 x i32> something
