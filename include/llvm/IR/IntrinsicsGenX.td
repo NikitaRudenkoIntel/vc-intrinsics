@@ -1437,34 +1437,34 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   ///
   def int_genx_typed_atomic_add : Intrinsic<[llvm_anyvector_ty],
     [llvm_anyvector_ty, llvm_i32_ty, LLVMMatchType<0>,
-    llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty], []>;
+	llvm_anyint_ty, LLVMMatchType<2>, LLVMMatchType<2>, LLVMMatchType<2>], []>;
   def int_genx_typed_atomic_sub : Intrinsic<[llvm_anyvector_ty],
     [llvm_anyvector_ty, llvm_i32_ty, LLVMMatchType<0>,
-    llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty], []>;
+	llvm_anyint_ty, LLVMMatchType<2>, LLVMMatchType<2>, LLVMMatchType<2>], []>;
   def int_genx_typed_atomic_min : Intrinsic<[llvm_anyvector_ty],
     [llvm_anyvector_ty, llvm_i32_ty, LLVMMatchType<0>,
-    llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty], []>;
+	llvm_anyint_ty, LLVMMatchType<2>, LLVMMatchType<2>, LLVMMatchType<2>], []>;
   def int_genx_typed_atomic_max : Intrinsic<[llvm_anyvector_ty],
     [llvm_anyvector_ty, llvm_i32_ty, LLVMMatchType<0>,
-    llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty], []>;
+	llvm_anyint_ty, LLVMMatchType<2>, LLVMMatchType<2>, LLVMMatchType<2>], []>;
   def int_genx_typed_atomic_xchg : Intrinsic<[llvm_anyvector_ty],
     [llvm_anyvector_ty, llvm_i32_ty, LLVMMatchType<0>,
-    llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty], []>;
+	llvm_anyint_ty, LLVMMatchType<2>, LLVMMatchType<2>, LLVMMatchType<2>], []>;
   def int_genx_typed_atomic_and : Intrinsic<[llvm_anyvector_ty],
     [llvm_anyvector_ty, llvm_i32_ty, LLVMMatchType<0>,
-    llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty], []>;
+	llvm_anyint_ty, LLVMMatchType<2>, LLVMMatchType<2>, LLVMMatchType<2>], []>;
   def int_genx_typed_atomic_or : Intrinsic<[llvm_anyvector_ty],
     [llvm_anyvector_ty, llvm_i32_ty, LLVMMatchType<0>,
-    llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty], []>;
+	llvm_anyint_ty, LLVMMatchType<2>, LLVMMatchType<2>, LLVMMatchType<2>], []>;
   def int_genx_typed_atomic_xor : Intrinsic<[llvm_anyvector_ty],
     [llvm_anyvector_ty, llvm_i32_ty, LLVMMatchType<0>,
-    llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty], []>;
+	llvm_anyint_ty, LLVMMatchType<2>, LLVMMatchType<2>, LLVMMatchType<2>], []>;
   def int_genx_typed_atomic_imin : Intrinsic<[llvm_anyvector_ty],
     [llvm_anyvector_ty, llvm_i32_ty, LLVMMatchType<0>,
-    llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty], []>;
+	llvm_anyint_ty, LLVMMatchType<2>, LLVMMatchType<2>, LLVMMatchType<2>], []>;
   def int_genx_typed_atomic_imax : Intrinsic<[llvm_anyvector_ty],
     [llvm_anyvector_ty, llvm_i32_ty, LLVMMatchType<0>,
-    llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty], []>;
+	llvm_anyint_ty, LLVMMatchType<2>, LLVMMatchType<2>, LLVMMatchType<2>], []>;
 
   /// ``llvm.genx.typed.atomic.*`` : atomic typed with fmin/fmax operation
   /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1487,10 +1487,10 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   ///
   def int_genx_typed_atomic_fmin : Intrinsic<[llvm_anyvector_ty],
     [llvm_anyvector_ty, llvm_i32_ty, LLVMMatchType<0>,
-    llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty], []>;
+	llvm_anyint_ty, LLVMMatchType<2>, LLVMMatchType<2>, LLVMMatchType<2>], []>;
   def int_genx_typed_atomic_fmax : Intrinsic<[llvm_anyvector_ty],
     [llvm_anyvector_ty, llvm_i32_ty, LLVMMatchType<0>,
-    llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty], []>;
+	llvm_anyint_ty, LLVMMatchType<2>, LLVMMatchType<2>, LLVMMatchType<2>], []>;
 
   /// ``llvm.genx.typed.atomic.*`` : atomic typed with inc/dec operation
   /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1512,10 +1512,10 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   ///
   def int_genx_typed_atomic_inc : Intrinsic<[llvm_anyvector_ty],
     [llvm_anyvector_ty, llvm_i32_ty,
-    llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty], []>;
+	llvm_anyint_ty, LLVMMatchType<2>, LLVMMatchType<2>, LLVMMatchType<2>], []>;
   def int_genx_typed_atomic_dec : Intrinsic<[llvm_anyvector_ty],
     [llvm_anyvector_ty, llvm_i32_ty,
-    llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty], []>;
+	llvm_anyint_ty, LLVMMatchType<2>, LLVMMatchType<2>, LLVMMatchType<2>], []>;
 
   /// ``llvm.genx.typed.atomic.cmpxchg`` : vISA TYPED_ATOMIC CMPXCHG instruction
   /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1537,7 +1537,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   ///
   def int_genx_typed_atomic_cmpxchg : Intrinsic<[llvm_anyvector_ty],
     [llvm_anyvector_ty, llvm_i32_ty, LLVMMatchType<0>, LLVMMatchType<0>,
-    llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty], []>;
+	llvm_anyint_ty, LLVMMatchType<2>, LLVMMatchType<2>, LLVMMatchType<2>], []>;
 
   /// ``llvm.genx.typed.atomic.fcmpwr`` : vISA TYPED_ATOMIC FCMPWR instruction
   /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1557,9 +1557,9 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// Predicate, element offset, src, and the return value must all have the
   /// same vector width (which in reality must be 8)
   ///
-  def int_genx_typed_atomic_fcmpwr : Intrinsic<[llvm_v8f32_ty],
+  def int_genx_typed_atomic_fcmpwr : Intrinsic<[llvm_anyvector_ty],
     [llvm_anyvector_ty, llvm_i32_ty, LLVMMatchType<0>,LLVMMatchType<0>,
-    llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty, llvm_v8i32_ty], []>;
+	llvm_anyint_ty, LLVMMatchType<2>, LLVMMatchType<2>, LLVMMatchType<2>], []>;
 
   /// ``llvm.genx.gather.orig`` : vISA GATHER instruction
   /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
