@@ -982,6 +982,56 @@ void CMSimdCFLowering::rewritePredication(CallInst *CI, unsigned SimdWidth)
   CI->eraseFromParent();
 }
 
+static bool IsBitCastForLifetimeMark(const Value *V)
+{
+  if (!V || !isa<BitCastInst>(V)) {
+    return false;
+  }
+  for (Value::const_user_iterator it = V->user_begin(), e = V->user_end(); it != e; ++it) {
+    const CallInst *CI = dyn_cast<const CallInst>(*it);
+    if (!CI) {
+      return false;
+    }
+    unsigned IntrinsicID = Intrinsic::not_intrinsic;
+    auto Callee = CI->getCalledFunction();
+    if (Callee) {
+      IntrinsicID = Callee->getIntrinsicID();
+    }
+    if (IntrinsicID != Intrinsic::lifetime_start &&
+        IntrinsicID != Intrinsic::lifetime_end) {
+      return false;
+    }
+  }
+  return true;
+}
+
+static bool isSingleBlockLocalStore(const StoreInst *SI)
+{
+  const Value *P = SI->getPointerOperand();
+  // pointer has to be an alloca
+  if (isa<AllocaInst>(P)) {
+    // check every uses of P, it has to be either a lift-time intrinsic or a load/store in the same basic block
+    auto BLK = SI->getParent();
+    for (Value::const_user_iterator II = P->user_begin(), IE = P->user_end(); II != IE; ++II) {
+      if (auto *SU = dyn_cast<const StoreInst>(*II)) {
+        if (SU->getParent() != BLK) {
+          return false;
+        }
+      }
+      else if (auto *LU = dyn_cast<const LoadInst>(*II)) {
+        if (LU->getParent() != BLK) {
+          return false;
+        }
+      }
+      else if (!IsBitCastForLifetimeMark(dyn_cast<const Value>(*II))) {
+        return false;
+      }
+    }
+    return true;
+  }
+  return false;
+}
+
 /***********************************************************************
  * predicateStore : add predication to a StoreInst
  *
@@ -996,8 +1046,13 @@ void CMSimdCFLowering::predicateStore(StoreInst *SI, unsigned SimdWidth)
 {
   auto V = SI->getValueOperand();
   auto StoreVT = dyn_cast<VectorType>(V->getType());
+  // Scalar store not predicated
   if (!StoreVT || StoreVT->getNumElements() == 1)
-    return; // Scalar store not predicated
+    return; 
+  // local-variable store that is only used within the same basic block 
+  // do not need predicate
+  if (isSingleBlockLocalStore(SI))
+    return;
   // See if the value to store is a wrregion (possibly predicated) of the
   // right width. If so, we predicate that instead. This also handles
   // the case that the value to store is wider than the simd CF width,
@@ -1007,6 +1062,7 @@ void CMSimdCFLowering::predicateStore(StoreInst *SI, unsigned SimdWidth)
   // Also skip any bitcasts.
   CallInst *WrRegionToPredicate = nullptr;
   Use *U = &SI->getOperandUse(0);
+  Use *UseNeedsUpdate = nullptr;
   for (;;) {
     if (auto BC = dyn_cast<BitCastInst>(V)) {
       U = &BC->getOperandUse(0);
@@ -1037,18 +1093,24 @@ void CMSimdCFLowering::predicateStore(StoreInst *SI, unsigned SimdWidth)
       Width = VT->getNumElements();
     if (Width == SimdWidth) {
       // This wrregion has the right width input. We could predicate it.
-      if (WrRegionToPredicate)
-        U = &WrRegionToPredicate->getOperandUse(
+      if (WrRegionToPredicate) {
+        // is this right? what if there is bitcast in between?
+        UseNeedsUpdate = &WrRegionToPredicate->getOperandUse(
             Intrinsic::GenXRegion::NewValueOperandNum);
+      }
+      else {
+        UseNeedsUpdate = U;
+      }
       WrRegionToPredicate = WrRegion;
       V = WrRegionToPredicate->getArgOperand(
           Intrinsic::GenXRegion::NewValueOperandNum);
       // See if it is already predicated, other than by an all true constant.
       Value *Pred = WrRegion->getArgOperand(
           Intrinsic::GenXRegion::PredicateOperandNum);
-      if (auto C = dyn_cast<Constant>(Pred))
+      if (auto C = dyn_cast<Constant>(Pred)) {
         if (C->isAllOnesValue())
           Pred = nullptr;
+      }
       if (Pred) {
         // Yes it is predicated. Stop here and further predicate it.
         break;
@@ -1064,7 +1126,8 @@ void CMSimdCFLowering::predicateStore(StoreInst *SI, unsigned SimdWidth)
   }
   if (WrRegionToPredicate) {
     // We found a wrregion to predicate. Replace it with a predicated one.
-    *U = predicateWrRegion(WrRegionToPredicate, SimdWidth);
+    assert(UseNeedsUpdate); 
+    *UseNeedsUpdate = predicateWrRegion(WrRegionToPredicate, SimdWidth);
     if (WrRegionToPredicate->use_empty())
       WrRegionToPredicate->eraseFromParent();
     return;
