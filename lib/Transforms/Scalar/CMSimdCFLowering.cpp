@@ -305,7 +305,7 @@ private:
   void predicateBlock(BasicBlock *BB, unsigned SimdWidth, bool PredicateStores);
   void predicateInst(Instruction *Inst, unsigned SimdWidth, bool PredicateStores);
   void rewritePredication(CallInst *CI, unsigned SimdWidth);
-  void predicateStore(StoreInst *SI, unsigned SimdWidth);
+  void predicateStore(Instruction *SI, unsigned SimdWidth);
   CallInst *convertScatterGather(CallInst *CI, unsigned IID);
   void predicateSend(CallInst *CI, unsigned IntrinsicID, unsigned SimdWidth);
   void predicateScatterGather(CallInst *CI, unsigned SimdWidth, unsigned PredOperandNum);
@@ -885,6 +885,13 @@ static CallInst *createWrRegion(ArrayRef<Value *> Args, const Twine &Name,
   return WrRegion;
 }
 
+static unsigned getIntrinsicID(const Value *V) {
+  if (auto CI = dyn_cast_or_null<CallInst>(V))
+    if (auto F = CI->getCalledFunction())
+      return F->getIntrinsicID();
+  return Intrinsic::not_intrinsic;
+}
+
 /***********************************************************************
  * predicateInst : add predication to an Instruction if necessary
  *
@@ -895,6 +902,14 @@ static CallInst *createWrRegion(ArrayRef<Value *> Args, const Twine &Name,
 void CMSimdCFLowering::predicateInst(Instruction *Inst, unsigned SimdWidth,
     bool PredicateStores)
 {
+  if (PredicateStores) {
+    if (isa<StoreInst>(Inst) ||
+        getIntrinsicID(Inst) == Intrinsic::genx_vstore) {
+      predicateStore(Inst, SimdWidth);
+      return;
+    }
+  }
+
   if (auto CI = dyn_cast<CallInst>(Inst)) {
     unsigned IntrinsicID = Intrinsic::not_intrinsic;
     auto Callee = CI->getCalledFunction();
@@ -906,6 +921,8 @@ void CMSimdCFLowering::predicateInst(Instruction *Inst, unsigned SimdWidth,
       case Intrinsic::genx_wrregioni:
       case Intrinsic::genx_wrregionf:
       case Intrinsic::genx_simdcf_any:
+      case Intrinsic::genx_vload:
+      case Intrinsic::genx_vstore:
         return; // ignore these intrinsics
       case Intrinsic::genx_simdcf_predicate:
         rewritePredication(CI, SimdWidth);
@@ -949,9 +966,6 @@ void CMSimdCFLowering::predicateInst(Instruction *Inst, unsigned SimdWidth,
     DiagnosticInfoSimdCF::emit(CI, "illegal instruction inside SIMD control flow");
     return;
   }
-  if (PredicateStores)
-    if (auto SI = dyn_cast<StoreInst>(Inst))
-      predicateStore(SI, SimdWidth);
 }
 
 /***********************************************************************
@@ -982,21 +996,12 @@ void CMSimdCFLowering::rewritePredication(CallInst *CI, unsigned SimdWidth)
   CI->eraseFromParent();
 }
 
-static bool IsBitCastForLifetimeMark(const Value *V)
-{
+static bool IsBitCastForLifetimeMark(const Value *V) {
   if (!V || !isa<BitCastInst>(V)) {
     return false;
   }
-  for (Value::const_user_iterator it = V->user_begin(), e = V->user_end(); it != e; ++it) {
-    const CallInst *CI = dyn_cast<const CallInst>(*it);
-    if (!CI) {
-      return false;
-    }
-    unsigned IntrinsicID = Intrinsic::not_intrinsic;
-    auto Callee = CI->getCalledFunction();
-    if (Callee) {
-      IntrinsicID = Callee->getIntrinsicID();
-    }
+  for (auto U : V->users()) {
+    unsigned IntrinsicID = getIntrinsicID(U);
     if (IntrinsicID != Intrinsic::lifetime_start &&
         IntrinsicID != Intrinsic::lifetime_end) {
       return false;
@@ -1005,27 +1010,22 @@ static bool IsBitCastForLifetimeMark(const Value *V)
   return true;
 }
 
-static bool isSingleBlockLocalStore(const StoreInst *SI)
+static bool isSingleBlockLocalStore(const Instruction *SI)
 {
-  const Value *P = SI->getPointerOperand();
+  const Value *P = SI->getOperand(1);
   // pointer has to be an alloca
   if (isa<AllocaInst>(P)) {
-    // check every uses of P, it has to be either a lift-time intrinsic or a load/store in the same basic block
+    // check every uses of P, it has to be either a lift-time intrinsic or a
+    // load/store in the same basic block.
     auto BLK = SI->getParent();
-    for (Value::const_user_iterator II = P->user_begin(), IE = P->user_end(); II != IE; ++II) {
-      if (auto *SU = dyn_cast<const StoreInst>(*II)) {
-        if (SU->getParent() != BLK) {
+    for (auto U : P->users()) {
+      if (isa<LoadInst>(U) || isa<StoreInst>(U) ||
+          getIntrinsicID(U) == Intrinsic::genx_vload ||
+          getIntrinsicID(U) == Intrinsic::genx_vstore) {
+        if (cast<Instruction>(U)->getParent() != BLK)
           return false;
-        }
-      }
-      else if (auto *LU = dyn_cast<const LoadInst>(*II)) {
-        if (LU->getParent() != BLK) {
-          return false;
-        }
-      }
-      else if (!IsBitCastForLifetimeMark(dyn_cast<const Value>(*II))) {
+      } else if (!IsBitCastForLifetimeMark(U))
         return false;
-      }
     }
     return true;
   }
@@ -1042,9 +1042,9 @@ static bool isSingleBlockLocalStore(const StoreInst *SI)
  * intrinsic that are in the GenX backend because this pass is not part of the
  * GenX backend.
  */
-void CMSimdCFLowering::predicateStore(StoreInst *SI, unsigned SimdWidth)
+void CMSimdCFLowering::predicateStore(Instruction *SI, unsigned SimdWidth)
 {
-  auto V = SI->getValueOperand();
+  auto V = SI->getOperand(0);
   auto StoreVT = dyn_cast<VectorType>(V->getType());
   // Scalar store not predicated
   if (!StoreVT || StoreVT->getNumElements() == 1)
@@ -1137,8 +1137,18 @@ void CMSimdCFLowering::predicateStore(StoreInst *SI, unsigned SimdWidth)
     return;
   }
   // Predicate the store by creating a select.
-  auto Load = new LoadInst(SI->getPointerOperand(),
-      SI->getPointerOperand()->getName() + ".simdcfpred.load", SI);
+  Instruction *Load = nullptr;
+  if (auto SInst = dyn_cast<StoreInst>(SI))
+    Load = new LoadInst(
+        SInst->getPointerOperand(),
+        SInst->getPointerOperand()->getName() + ".simdcfpred.load", SI);
+  else {
+    auto ID = llvm::Intrinsic::genx_vload;
+    Value *Addr = SI->getOperand(1);
+    Type *Tys[] = {Addr->getType()->getPointerElementType(), Addr->getType()};
+    auto Fn = Intrinsic::getDeclaration(SI->getParent()->getParent()->getParent(), ID, Tys);
+    Load = CallInst::Create(Fn, Addr, ".simdcfpred.vload", SI);
+  }
   Load->setDebugLoc(SI->getDebugLoc());
   auto EM = loadExecutionMask(SI, SimdWidth);
   auto Select = SelectInst::Create(EM, V, Load,
