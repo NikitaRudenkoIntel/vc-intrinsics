@@ -141,6 +141,35 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
       llvm_anyfloat_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_anyint_ty,
       llvm_i32_ty, llvm_anyint_ty], [IntrNoMem]>;
 
+  /// ``llvm.genx.vstore`` : store a vector value into memory
+  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  ///
+  /// This intrinsic has the exact semantics of an llvm store instruction.
+  /// It is designed for reading and writing a pass-by-reference argument
+  /// and it stops llvm optimizations from optimizing away accesses to the
+  /// pass-by-reference arguments.
+  ///
+  /// * arg0: the memory to be accessed
+  ///
+  def int_genx_vstore : Intrinsic<[],
+                                  [llvm_anyvector_ty, LLVMAnyPointerType<LLVMMatchType<1>>],
+                                  [IntrReadWriteArgMem]>;
+
+  /// ``llvm.genx.vload`` : load a vector value from memory
+  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  ///
+  /// This intrinsic has the exact semantics of an llvm load instruction.
+  /// It is designed for reading and writing a pass-by-reference argument
+  /// and it stops llvm optimizations from optimizing away accesses to the
+  /// pass-by-reference arguments.
+  ///
+  /// * arg0: the memory to be accessed
+  /// * Return value: the vector value read
+  ///
+  def int_genx_vload  : Intrinsic<[llvm_anyvector_ty],
+                                  [LLVMAnyPointerType<LLVMMatchType<0>>],
+                                  [IntrReadArgMem]>;
+
   // ------------------------------
   /// ALU type conversion intrinsics
   /// ------------------------------
