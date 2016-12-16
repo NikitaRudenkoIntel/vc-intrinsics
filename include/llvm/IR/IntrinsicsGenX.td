@@ -3197,4 +3197,15 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
       llvm_anyvector_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_anyint_ty,
       llvm_i32_ty, llvm_anyint_ty], [IntrNoMem]>;
 
+  // ``llvm.genx.output`` : Mark output arguments
+  // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  //
+  // * Return value: void
+  //
+  // This implementation intrinsic is to mark a list of output arguments.
+  // This intrinsic call only extends the live range of marked arguments and
+  // emits no code.
+  //
+  def int_genx_output : Intrinsic<[], [llvm_vararg_ty], []>;
+
 }
