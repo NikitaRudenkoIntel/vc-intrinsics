@@ -153,7 +153,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   ///
   def int_genx_vstore : Intrinsic<[],
                                   [llvm_anyvector_ty, LLVMAnyPointerType<LLVMMatchType<1>>],
-                                  [IntrReadWriteArgMem]>;
+                                  []>;
 
   /// ``llvm.genx.vload`` : load a vector value from memory
   /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -168,7 +168,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   ///
   def int_genx_vload  : Intrinsic<[llvm_anyvector_ty],
                                   [LLVMAnyPointerType<LLVMMatchType<0>>],
-                                  [IntrReadArgMem]>;
+                                  []>;
 
   // ------------------------------
   /// ALU type conversion intrinsics
