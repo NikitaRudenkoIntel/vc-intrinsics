@@ -1065,8 +1065,12 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   def int_genx_usad2 : Intrinsic<[llvm_anyint_ty], [llvm_anyint_ty,
               LLVMMatchType<1>], [IntrNoMem]>;
 
-  /// ``llvm.genx.sad2add`` : two-wide sum of absolute differences and add
-  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  /// ``llvm.genx.*sad2add`` : two-wide sum of absolute differences and add
+  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  /// * ``llvm.genx.sssad2add`` : signed result and args 
+  /// * ``llvm.genx.uusad2add`` : unsigned result and args 
+  /// * ``llvm.genx.ussad2add`` : unsigned result and signed args 
+  /// * ``llvm.genx.susad2add`` : signed result and unsigned args 
   ///
   /// * arg0: first input, vector of i8, multiple of 2 wide
   /// * arg1: second input, same type
@@ -1076,11 +1080,21 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   ///
   def int_genx_sad2add : Intrinsic<[llvm_anyint_ty], [llvm_anyint_ty,
               LLVMMatchType<1>, LLVMMatchType<0>], [IntrNoMem]>;
+  def int_genx_sssad2add : Intrinsic<[llvm_anyint_ty], [llvm_anyint_ty,
+              LLVMMatchType<1>, LLVMMatchType<0>], [IntrNoMem]>;
+  def int_genx_uusad2add : Intrinsic<[llvm_anyint_ty], [llvm_anyint_ty,
+              LLVMMatchType<1>, LLVMMatchType<0>], [IntrNoMem]>;
+  def int_genx_ussad2add : Intrinsic<[llvm_anyint_ty], [llvm_anyint_ty,
+              LLVMMatchType<1>, LLVMMatchType<0>], [IntrNoMem]>;
+  def int_genx_susad2add : Intrinsic<[llvm_anyint_ty], [llvm_anyint_ty,
+              LLVMMatchType<1>, LLVMMatchType<0>], [IntrNoMem]>;
 
   /// ``llvm.genx.*sad2add.sat`` : two-wide sum of absolute differences and add, saturated
   /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  /// * ``llvm.genx.ssad2add.sat`` : signed arg2 and result
-  /// * ``llvm.genx.usad2add.sat`` : unsigned arg2 and result
+  /// * ``llvm.genx.sssad2add.sat`` : signed result and args 
+  /// * ``llvm.genx.uusad2add.sat`` : unsigned result and args 
+  /// * ``llvm.genx.ussad2add.sat`` : unsigned result and signed args 
+  /// * ``llvm.genx.susad2add.sat`` : signed result and unsigned args 
   ///
   /// * arg0: first input, vector of i8, multiple of 2 wide
   /// * arg1: second input, same type
@@ -1091,6 +1105,14 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   def int_genx_ssad2add_sat : Intrinsic<[llvm_anyint_ty], [llvm_anyint_ty,
               LLVMMatchType<1>, LLVMMatchType<0>], [IntrNoMem]>;
   def int_genx_usad2add_sat : Intrinsic<[llvm_anyint_ty], [llvm_anyint_ty,
+              LLVMMatchType<1>, LLVMMatchType<0>], [IntrNoMem]>;
+  def int_genx_sssad2add_sat : Intrinsic<[llvm_anyint_ty], [llvm_anyint_ty,
+              LLVMMatchType<1>, LLVMMatchType<0>], [IntrNoMem]>;
+  def int_genx_uusad2add_sat : Intrinsic<[llvm_anyint_ty], [llvm_anyint_ty,
+              LLVMMatchType<1>, LLVMMatchType<0>], [IntrNoMem]>;
+  def int_genx_ussad2add_sat : Intrinsic<[llvm_anyint_ty], [llvm_anyint_ty,
+              LLVMMatchType<1>, LLVMMatchType<0>], [IntrNoMem]>;
+  def int_genx_susad2add_sat : Intrinsic<[llvm_anyint_ty], [llvm_anyint_ty,
               LLVMMatchType<1>, LLVMMatchType<0>], [IntrNoMem]>;
 
   /// ``llvm.genx.*shl`` : shl instruction, no saturation
