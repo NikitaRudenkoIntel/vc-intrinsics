@@ -1048,19 +1048,21 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   def int_genx_rsqrt :
               Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>], [IntrNoMem]>;
 
-  /// ``llvm.genx.sad2`` : two-wide sum of absolute differences
-  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  /// ``llvm.genx.*sad2`` : two-wide sum of absolute differences
+  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  /// * ``llvm.genx.ssad2`` : signed argument and result
+  /// * ``llvm.genx.usad2`` : unsigned argument and result
   ///
   /// * arg0: first input, vector of i8, multiple of 2 wide
   /// * arg1: second input, same type
   ///
   /// * Return value: result, vector of i16 of same vector width
   ///
-  /// The vISA spec says that the args and the result can be signed or
-  /// unsigned, and saturation is an option. I can't see that any of that makes
-  /// any difference to the result, so I have provided just this one intrinsic.
-  ///
   def int_genx_sad2 : Intrinsic<[llvm_anyint_ty], [llvm_anyint_ty,
+              LLVMMatchType<1>], [IntrNoMem]>;
+  def int_genx_ssad2 : Intrinsic<[llvm_anyint_ty], [llvm_anyint_ty,
+              LLVMMatchType<1>], [IntrNoMem]>;
+  def int_genx_usad2 : Intrinsic<[llvm_anyint_ty], [llvm_anyint_ty,
               LLVMMatchType<1>], [IntrNoMem]>;
 
   /// ``llvm.genx.sad2add`` : two-wide sum of absolute differences and add
@@ -1071,10 +1073,6 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// * arg2: third input, vector of i16 of same vector width
   ///
   /// * Return value: result, same type as arg2
-  ///
-  /// The vISA spec says that the args and the result can be signed or
-  /// unsigned, and saturation is an option. I can't see that any of that makes
-  /// any difference to the result, so I have provided just this one intrinsic.
   ///
   def int_genx_sad2add : Intrinsic<[llvm_anyint_ty], [llvm_anyint_ty,
               LLVMMatchType<1>, LLVMMatchType<0>], [IntrNoMem]>;
