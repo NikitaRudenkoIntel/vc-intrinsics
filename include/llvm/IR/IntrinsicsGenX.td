@@ -1058,8 +1058,6 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   ///
   /// * Return value: result, vector of i16 of same vector width
   ///
-  def int_genx_sad2 : Intrinsic<[llvm_anyint_ty], [llvm_anyint_ty,
-              LLVMMatchType<1>], [IntrNoMem]>;
   def int_genx_ssad2 : Intrinsic<[llvm_anyint_ty], [llvm_anyint_ty,
               LLVMMatchType<1>], [IntrNoMem]>;
   def int_genx_usad2 : Intrinsic<[llvm_anyint_ty], [llvm_anyint_ty,
@@ -1078,8 +1076,6 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   ///
   /// * Return value: result, same type as arg2
   ///
-  def int_genx_sad2add : Intrinsic<[llvm_anyint_ty], [llvm_anyint_ty,
-              LLVMMatchType<1>, LLVMMatchType<0>], [IntrNoMem]>;
   def int_genx_sssad2add : Intrinsic<[llvm_anyint_ty], [llvm_anyint_ty,
               LLVMMatchType<1>, LLVMMatchType<0>], [IntrNoMem]>;
   def int_genx_uusad2add : Intrinsic<[llvm_anyint_ty], [llvm_anyint_ty,
@@ -1102,10 +1098,6 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   ///
   /// * Return value: result, same type as arg2
   ///
-  def int_genx_ssad2add_sat : Intrinsic<[llvm_anyint_ty], [llvm_anyint_ty,
-              LLVMMatchType<1>, LLVMMatchType<0>], [IntrNoMem]>;
-  def int_genx_usad2add_sat : Intrinsic<[llvm_anyint_ty], [llvm_anyint_ty,
-              LLVMMatchType<1>, LLVMMatchType<0>], [IntrNoMem]>;
   def int_genx_sssad2add_sat : Intrinsic<[llvm_anyint_ty], [llvm_anyint_ty,
               LLVMMatchType<1>, LLVMMatchType<0>], [IntrNoMem]>;
   def int_genx_uusad2add_sat : Intrinsic<[llvm_anyint_ty], [llvm_anyint_ty,
