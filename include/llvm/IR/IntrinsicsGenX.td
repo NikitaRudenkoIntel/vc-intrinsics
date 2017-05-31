@@ -925,10 +925,36 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
 
   /// mul
   /// ^^^
-  /// Non-saturating mul intrinsic is not needed. A vISA non-saturating mul
-  /// where the result type is different to the operand type is represented
-  /// by trunc/zext/sext of each operand and then an LLVM IR Mul instruction.
+  /// Still need non-saaturating mul intrinsic as def-hoist/copy-prop in jitter
+  /// cannot fully remove the trunc/zext/sext on each operand.
   ///
+  /// ``llvm.genx.*mul`` : mul instruction, no saturation
+  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  /// * ``llvm.genx.ssmul`` : result signed, operands signed, signed
+  /// * ``llvm.genx.sumul`` : result signed, operands signed, unsigned
+  /// * ``llvm.genx.usmul`` : result signed, operands unsigned, signed
+  /// * ``llvm.genx.uumul`` : result signed, operands unsigned, unsigned
+  ///
+  /// result := arg0 * arg1
+  ///
+  /// * Return value: result, any scalar or vector integer type with same
+  ///                 vector width
+  ///
+  /// * arg0: first input, any scalar/vector integer type (not i64)
+  /// * arg1: second input, same type as arg0
+  ///
+  def int_genx_ssmul : Intrinsic<[llvm_anyint_ty],
+                                 [llvm_anyint_ty, LLVMMatchType<1>],
+                                 [IntrNoMem]>;
+  def int_genx_sumul : Intrinsic<[llvm_anyint_ty],
+                                 [llvm_anyint_ty, LLVMMatchType<1>],
+                                 [IntrNoMem]>;
+  def int_genx_usmul : Intrinsic<[llvm_anyint_ty],
+                                 [llvm_anyint_ty, LLVMMatchType<1>],
+                                 [IntrNoMem]>;
+  def int_genx_uumul : Intrinsic<[llvm_anyint_ty],
+                                 [llvm_anyint_ty, LLVMMatchType<1>],
+                                 [IntrNoMem]>;
 
   /// ``llvm.genx.*mul.sat`` : mul instruction with saturation
   /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
