@@ -302,8 +302,8 @@ private:
 
   // Methods to add predication to the code
   void predicateCode(unsigned CMWidth);
-  void predicateBlock(BasicBlock *BB, unsigned SimdWidth, bool PredicateStores);
-  void predicateInst(Instruction *Inst, unsigned SimdWidth, bool PredicateStores);
+  void predicateBlock(BasicBlock *BB, unsigned SimdWidth);
+  void predicateInst(Instruction *Inst, unsigned SimdWidth);
   void rewritePredication(CallInst *CI, unsigned SimdWidth);
   void predicateStore(Instruction *SI, unsigned SimdWidth);
   CallInst *convertScatterGather(CallInst *CI, unsigned IID);
@@ -789,7 +789,9 @@ void CMSimdCFLowering::determineJIP(BasicBlock *BB,
   for (;; JP = JP->getNextNode(), ++JPNum) {
     assert(JP);
     if ((*Numbers)[JP] != JPNum)
-      DEBUG(dbgs() << JP->getName() << " number " << (*Numbers)[JP] << " does not match " << JPNum << " for " << JP->getName() << "\n");
+      DEBUG(dbgs() << JP->getName() << " number " << (*Numbers)[JP]
+                   << " does not match " << JPNum << " for " << JP->getName()
+                   << "\n");
     assert((*Numbers)[JP] == JPNum);
     // If we have reached UIP, then that is also JIP.
     if (JP == UIP)
@@ -825,14 +827,14 @@ void CMSimdCFLowering::determineJIP(BasicBlock *BB,
 void CMSimdCFLowering::predicateCode(unsigned CMWidth)
 {
   if (CMWidth) {
-    // Inside a predicated call, also predicate all other blocks, but without
-    // predicating the stores. We do this first so the entry block gets done
-    // before any other block, avoiding a problem that code we insert to set up
-    // the EMs and RMs accidentally gets predicated.
+    // Inside a predicated call, also predicate all other blocks. We do this
+    // first so the entry block gets done before any other block, avoiding a
+    // problem that code we insert to set up the EMs and RMs accidentally gets
+    // predicated.
     for (auto fi = F->begin(), fe = F->end(); fi != fe; ++fi) {
       BasicBlock *BB = &*fi;
       if (PredicatedBlocks.find(BB) == PredicatedBlocks.end())
-        predicateBlock(BB, CMWidth, /*PredicateStores=*/false);
+        predicateBlock(BB, CMWidth);
     }
   }
   // Predicate all basic blocks that need it.
@@ -840,7 +842,7 @@ void CMSimdCFLowering::predicateCode(unsigned CMWidth)
       pbi != pbe; ++pbi) {
     BasicBlock *BB = pbi->first;
     unsigned SimdWidth = pbi->second;
-    predicateBlock(BB, SimdWidth, /*PredicateStores=*/true);
+    predicateBlock(BB, SimdWidth);
   }
 }
 
@@ -849,17 +851,13 @@ void CMSimdCFLowering::predicateCode(unsigned CMWidth)
  *
  * Enter:   BB = basic block
  *          SimdWidth = simd width of controlling simd branch or call mask
- *          PredicateStores = true to predicate store of local variable. Set
- *              to false when predicating blocks outside SIMD CF in a
- *              predicated call
  */
-void CMSimdCFLowering::predicateBlock(BasicBlock *BB, unsigned SimdWidth,
-    bool PredicateStores)
+void CMSimdCFLowering::predicateBlock(BasicBlock *BB, unsigned SimdWidth)
 {
   for (auto bi = BB->begin(), be = BB->end(); bi != be; ) {
     Instruction *Inst = &*bi;
     ++bi; // Increment here in case Inst is removed
-    predicateInst(Inst, SimdWidth, PredicateStores);
+    predicateInst(Inst, SimdWidth);
   }
 }
 
@@ -897,17 +895,11 @@ static unsigned getIntrinsicID(const Value *V) {
  *
  * Enter:   Inst = the instruction
  *          SimdWidth = simd cf width in force
- *          PredicateStores = whether to predicate store instructions
  */
-void CMSimdCFLowering::predicateInst(Instruction *Inst, unsigned SimdWidth,
-    bool PredicateStores)
-{
-  if (PredicateStores) {
-    if (isa<StoreInst>(Inst) ||
-        getIntrinsicID(Inst) == Intrinsic::genx_vstore) {
-      predicateStore(Inst, SimdWidth);
-      return;
-    }
+void CMSimdCFLowering::predicateInst(Instruction *Inst, unsigned SimdWidth) {
+  if (isa<StoreInst>(Inst) || getIntrinsicID(Inst) == Intrinsic::genx_vstore) {
+    predicateStore(Inst, SimdWidth);
+    return;
   }
 
   if (auto CI = dyn_cast<CallInst>(Inst)) {
