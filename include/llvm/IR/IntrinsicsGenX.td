@@ -1218,6 +1218,22 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   def int_genx_ieee_sqrt :
               Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>], [IntrNoMem]>;
 
+// __INTEL_EMBARGO_BEGIN__
+  /// ``llvm.genx.dpas`` : dpas instruction (Dot Product Accumulate Systolic)
+  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  ///
+  /// * arg0: first input value, vector integer/float type
+  /// * arg1: second input value, vector integer/float type
+  /// * arg2: third input value, vector integer/float type
+  /// * arg3: fourth input value, integer type
+  ///
+  /// * Return value: result, same type as arg0
+  ///
+  def int_genx_dpas :
+              Intrinsic<[llvm_anyvector_ty],
+                    [LLVMMatchType<0>, llvm_anyvector_ty, llvm_anyvector_ty, llvm_i32_ty], [IntrNoMem]>;
+// __INTEL_EMBARGO_END__
+
   /// subb
   /// ^^^^
   /// No intrinsic for subb as it has two results.
