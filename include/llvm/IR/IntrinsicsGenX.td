@@ -1245,6 +1245,43 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   def int_genx_dp4a :
               Intrinsic<[llvm_anyvector_ty],
                     [llvm_anyvector_ty, llvm_anyvector_ty, llvm_anyvector_ty], [IntrNoMem]>;
+
+  /// add3
+  /// ^^^^
+  ///
+  /// ``llvm.genx.*add3`` : add3 instruction without saturation
+  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  /// * ``llvm.genx.add3`` :
+  ///
+  /// * arg0: first input, any scalar/vector integer type, i16/i32
+  /// * arg1: second input, same type as arg0
+  /// * arg2: third input, same type as arg0
+  def int_genx_add3 : Intrinsic<[llvm_anyint_ty],
+                [llvm_anyint_ty, LLVMMatchType<1>, LLVMMatchType<1>], [IntrNoMem]>;
+
+  /// ``llvm.genx.*add3.sat`` : add3 instruction with saturation
+  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  /// * ``llvm.genx.ssadd3.sat`` : result signed, operands signed
+  /// * ``llvm.genx.suadd3.sat`` : result signed, operands unsigned
+  /// * ``llvm.genx.usadd3.sat`` : result unsigned, operands signed
+  /// * ``llvm.genx.uuadd3.sat`` : result unsigned, operands unsigned
+  ///
+  /// * arg0: first input, any scalar/vector integer type, i16/i32
+  /// * arg1: second input, same type as arg0
+  /// * arg2: third input, same type as arg0
+  ///
+  /// * Return value: result, any scalar or vector integer type with same
+  ///               vector width
+  ///
+  def int_genx_ssadd3_sat : Intrinsic<[llvm_anyint_ty],
+                [llvm_anyint_ty, LLVMMatchType<1>, LLVMMatchType<1>], [IntrNoMem]>;
+  def int_genx_suadd3_sat : Intrinsic<[llvm_anyint_ty],
+                [llvm_anyint_ty, LLVMMatchType<1>, LLVMMatchType<1>], [IntrNoMem]>;
+  def int_genx_usadd3_sat : Intrinsic<[llvm_anyint_ty],
+                [llvm_anyint_ty, LLVMMatchType<1>, LLVMMatchType<1>], [IntrNoMem]>;
+  def int_genx_uuadd3_sat : Intrinsic<[llvm_anyint_ty],
+                [llvm_anyint_ty, LLVMMatchType<1>, LLVMMatchType<1>], [IntrNoMem]>;
+
 // __INTEL_EMBARGO_END__
 
   /// subb
