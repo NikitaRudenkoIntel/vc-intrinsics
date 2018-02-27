@@ -1282,6 +1282,20 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   def int_genx_uuadd3_sat : Intrinsic<[llvm_anyint_ty],
                 [llvm_anyint_ty, LLVMMatchType<1>, LLVMMatchType<1>], [IntrNoMem]>;
 
+  /// bfn 
+  /// ^^^
+  ///
+  /// ``llvm.genx.bfn`` : bfn instruction
+  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  /// * ``llvm.genx.bfn`` :
+  ///
+  /// * arg0: first input, any scalar/vector integer type, i1/i16/i32
+  /// * arg1: second input, same type as arg0
+  /// * arg2: third input, same type as arg0
+  /// * arg3: fourth input, byte, constant
+  def int_genx_bfn : Intrinsic<[llvm_anyint_ty],
+                [llvm_anyint_ty, LLVMMatchType<1>, LLVMMatchType<1>, llvm_i8_ty], [IntrNoMem]>;
+
 // __INTEL_EMBARGO_END__
 
   /// subb
