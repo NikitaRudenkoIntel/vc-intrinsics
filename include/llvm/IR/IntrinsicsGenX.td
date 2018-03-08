@@ -1289,7 +1289,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   /// * ``llvm.genx.bfn`` :
   ///
-  /// * arg0: first input, any scalar/vector integer type, i1/i16/i32
+  /// * arg0: first input, any scalar/vector integer type, i16/i32
   /// * arg1: second input, same type as arg0
   /// * arg2: third input, same type as arg0
   /// * arg3: fourth input, byte, constant
