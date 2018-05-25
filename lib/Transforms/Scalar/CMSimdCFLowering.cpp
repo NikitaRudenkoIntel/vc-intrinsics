@@ -231,11 +231,11 @@ private:
     return KindID;
   }
 public:
-  static void emit(Instruction *Inst, const Twine &Msg, DiagnosticSeverity Severity = DS_Error);
+  static void emit(Instruction *Inst, StringRef Msg, DiagnosticSeverity Severity = DS_Error);
   DiagnosticInfoSimdCF(DiagnosticSeverity Severity, const Function &Fn,
-      const DebugLoc &DLoc, const Twine &Msg)
+      const DebugLoc &DLoc, StringRef Msg)
       : DiagnosticInfoOptimizationBase((DiagnosticKind)getKindID(), Severity,
-          /*PassName=*/nullptr, Fn, DLoc, Msg) {}
+          /*PassName=*/nullptr, Msg, Fn, DLoc) {}
   // This kind of message is always enabled, and not affected by -rpass.
   virtual bool isEnabled() const override { return true; }
   static bool classof(const DiagnosticInfo *DI) {
@@ -520,8 +520,9 @@ void CMSimdCFLowering::determinePredicatedBlocks()
     // BlockM has a simd conditional branch. Get the postdominator tree if we
     // do not already have it.
     if (!PDT) {
-      PDT = (PostDominatorTree *)createPostDomTree();
-      PDT->runOnFunction(*F);
+      auto PDTP = (PostDominatorTreeWrapperPass *)createPostDomTree();
+      PDTP->runOnFunction(*F);
+      PDT = &PDTP->getPostDomTree();
     }
     // For each successor BlockN of BlockM...
     for (unsigned si = 0, se = Br->getNumSuccessors(); si != se; ++si) {
@@ -1568,7 +1569,8 @@ Value *CMSimdCFLowering::getRMAddr(BasicBlock *JP, unsigned SimdWidth)
     // of the function.
     Type *RMTy = VectorType::get(Type::getInt1Ty(F->getContext()), SimdWidth);
     Instruction *InsertBefore = &F->front().front();
-    *RMAddr = new AllocaInst(RMTy, Twine("RM.") + JP->getName(), InsertBefore);
+    *RMAddr = new AllocaInst(RMTy, /*AddrSpace*/ 0,
+                             Twine("RM.") + JP->getName(), InsertBefore);
     // Initialize to all zeros.
     new StoreInst(Constant::getNullValue(RMTy), *RMAddr, InsertBefore);
   }
@@ -1581,11 +1583,9 @@ Value *CMSimdCFLowering::getRMAddr(BasicBlock *JP, unsigned SimdWidth)
 /***********************************************************************
  * DiagnosticInfoSimdCF::emit : emit an error or warning
  */
-void DiagnosticInfoSimdCF::emit(Instruction *Inst, const Twine &Msg,
-        DiagnosticSeverity Severity)
-{
+void DiagnosticInfoSimdCF::emit(Instruction *Inst, StringRef Msg,
+                                DiagnosticSeverity Severity) {
   DiagnosticInfoSimdCF Err(Severity, *Inst->getParent()->getParent(),
-      Inst->getDebugLoc(), Msg);
+                           Inst->getDebugLoc(), Msg);
   Inst->getContext().diagnose(Err);
 }
-
