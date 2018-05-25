@@ -508,7 +508,9 @@ void CMSimdCFLowering::findSimdBranches(unsigned CMWidth)
  */
 void CMSimdCFLowering::determinePredicatedBlocks()
 {
-  PostDominatorTree *PDT = nullptr;
+  PostDominatorTree PDT;
+  PDT.recalculate(*F);
+
   for (auto sbi = SimdBranches.begin(), sbe = SimdBranches.end();
       sbi != sbe; ++sbi) {
     BasicBlock *BlockM = sbi->first;
@@ -517,23 +519,16 @@ void CMSimdCFLowering::determinePredicatedBlocks()
     LLVM_DEBUG(dbgs() << "simd branch (width " << SimdWidth << ") at " << BlockM->getName() << "\n");
     if (SimdWidth < 2 || SimdWidth > MAX_SIMD_CF_WIDTH || !isPowerOf2_32(SimdWidth))
       DiagnosticInfoSimdCF::emit(Br, "illegal SIMD CF width");
-    // BlockM has a simd conditional branch. Get the postdominator tree if we
-    // do not already have it.
-    if (!PDT) {
-      auto PDTP = (PostDominatorTreeWrapperPass *)createPostDomTree();
-      PDTP->runOnFunction(*F);
-      PDT = &PDTP->getPostDomTree();
-    }
     // For each successor BlockN of BlockM...
     for (unsigned si = 0, se = Br->getNumSuccessors(); si != se; ++si) {
       auto BlockN = Br->getSuccessor(si);
       // Get BlockL, the closest common postdominator.
-      auto BlockL = PDT->findNearestCommonDominator(BlockM, BlockN);
+      auto BlockL = PDT.findNearestCommonDominator(BlockM, BlockN);
       // Trace up the postdominator tree from BlockN (inclusive) to BlockL
       // (exclusive) to find blocks control dependent on BlockM. This also
       // handles the case that BlockN does postdominate BlockM; no blocks
       // are control dependent on BlockM.
-      for (auto Node = PDT->getNode(BlockN); Node && Node->getBlock() != BlockL;
+      for (auto Node = PDT.getNode(BlockN); Node && Node->getBlock() != BlockL;
             Node = Node->getIDom()) {
         auto BB = Node->getBlock();
         LLVM_DEBUG(dbgs() << "  " << BB->getName() << " needs predicating\n");
@@ -544,7 +539,6 @@ void CMSimdCFLowering::determinePredicatedBlocks()
       }
     }
   }
-  delete PDT;
 }
 
 /***********************************************************************
@@ -916,6 +910,8 @@ void CMSimdCFLowering::predicateInst(Instruction *Inst, unsigned SimdWidth) {
       case Intrinsic::genx_simdcf_any:
       case Intrinsic::genx_vload:
       case Intrinsic::genx_vstore:
+      case Intrinsic::lifetime_start:
+      case Intrinsic::lifetime_end:
         return; // ignore these intrinsics
       case Intrinsic::genx_simdcf_predicate:
         rewritePredication(CI, SimdWidth);
@@ -939,10 +935,11 @@ void CMSimdCFLowering::predicateInst(Instruction *Inst, unsigned SimdWidth) {
         return;
     }
     // An IntrNoMem intrinsic is an ALU intrinsic and can be ignored.
-    if (Callee->doesNotAccessMemory())
+    if (Callee->doesNotAccessMemory() || CI->getNumArgOperands() == 0)
       return;
+ 
     // Look for a predicate operand in operand 2, 1 or 0.
-    unsigned PredNum = std::max(2U, CI->getNumArgOperands());
+    unsigned PredNum = CI->getNumArgOperands() - 1;
     for (;;) {
       if (auto VT = dyn_cast<VectorType>(CI->getArgOperand(PredNum)->getType()))
       {
