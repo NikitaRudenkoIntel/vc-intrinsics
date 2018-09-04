@@ -1233,6 +1233,20 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
               Intrinsic<[llvm_anyvector_ty],
                     [LLVMMatchType<0>, llvm_anyvector_ty, llvm_anyvector_ty, llvm_i32_ty], [IntrNoMem]>;
 
+  /// ``llvm.genx.dpasw`` : dpasw instruction (Dot Product Accumulate Systolic)
+  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  ///
+  /// * arg0: first input value, vector integer/float type
+  /// * arg1: second input value, vector integer/float type
+  /// * arg2: third input value, vector integer/float type
+  /// * arg3: fourth input value, integer type
+  ///
+  /// * Return value: result, same type as arg0
+  ///
+  def int_genx_dpasw :
+              Intrinsic<[llvm_anyvector_ty],
+                    [LLVMMatchType<0>, llvm_anyvector_ty, llvm_anyvector_ty, llvm_i32_ty], [IntrNoMem]>;
+
   /// ``llvm.genx.dp4a`` : dp4a instruction (Dot Product 4 Accumulate)
   /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   ///
