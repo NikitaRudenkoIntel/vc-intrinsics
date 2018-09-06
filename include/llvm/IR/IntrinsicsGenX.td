@@ -1511,6 +1511,14 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   def int_genx_dword_atomic_fmax : Intrinsic<[llvm_anyvector_ty],
     [llvm_anyvector_ty, llvm_i32_ty, llvm_anyint_ty, LLVMMatchType<0>,
     LLVMMatchType<0>], []>;
+// __INTEL_EMBARGO_BEGIN__
+  def int_genx_dword_atomic_fadd : Intrinsic<[llvm_anyvector_ty],
+    [llvm_anyvector_ty, llvm_i32_ty, llvm_anyint_ty, LLVMMatchType<0>,
+    LLVMMatchType<0>], []>;
+  def int_genx_dword_atomic_fsub : Intrinsic<[llvm_anyvector_ty],
+    [llvm_anyvector_ty, llvm_i32_ty, llvm_anyint_ty, LLVMMatchType<0>,
+    LLVMMatchType<0>], []>;
+// __INTEL_EMBARGO_END__
 
   /// ``llvm.genx.dword.atomic.*`` : dword atomic with inc/dec operation
   /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1656,6 +1664,14 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   def int_genx_typed_atomic_fmax : Intrinsic<[llvm_anyvector_ty],
     [llvm_anyvector_ty, llvm_i32_ty, LLVMMatchType<0>,
 	llvm_anyint_ty, LLVMMatchType<2>, LLVMMatchType<2>, LLVMMatchType<2>], []>;
+// __INTEL_EMBARGO_BEGIN__
+  def int_genx_typed_atomic_fadd : Intrinsic<[llvm_anyvector_ty],
+    [llvm_anyvector_ty, llvm_i32_ty, LLVMMatchType<0>,
+	llvm_anyint_ty, LLVMMatchType<2>, LLVMMatchType<2>, LLVMMatchType<2>], []>;
+  def int_genx_typed_atomic_fsub : Intrinsic<[llvm_anyvector_ty],
+    [llvm_anyvector_ty, llvm_i32_ty, LLVMMatchType<0>,
+	llvm_anyint_ty, LLVMMatchType<2>, LLVMMatchType<2>, LLVMMatchType<2>], []>;
+// __INTEL_EMBARGO_END__
 
   /// ``llvm.genx.typed.atomic.*`` : atomic typed with inc/dec operation
   /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
