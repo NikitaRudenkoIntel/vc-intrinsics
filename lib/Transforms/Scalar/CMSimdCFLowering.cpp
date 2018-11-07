@@ -518,6 +518,18 @@ void CMSimdCFLower::markPredicatedBranches()
   }
 }
 
+static void FixPHIInput(BasicBlock *Succ, BasicBlock *OldPred, BasicBlock *NewPred)
+{
+  for (BasicBlock::iterator SBI = Succ->begin(), SBE = Succ->end();
+    SBI != SBE; ++SBI) {
+    PHINode *phi = dyn_cast<PHINode>(SBI);
+    if (!phi)
+      break;
+    Value *SrcV = phi->getIncomingValueForBlock(OldPred);
+    phi->removeIncomingValue(OldPred);
+    phi->addIncoming(SrcV, NewPred);
+  }
+}
 /***********************************************************************
  * fixSimdBranches : fix simd branches ready for JIP determination
  *
@@ -552,6 +564,7 @@ void CMSimdCFLower::fixSimdBranches()
                 BB->getName() + ".backward", BB->getParent(), NextBB);
           BranchInst::Create(Succ, NewBB)->setDebugLoc(Br->getDebugLoc());
           Br->setSuccessor(si, NewBB);
+          FixPHIInput(Succ, BB, NewBB);
         }
       }
     }
@@ -563,12 +576,13 @@ void CMSimdCFLower::fixSimdBranches()
           // Neither leg is fallthrough. Add an extra basic block to make the
           // false one fallthrough.
           LLVM_DEBUG(dbgs() << "simd branch at " << BB->getName() << ": inserted fallthrough\n");
+          auto Succ = Br->getSuccessor(1);
           auto NewBB = BasicBlock::Create(BB->getContext(),
                 BB->getName() + ".fallthrough", BB->getParent(), NextBB);
           PredicatedBlocks[NewBB] = PredicatedBlocks[Br->getSuccessor(0)];
-          BranchInst::Create(Br->getSuccessor(1), NewBB)
-              ->setDebugLoc(Br->getDebugLoc());
+          BranchInst::Create(Succ, NewBB)->setDebugLoc(Br->getDebugLoc());
           Br->setSuccessor(1, NewBB);
+          FixPHIInput(Succ, BB, NewBB);
         } else {
           // The true leg is fallthrough. Invert the branch.
           LLVM_DEBUG(dbgs() << "simd branch at " << BB->getName() << ": inverting\n");
@@ -595,26 +609,38 @@ void CMSimdCFLower::fixSimdBranches()
  */
 void CMSimdCFLower::findAndSplitJoinPoints()
 {
+  // cannot iterate the simd-branch blocks directly because some blocks may
+  // be splitted in the loop, and the owner-block of a simd-branch may be
+  // changed. So we collect the simd-branches first.
+  SmallVector<TerminatorInst*, 4> Jumps;
   for (auto sbi = SimdBranches.begin(), sbe = SimdBranches.end();
       sbi != sbe; ++sbi) {
     auto Br = sbi->first->getTerminator();
-    unsigned SimdWidth = sbi->second;
+    Jumps.push_back(Br);
+  }
+  for (auto sji = Jumps.begin(), sje = Jumps.end(); sji != sje; ++sji) {
+    auto Br = *sji;
+    unsigned SimdWidth = SimdBranches[Br->getParent()];
     LLVM_DEBUG(dbgs() << *Br << "\n");
     auto JP = Br->getSuccessor(0);
     if (JoinPoints.count(JP))
       continue;
     // This is a new join point.
     LLVM_DEBUG(dbgs() << "new join point " << JP->getName() << "\n");
+    auto SplitBB = JP->splitBasicBlock(JP->getFirstNonPHI(), ".afterjoin");
     // We need to split it into its own basic block, so later we can modify
     // the join to do a branch to its JIP.
-    auto SplitBB = BasicBlock::Create(JP->getContext(),
-        JP->getName() + ".joinpoint", JP->getParent(), JP);
     if (PredicatedBlocks.find(JP) != PredicatedBlocks.end())
       PredicatedBlocks[SplitBB] = PredicatedBlocks[JP];
     JP->replaceAllUsesWith(SplitBB);
     BranchInst::Create(JP, SplitBB)->setDebugLoc(JP->front().getDebugLoc());
     LLVM_DEBUG(dbgs() << "split join point " << JP->getName() << " out to " << SplitBB->getName() << "\n");
     JP = SplitBB;
+    if (SimdBranches.find(JP) != SimdBranches.end()) {
+      SimdBranches[SplitBB] = SimdBranches[JP];
+      SimdBranches.erase(JP);
+    }
+    LLVM_DEBUG(dbgs() << "split join point " << JP->getName() << " out to " << SplitBB->getName() << "\n");
     JoinPoints[JP] = SimdWidth;
   }
 }
