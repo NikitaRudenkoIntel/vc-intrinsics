@@ -518,7 +518,7 @@ void CMSimdCFLower::markPredicatedBranches()
   }
 }
 
-static void FixPHIInput(BasicBlock *Succ, BasicBlock *OldPred, BasicBlock *NewPred)
+static void fixPHIInput(BasicBlock *Succ, BasicBlock *OldPred, BasicBlock *NewPred)
 {
   for (BasicBlock::iterator SBI = Succ->begin(), SBE = Succ->end();
     SBI != SBE; ++SBI) {
@@ -564,7 +564,7 @@ void CMSimdCFLower::fixSimdBranches()
                 BB->getName() + ".backward", BB->getParent(), NextBB);
           BranchInst::Create(Succ, NewBB)->setDebugLoc(Br->getDebugLoc());
           Br->setSuccessor(si, NewBB);
-          FixPHIInput(Succ, BB, NewBB);
+          fixPHIInput(Succ, BB, NewBB);
         }
       }
     }
@@ -582,7 +582,7 @@ void CMSimdCFLower::fixSimdBranches()
           PredicatedBlocks[NewBB] = PredicatedBlocks[Br->getSuccessor(0)];
           BranchInst::Create(Succ, NewBB)->setDebugLoc(Br->getDebugLoc());
           Br->setSuccessor(1, NewBB);
-          FixPHIInput(Succ, BB, NewBB);
+          fixPHIInput(Succ, BB, NewBB);
         } else {
           // The true leg is fallthrough. Invert the branch.
           LLVM_DEBUG(dbgs() << "simd branch at " << BB->getName() << ": inverting\n");
