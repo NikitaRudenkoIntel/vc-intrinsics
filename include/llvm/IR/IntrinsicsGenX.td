@@ -2364,7 +2364,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// * Return value: vXi32/vXi64 the old value read
   ///
   /// Predicate, element offset, src, and the return value must all have the
-  /// same vector width, which must be 8 (BDW+) or 16 (SKL+).
+  /// same vector width, which must be 1, 2, 4, or 8.
   ///
   def int_genx_svm_atomic_add : Intrinsic<[llvm_anyvector_ty],
     [llvm_anyvector_ty, llvm_anyint_ty, LLVMMatchType<0>, LLVMMatchType<0>], []>;
@@ -2400,7 +2400,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// * Return value: vXi32/vXi64 the old value read
   ///
   /// Predicate, element offset and the return value must have the same vector
-  /// width, which must be 8 (BDW+) or 16 (SKL+).
+  /// width, which must be 1, 2, 4 or 8.
   ///
   def int_genx_svm_atomic_inc : Intrinsic<[llvm_anyvector_ty],
     [llvm_anyvector_ty, llvm_anyint_ty, LLVMMatchType<0>], []>;
@@ -2419,9 +2419,47 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// * Return value: vXi32/vXi64 the old value read
   ///
   /// Predicate, element offset, src0, src1, and the return value must all have
-  /// the same vector width, which must be 8 (BDW+) or 16 (SKL+).
+  /// the same vector width, which must be 1, 2, 4 or 8.
   ///
   def int_genx_svm_atomic_cmpxchg : Intrinsic<[llvm_anyvector_ty],
+    [llvm_anyvector_ty, llvm_anyint_ty, LLVMMatchType<0>, LLVMMatchType<0>,
+    LLVMMatchType<0>], []>;
+
+  /// ``llvm.genx.svm.atomic.*`` : vISA SVM_ATOMIC with binary operator
+  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  /// * ``llvm.genx.svm.atomic.fmin`` : vISA SVM_ATOMIC FMIN instruction
+  /// * ``llvm.genx.svm.atomic.fmax`` : vISA SVM_ATOMIC FMAX instruction
+  ///
+  /// * arg0: vXi1 predicate (Num_elts inferred from this arg)
+  /// * arg1: vXi64 element addresses in bytes
+  /// * arg2: vXf32 src
+  /// * arg3: original value of the register that the data is read into
+  ///
+  /// * Return value: vXf32 the old value read
+  ///
+  /// Predicate, element offset, src, and the return value must all have the
+  /// same vector width, which must be 1, 2, 4, or 8.
+  ///
+  def int_genx_svm_atomic_fmin : Intrinsic<[llvm_anyvector_ty],
+    [llvm_anyvector_ty, llvm_anyint_ty, LLVMMatchType<0>, LLVMMatchType<0>], []>;
+  def int_genx_svm_atomic_fmax : Intrinsic<[llvm_anyvector_ty],
+    [llvm_anyvector_ty, llvm_anyint_ty, LLVMMatchType<0>, LLVMMatchType<0>], []>;
+
+  /// ``llvm.genx.svm.atomic.fcmpwr`` : vISA SVM_ATOMIC FCMPWR instruction
+  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  ///
+  /// * arg0: vXi1 predicate (Num_elts inferred from element offset type)
+  /// * arg1: vXi64 element addresses in bytes
+  /// * arg2: vXf32 src0
+  /// * arg3: vXf32 src1
+  /// * arg4: original value of the register that the data is read into
+  ///
+  /// * Return value: vXf32 the old value read
+  ///
+  /// Predicate, element offset, src0, src1, and the return value must all have
+  /// the same vector width, which must be 1, 2, 4 or 8.
+  ///
+  def int_genx_svm_atomic_fcmpwr : Intrinsic<[llvm_anyvector_ty],
     [llvm_anyvector_ty, llvm_anyint_ty, LLVMMatchType<0>, LLVMMatchType<0>,
     LLVMMatchType<0>], []>;
 
