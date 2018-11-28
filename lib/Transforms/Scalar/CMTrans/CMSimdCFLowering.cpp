@@ -288,6 +288,9 @@ Pass *llvm::createCMSimdCFLoweringPass() { return new CMSimdCFLowering(); }
  */
 bool CMSimdCFLowering::doInitialization(Module &M)
 {
+
+  packetizeCMSIMTFunctions(M);
+
   // See if simd CF is used anywhere in this module.
   // We have to try each overload of llvm.genx.simdcf.any separately.
   bool HasSimdCF = false;
@@ -398,25 +401,26 @@ void CMSimdCFLower::processFunction(Function *ArgF)
   LLVM_DEBUG(F->print(dbgs()));
   unsigned CMWidth = PredicatedSubroutines[F];
   // Find the simd branches.
-  findSimdBranches(CMWidth);
-  // Determine which basic blocks need to be predicated.
-  determinePredicatedBlocks();
-  // Mark the branch at the end of any to-be-predicated block as a simd branch.
-  markPredicatedBranches();
-  // Fix simd branches:
-  //  - remove backward simd branches
-  //  - ensure that the false leg is fallthrough
-  fixSimdBranches();
-  // Find the join points, and split out any join point into its own basic
-  // block.
-  findAndSplitJoinPoints();
-  // Determine the JIPs for the gotos and joins.
-  determineJIPs();
-  // Predicate the code.
-  predicateCode(CMWidth);
-  // Lower the control flow.
-  lowerSimdCF();
-
+  bool FoundSIMD = findSimdBranches(CMWidth);
+  if (CMWidth > 0 || FoundSIMD) {
+    // Determine which basic blocks need to be predicated.
+    determinePredicatedBlocks();
+    // Mark the branch at the end of any to-be-predicated block as a simd branch.
+    markPredicatedBranches();
+    // Fix simd branches:
+    //  - remove backward simd branches
+    //  - ensure that the false leg is fallthrough
+    fixSimdBranches();
+    // Find the join points, and split out any join point into its own basic
+    // block.
+    findAndSplitJoinPoints();
+    // Determine the JIPs for the gotos and joins.
+    determineJIPs();
+    // Predicate the code.
+    predicateCode(CMWidth);
+    // Lower the control flow.
+    lowerSimdCF();
+  }
   SimdBranches.clear();
   PredicatedBlocks.clear();
   JoinPoints.clear();
@@ -431,8 +435,9 @@ void CMSimdCFLower::processFunction(Function *ArgF)
  *
  * This adds blocks to SimdBranches.
  */
-void CMSimdCFLower::findSimdBranches(unsigned CMWidth)
+bool CMSimdCFLower::findSimdBranches(unsigned CMWidth)
 {
+  bool found = false;
   for (auto fi = F->begin(), fe = F->end(); fi != fe; ++fi) {
     BasicBlock *BB = &*fi;
     auto Br = dyn_cast<BranchInst>(BB->getTerminator());
@@ -443,8 +448,10 @@ void CMSimdCFLower::findSimdBranches(unsigned CMWidth)
       if (CMWidth && SimdWidth != CMWidth)
         DiagnosticInfoSimdCF::emit(Br, "mismatching SIMD CF width inside SIMD call");
       SimdBranches[BB] = SimdWidth;
+      found = true;
     }
   }
+  return found;
 }
 
 /***********************************************************************
@@ -1421,6 +1428,7 @@ void CMSimdCFLower::lowerSimdCF()
     Value *Args[] = { OldEM, OldRM, NotCond };
     auto Goto = CallInst::Create(GotoFunc, Args, "goto", Br);
     Goto->setDebugLoc(DL);
+    Goto->setConvergent();
     Instruction *NewEM = ExtractValueInst::Create(Goto, 0, "goto.extractem", Br);
     (new StoreInst(NewEM, EMVar, Br))->setDebugLoc(DL);
     auto NewRM = ExtractValueInst::Create(Goto, 1, "goto.extractrm", Br);
@@ -1455,6 +1463,7 @@ void CMSimdCFLower::lowerSimdCF()
     Value *Args[] = { OldEM, RM };
     auto Join = CallInst::Create(JoinFunc, Args, "join", InsertBefore);
     Join->setDebugLoc(DL);
+    Join->setConvergent();
     auto NewEM = ExtractValueInst::Create(Join, 0, "join.extractem", InsertBefore);
     (new StoreInst(NewEM, EMVar, InsertBefore))->setDebugLoc(DL);
     auto BranchCond = ExtractValueInst::Create(Join, 1, "join.extractcond", InsertBefore);
