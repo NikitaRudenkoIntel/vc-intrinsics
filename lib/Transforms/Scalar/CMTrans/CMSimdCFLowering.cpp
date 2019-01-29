@@ -288,9 +288,18 @@ Pass *llvm::createCMSimdCFLoweringPass() { return new CMSimdCFLowering(); }
  */
 bool CMSimdCFLowering::doInitialization(Module &M)
 {
-
-  packetizeCMSIMTFunctions(M);
-
+#if 0
+  for (auto &F : M.getFunctionList()) {
+    if (F.hasFnAttribute("CMGenxSIMT")) {
+      if (F.hasFnAttribute(Attribute::AlwaysInline)) {
+        F.removeFnAttr(Attribute::AlwaysInline);
+        F.removeFnAttr(Attribute::InlineHint);
+        F.addFnAttr("CMGenxInline");
+        F.addFnAttr(Attribute::NoInline);
+      }
+    }
+  }
+#endif
   // See if simd CF is used anywhere in this module.
   // We have to try each overload of llvm.genx.simdcf.any separately.
   bool HasSimdCF = false;
@@ -919,7 +928,10 @@ void CMSimdCFLower::predicateInst(Instruction *Inst, unsigned SimdWidth) {
         return;
       case Intrinsic::not_intrinsic:
         // Call to real subroutine.
-        predicateCall(CI, SimdWidth);
+        // ignore those SIMT entry function.
+        if (!Callee->hasFnAttribute("CMGenxSIMT")) {
+          predicateCall(CI, SimdWidth);
+        }
         return;
     }
     // An IntrNoMem intrinsic is an ALU intrinsic and can be ignored.
