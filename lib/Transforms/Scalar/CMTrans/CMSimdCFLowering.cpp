@@ -563,6 +563,7 @@ void CMSimdCFLower::fixSimdBranches()
       continue;
     // This is a simd branch.
     auto Br = cast<BranchInst>(BB->getTerminator());
+    bool IsBackward = false;
     // Check for backward branch in either leg.
     for (unsigned si = 0, se = Br->getNumSuccessors(); si != se; ++si) {
       BasicBlock *Succ = Br->getSuccessor(si);
@@ -573,14 +574,27 @@ void CMSimdCFLower::fixSimdBranches()
           LLVM_DEBUG(dbgs() << " unconditional, so unsimding\n");
           SimdBranches.erase(SimdBranches.find(BB));
         } else {
-          // Conditional simd branch where a leg is backward. Insert an extra
-          // block.
+          // Conditional simd branch where a leg is backward. Insert an extra block.
+          IsBackward = true;
           auto NextBB = BB->getNextNode();
           auto NewBB = BasicBlock::Create(BB->getContext(),
                 BB->getName() + ".backward", BB->getParent(), NextBB);
           BranchInst::Create(Succ, NewBB)->setDebugLoc(Br->getDebugLoc());
           Br->setSuccessor(si, NewBB);
           fixPHIInput(Succ, BB, NewBB);
+        }
+      }
+    }
+    // fix loop-end critical edge
+    if (IsBackward) {
+      for (unsigned si = 0, se = Br->getNumSuccessors(); si != se; ++si) {
+        BasicBlock *Succ = Br->getSuccessor(si);
+        if (Seen.find(Succ) == Seen.end() &&
+            Succ->getUniquePredecessor() == nullptr) {
+          auto NewBB = BasicBlock::Create(BB->getContext(),
+            BB->getName() + ".loopend", BB->getParent(), Succ);
+          BranchInst::Create(Succ, NewBB)->setDebugLoc(Br->getDebugLoc());
+          Br->setSuccessor(si, NewBB);
         }
       }
     }
