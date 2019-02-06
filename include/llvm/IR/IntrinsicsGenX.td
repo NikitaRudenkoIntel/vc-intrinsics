@@ -1310,6 +1310,19 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   def int_genx_bfn : Intrinsic<[llvm_anyint_ty],
                 [llvm_anyint_ty, LLVMMatchType<1>, LLVMMatchType<1>, llvm_i8_ty], [IntrNoMem]>;
 
+  /// bf_cvt
+  /// ^^^^^^
+  ///
+  /// ``llvm.genx.bf.cvt`` : bf_cvt instruction
+  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  /// * ``llvm.genx.bf.cvt`` :
+  ///
+  /// * arg0: first input, any scalar/vector bf/float type
+  ///
+  /// * Return value: result, 
+  ///
+  def int_genx_bf_cvt : Intrinsic<[llvm_anyfloat_ty], [llvm_anyfloat_ty], [IntrNoMem]>;
+
 // __INTEL_EMBARGO_END__
 
   /// subb
