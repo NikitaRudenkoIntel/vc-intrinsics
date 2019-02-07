@@ -1319,7 +1319,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   ///
   /// * arg0: first input, any scalar/vector bf/float type
   ///
-  /// * Return value: result, 
+  /// * Return value: result, must be float if arg0 is half, or half if arg0 is float.
   ///
   def int_genx_bf_cvt : Intrinsic<[llvm_anyfloat_ty], [llvm_anyfloat_ty], [IntrNoMem]>;
 
