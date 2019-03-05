@@ -1126,6 +1126,8 @@ void CMSimdCFLower::predicateStore(Instruction *SI, unsigned SimdWidth)
     } else if (Width < SimdWidth) {
       // Too narrow. Predicate the last correctly sized wrregion or the store.
       break;
+    } else {
+      assert(false && "unexpected data size inside SIMD control flow");
     }
   }
   if (WrRegionToPredicate) {
