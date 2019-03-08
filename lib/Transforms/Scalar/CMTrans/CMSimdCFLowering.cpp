@@ -495,6 +495,12 @@ void CMSimdCFLower::determinePredicatedBlocks()
       auto BlockN = Br->getSuccessor(si);
       // Get BlockL, the closest common postdominator.
       auto BlockL = PDT.findNearestCommonDominator(BlockM, BlockN);
+      if (BlockL == BlockM) {
+        // need to include BlockM into the chain 
+        // if the branch is the do-while back-edge
+        if (auto ParentNode = PDT.getNode(BlockM)->getIDom())
+          BlockL = ParentNode->getBlock();
+      }
       // Trace up the postdominator tree from BlockN (inclusive) to BlockL
       // (exclusive) to find blocks control dependent on BlockM. This also
       // handles the case that BlockN does postdominate BlockM; no blocks
