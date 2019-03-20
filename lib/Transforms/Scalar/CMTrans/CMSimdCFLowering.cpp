@@ -673,7 +673,8 @@ void CMSimdCFLower::findAndSplitJoinPoints()
     LLVM_DEBUG(dbgs() << "split join point " << JP->getName() << " out to " << SplitBB->getName() << "\n");
     JP = SplitBB;
     if (SimdBranches.find(JP) != SimdBranches.end()) {
-      SimdBranches[SplitBB] = SimdBranches[JP];
+      assert( SimdBranches[JP] == SimdWidth);
+      SimdBranches[SplitBB] = SimdWidth;
       SimdBranches.erase(JP);
     }
     LLVM_DEBUG(dbgs() << "split join point " << JP->getName() << " out to " << SplitBB->getName() << "\n");
@@ -1156,8 +1157,8 @@ void CMSimdCFLower::predicateStore(Instruction *SI, unsigned SimdWidth)
   }
   Load->setDebugLoc(SI->getDebugLoc());
   auto EM = loadExecutionMask(SI, SimdWidth);
-  auto Select = SelectInst::Create(EM, V, Load,
-      V->getName() + ".simdcfpred", SI);
+  auto Select = SelectInst::Create(EM, SI->getOperand(0), Load,
+      SI->getOperand(0)->getName() + ".simdcfpred", SI);
   SI->setOperand(0, Select);
 }
 
