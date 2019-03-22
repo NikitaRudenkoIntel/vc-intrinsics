@@ -2352,8 +2352,8 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// times the number of channels to read per element.
   /// The element type of the data to write arg must be i32 or float.
   ///
-  def int_genx_svm_scatter4_scaled : Intrinsic<[llvm_anyvector_ty],
-    [llvm_anyvector_ty, llvm_i32_ty, llvm_i16_ty, llvm_i64_ty, llvm_anyint_ty],
+  def int_genx_svm_scatter4_scaled : Intrinsic<[],
+    [llvm_anyvector_ty, llvm_i32_ty, llvm_i16_ty, llvm_i64_ty, llvm_anyint_ty, llvm_anyvector_ty], 
     []>;
 
   /// ``llvm.genx.svm.atomic.*`` : vISA SVM_ATOMIC with binary operator
