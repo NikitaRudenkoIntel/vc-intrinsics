@@ -1379,7 +1379,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   ///
   def int_genx_r0 : Intrinsic<[llvm_anyint_ty], [], [IntrReadMem]>;
 
-  /// ``llvm.genx.sr0`` : read vISA v18 (%sr0)
+  /// ``llvm.genx.sr0`` : read vISA v13 (%sr0)
   /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   ///
   /// * Return value:  vxi32 the value read
@@ -1388,6 +1388,15 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   ///
   ///
   def int_genx_sr0 : Intrinsic<[llvm_anyint_ty], [], [IntrReadMem]>;
+
+  /// ``llvm.genx.set.sr0.2`` : write vISA v13(0, 2) (%sr0.2)
+  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  ///
+  /// arg0: data to write (1 dword)
+  ///
+  /// * Return value:  void
+  ///
+  def int_genx_set_sr0_2 : Intrinsic<[], [llvm_i32_ty], []>;
 
   /// ``llvm.genx.get.color`` : read color value of the thread origin
   /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
