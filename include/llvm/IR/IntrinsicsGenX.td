@@ -1434,7 +1434,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
                                           llvm_i32_ty,       // imm offsets
                                           llvm_i8_ty,        // datum size size
                                           llvm_i8_ty,        // vector size
-                                          llvm_i1_ty,        // transposed
+                                          llvm_i8_ty,        // transposed
                                           llvm_i8_ty,        // channel mask
                                           llvm_any_ty,       // offsets
                                           llvm_i32_ty        // surface
@@ -1449,7 +1449,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
                                          llvm_i32_ty,       // imm offsets
                                          llvm_i8_ty,        // datum size size
                                          llvm_i8_ty,        // vector size
-                                         llvm_i1_ty,        // transposed
+                                         llvm_i8_ty,        // transposed
                                          llvm_i8_ty,        // channel mask
                                          llvm_any_ty        // addressess
                                          ],
