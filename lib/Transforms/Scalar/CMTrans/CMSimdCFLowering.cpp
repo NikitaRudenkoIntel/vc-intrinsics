@@ -174,6 +174,7 @@
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Intrinsics.h"
 #include "llvm/IR/IntrinsicsGenX.h"
+#include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/ValueHandle.h"
 #include "llvm/Pass.h"
@@ -300,6 +301,35 @@ bool CMSimdCFLowering::doInitialization(Module &M)
     }
   }
 #endif
+
+  for (auto &G : M.getGlobalList()) {
+    if (!G.hasAttribute("genx_volatile"))
+      continue;
+    // Transform all load store on volatile globals to vload/vstore to disable
+    // options on this global (no PHI will be produced.).
+    for (auto UI = G.user_begin(); UI != G.user_end();) {
+      auto Inst = *UI++;
+      if (auto LI = dyn_cast<LoadInst>(Inst)) {
+        IRBuilder<> Builder(LI);
+        auto ID = Intrinsic::genx_vload;
+        Type *Tys[] = {LI->getType(), LI->getPointerOperandType()};
+        Function *Fn = Intrinsic::getDeclaration(&M, ID, Tys);
+        Value *VLoad = Builder.CreateCall(Fn, LI->getPointerOperand(), "gload");
+        LI->replaceAllUsesWith(VLoad);
+        LI->eraseFromParent();
+      } else if (auto SI = dyn_cast<StoreInst>(Inst)) {
+        IRBuilder<> Builder(SI);
+        auto ID = Intrinsic::genx_vstore;
+        Type *Tys[] = {SI->getValueOperand()->getType(),
+                       SI->getPointerOperandType()};
+        Value *Args[] = {SI->getValueOperand(), SI->getPointerOperand()};
+        Function *Fn = Intrinsic::getDeclaration(&M, ID, Tys);
+        Builder.CreateCall(Fn, Args);
+        SI->eraseFromParent();
+      }
+    }
+  }
+
   // See if simd CF is used anywhere in this module.
   // We have to try each overload of llvm.genx.simdcf.any separately.
   bool HasSimdCF = false;
