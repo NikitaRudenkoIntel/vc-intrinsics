@@ -306,7 +306,7 @@ bool CMSimdCFLowering::doInitialization(Module &M)
     if (!G.hasAttribute("genx_volatile"))
       continue;
     // Transform all load store on volatile globals to vload/vstore to disable
-    // options on this global (no PHI will be produced.).
+    // optimizations on this global (no PHI will be produced.).
     for (auto UI = G.user_begin(); UI != G.user_end();) {
       auto Inst = *UI++;
       if (auto LI = dyn_cast<LoadInst>(Inst)) {
@@ -318,6 +318,8 @@ bool CMSimdCFLowering::doInitialization(Module &M)
         LI->replaceAllUsesWith(VLoad);
         LI->eraseFromParent();
       } else if (auto SI = dyn_cast<StoreInst>(Inst)) {
+        if (!SI->getValueOperand()->getType()->isVectorTy())
+          continue;
         IRBuilder<> Builder(SI);
         auto ID = Intrinsic::genx_vstore;
         Type *Tys[] = {SI->getValueOperand()->getType(),
