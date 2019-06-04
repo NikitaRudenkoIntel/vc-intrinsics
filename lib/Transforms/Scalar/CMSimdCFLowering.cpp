@@ -439,8 +439,8 @@ void CMSimdCFLowering::calculateVisitOrder(Module *M,
 void CMSimdCFLowering::processFunction(Function *ArgF)
 {
   F = ArgF;
-  DEBUG(dbgs() << "CMSimdCFLowering::processFunction:\n" << *F << "\n");
-  DEBUG(F->print(dbgs()));
+  LLVM_DEBUG(dbgs() << "CMSimdCFLowering::processFunction:\n" << *F << "\n");
+  LLVM_DEBUG(F->print(dbgs()));
   unsigned CMWidth = PredicatedSubroutines[F];
   // Find the simd branches.
   findSimdBranches(CMWidth);
@@ -514,7 +514,7 @@ void CMSimdCFLowering::determinePredicatedBlocks()
     BasicBlock *BlockM = sbi->first;
     auto Br = cast<BranchInst>(BlockM->getTerminator());
     unsigned SimdWidth = sbi->second;
-    DEBUG(dbgs() << "simd branch (width " << SimdWidth << ") at " << BlockM->getName() << "\n");
+    LLVM_DEBUG(dbgs() << "simd branch (width " << SimdWidth << ") at " << BlockM->getName() << "\n");
     if (SimdWidth < 2 || SimdWidth > MAX_SIMD_CF_WIDTH || !isPowerOf2_32(SimdWidth))
       DiagnosticInfoSimdCF::emit(Br, "illegal SIMD CF width");
     // BlockM has a simd conditional branch. Get the postdominator tree if we
@@ -536,7 +536,7 @@ void CMSimdCFLowering::determinePredicatedBlocks()
       for (auto Node = PDT->getNode(BlockN); Node && Node->getBlock() != BlockL;
             Node = Node->getIDom()) {
         auto BB = Node->getBlock();
-        DEBUG(dbgs() << "  " << BB->getName() << " needs predicating\n");
+        LLVM_DEBUG(dbgs() << "  " << BB->getName() << " needs predicating\n");
         auto PBEntry = &PredicatedBlocks[BB];
         if (*PBEntry && *PBEntry != SimdWidth)
           DiagnosticInfoSimdCF::emit(Br, "mismatching SIMD CF width");
@@ -564,7 +564,7 @@ void CMSimdCFLowering::markPredicatedBranches()
     if (!isa<BranchInst>(Term))
       DiagnosticInfoSimdCF::emit(Term, "return or switch not allowed in SIMD control flow");
     if (!SimdBranches[BB])
-      DEBUG(dbgs() << "branch at " << BB->getName() << " becomes simd\n");
+      LLVM_DEBUG(dbgs() << "branch at " << BB->getName() << " becomes simd\n");
     SimdBranches[BB] = SimdWidth;
   }
 }
@@ -590,10 +590,10 @@ void CMSimdCFLowering::fixSimdBranches()
     for (unsigned si = 0, se = Br->getNumSuccessors(); si != se; ++si) {
       BasicBlock *Succ = Br->getSuccessor(si);
       if (Seen.find(Succ) != Seen.end()) {
-        DEBUG(dbgs() << "simd branch at " << BB->getName() << " succ " << si << " is backward\n");
+        LLVM_DEBUG(dbgs() << "simd branch at " << BB->getName() << " succ " << si << " is backward\n");
         if (!Br->isConditional()) {
           // Unconditional simd backward branch. We can just remove its simdness.
-          DEBUG(dbgs() << " unconditional, so unsimding\n");
+          LLVM_DEBUG(dbgs() << " unconditional, so unsimding\n");
           SimdBranches.erase(SimdBranches.find(BB));
         } else {
           // Conditional simd branch where a leg is backward. Insert an extra
@@ -613,7 +613,7 @@ void CMSimdCFLowering::fixSimdBranches()
         if (Br->getSuccessor(0) != NextBB) {
           // Neither leg is fallthrough. Add an extra basic block to make the
           // false one fallthrough.
-          DEBUG(dbgs() << "simd branch at " << BB->getName() << ": inserted fallthrough\n");
+          LLVM_DEBUG(dbgs() << "simd branch at " << BB->getName() << ": inserted fallthrough\n");
           auto NewBB = BasicBlock::Create(BB->getContext(),
                 BB->getName() + ".fallthrough", BB->getParent(), NextBB);
           PredicatedBlocks[NewBB] = PredicatedBlocks[Br->getSuccessor(0)];
@@ -622,7 +622,7 @@ void CMSimdCFLowering::fixSimdBranches()
           Br->setSuccessor(1, NewBB);
         } else {
           // The true leg is fallthrough. Invert the branch.
-          DEBUG(dbgs() << "simd branch at " << BB->getName() << ": inverting\n");
+          LLVM_DEBUG(dbgs() << "simd branch at " << BB->getName() << ": inverting\n");
           Use *U = getSimdConditionUse(Br->getCondition());
           if (!U)
             U = &Br->getOperandUse(0);
@@ -650,12 +650,12 @@ void CMSimdCFLowering::findAndSplitJoinPoints()
       sbi != sbe; ++sbi) {
     auto Br = sbi->first->getTerminator();
     unsigned SimdWidth = sbi->second;
-    DEBUG(dbgs() << *Br << "\n");
+    LLVM_DEBUG(dbgs() << *Br << "\n");
     auto JP = Br->getSuccessor(0);
     if (JoinPoints.count(JP))
       continue;
     // This is a new join point.
-    DEBUG(dbgs() << "new join point " << JP->getName() << "\n");
+    LLVM_DEBUG(dbgs() << "new join point " << JP->getName() << "\n");
     // We need to split it into its own basic block, so later we can modify
     // the join to do a branch to its JIP.
     auto SplitBB = BasicBlock::Create(JP->getContext(),
@@ -664,7 +664,7 @@ void CMSimdCFLowering::findAndSplitJoinPoints()
       PredicatedBlocks[SplitBB] = PredicatedBlocks[JP];
     JP->replaceAllUsesWith(SplitBB);
     BranchInst::Create(JP, SplitBB)->setDebugLoc(JP->front().getDebugLoc());
-    DEBUG(dbgs() << "split join point " << JP->getName() << " out to " << SplitBB->getName() << "\n");
+    LLVM_DEBUG(dbgs() << "split join point " << JP->getName() << " out to " << SplitBB->getName() << "\n");
     JP = SplitBB;
     JoinPoints[JP] = SimdWidth;
   }
@@ -675,7 +675,7 @@ void CMSimdCFLowering::findAndSplitJoinPoints()
  */
 void CMSimdCFLowering::determineJIPs()
 {
-  DEBUG(dbgs() << "determineJIPs: " << F->getName() << "\n");
+  LLVM_DEBUG(dbgs() << "determineJIPs: " << F->getName() << "\n");
   // Number the basic blocks.
   std::map<BasicBlock *, unsigned> Numbers;
   unsigned Num = 0;
@@ -710,7 +710,7 @@ void CMSimdCFLowering::determineJIPs()
         continue;
       // We have a non-fallthrough edge BB -> Succ. Thus NextBB and Succ need
       // to be in the same group.
-      DEBUG(dbgs() << "joinGroups " << NextBB->getName() << " " << Succ->getName() << "\n");
+      LLVM_DEBUG(dbgs() << "joinGroups " << NextBB->getName() << " " << Succ->getName() << "\n");
       Groups.joinGroups(NextBB, Succ);
     }
   }
@@ -724,12 +724,12 @@ void CMSimdCFLowering::determineJIPs()
     // last block in its group.
     std::set<BasicBlock *> SeenGroup;
     for (auto BB = &F->back();;) {
-      DEBUG(dbgs() << "  " << BB->getName() << " is group " << Groups.getGroup(BB)->getName() << "\n");
+      LLVM_DEBUG(dbgs() << "  " << BB->getName() << " is group " << Groups.getGroup(BB)->getName() << "\n");
       if (JoinPoints.count(BB)) {
         if (!SeenGroup.insert(Groups.getGroup(BB)).second)
           determineJIP(BB, &Numbers, /*IsJoin=*/true);
         else
-          DEBUG(dbgs() << BB->getName() << " does not need JIP\n");
+          LLVM_DEBUG(dbgs() << BB->getName() << " does not need JIP\n");
       }
       if (BB == &F->front())
         break;
@@ -747,7 +747,7 @@ void CMSimdCFLowering::determineJIPs()
       BasicBlock *UIP = Br->getSuccessor(0);
       BasicBlock *JIP = JIPs[BB];
       if (!Br->isConditional() && (!JIP || UIP == JIP)) {
-        DEBUG(dbgs() << BB->getName() << ": converting back to unconditional branch to " << UIP->getName() << "\n");
+        LLVM_DEBUG(dbgs() << BB->getName() << ": converting back to unconditional branch to " << UIP->getName() << "\n");
         BranchesToUnsimd.push_back(BB);
       } else
         UIPs.insert(UIP);
@@ -764,7 +764,7 @@ void CMSimdCFLowering::determineJIPs()
       if (UIPs.find(i->first) == UIPs.end())
         JoinsToRemove.push_back(i->first);
     for (auto i = JoinsToRemove.begin(), e = JoinsToRemove.end(); i != e; ++i) {
-      DEBUG(dbgs() << (*i)->getName() << ": removing now unreferenced join\n");
+      LLVM_DEBUG(dbgs() << (*i)->getName() << ": removing now unreferenced join\n");
       JoinPoints.erase(JoinPoints.find(*i));
     }
   }
@@ -780,7 +780,7 @@ void CMSimdCFLowering::determineJIP(BasicBlock *BB,
   auto Br = cast<BranchInst>(BB->getTerminator());
   if (!IsJoin)
     UIP = Br->getSuccessor(0); // this is a goto with a UIP, not a join
-  DEBUG(dbgs() << BB->getName() << ": UIP is " << (UIP ? UIP->getName() : "(none)") << "\n");
+  LLVM_DEBUG(dbgs() << BB->getName() << ": UIP is " << (UIP ? UIP->getName() : "(none)") << "\n");
   // Scan forwards to find the next join point that could be resumed by any
   // code before or at BB.
   unsigned BBNum = (*Numbers)[BB];
@@ -790,7 +790,7 @@ void CMSimdCFLowering::determineJIP(BasicBlock *BB,
   for (;; JP = JP->getNextNode(), ++JPNum) {
     assert(JP);
     if ((*Numbers)[JP] != JPNum)
-      DEBUG(dbgs() << JP->getName() << " number " << (*Numbers)[JP]
+      LLVM_DEBUG(dbgs() << JP->getName() << " number " << (*Numbers)[JP]
                    << " does not match " << JPNum << " for " << JP->getName()
                    << "\n");
     assert((*Numbers)[JP] == JPNum);
@@ -818,7 +818,7 @@ void CMSimdCFLowering::determineJIP(BasicBlock *BB,
     }
     assert(JP != &BB->getParent()->back() && "reached end");
   }
-  DEBUG(dbgs() << BB->getName() << ": JIP is " << JP->getName() << "\n");
+  LLVM_DEBUG(dbgs() << BB->getName() << ": JIP is " << JP->getName() << "\n");
   JIPs[BB] = JP;
 }
 
@@ -1392,7 +1392,7 @@ void CMSimdCFLowering::lowerSimdCF()
     auto Br = cast<BranchInst>(BB->getTerminator());
     BasicBlock *UIP = Br->getSuccessor(0);
     BasicBlock *JIP = JIPs[BB];
-    DEBUG(dbgs() << "lower branch at " << BB->getName() << ", UIP=" << UIP->getName() << ", JIP=" << JIP->getName() << "\n");
+    LLVM_DEBUG(dbgs() << "lower branch at " << BB->getName() << ", UIP=" << UIP->getName() << ", JIP=" << JIP->getName() << "\n");
     if (!Br->isConditional()) {
       // Unconditional branch.  Turn it into a conditional branch on true,
       // adding a fallthrough on false.
@@ -1462,7 +1462,7 @@ void CMSimdCFLowering::lowerSimdCF()
       jpi != jpe; ++jpi) {
     BasicBlock *JP = jpi->first;
     unsigned SimdWidth = jpi->second;
-    DEBUG(dbgs() << "lower join point " << JP->getName() << "\n");
+    LLVM_DEBUG(dbgs() << "lower join point " << JP->getName() << "\n");
     DebugLoc DL = JP->front().getDebugLoc();
     Instruction *InsertBefore = JP->getFirstNonPHI();
     // Insert {NewEM,BranchCond} = llvm.genx.simdcf.join(OldEM,RM)
@@ -1561,7 +1561,7 @@ Instruction *CMSimdCFLowering::loadExecutionMask(Instruction *InsertBefore,
  */
 Value *CMSimdCFLowering::getRMAddr(BasicBlock *JP, unsigned SimdWidth)
 {
-  DEBUG(dbgs() << "getRMAddr(" << JP->getName() << ", " << SimdWidth << ")\n");
+  LLVM_DEBUG(dbgs() << "getRMAddr(" << JP->getName() << ", " << SimdWidth << ")\n");
   auto RMAddr = &RMAddrs[JP];
   if (!*RMAddr) {
     assert(SimdWidth);
