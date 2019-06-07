@@ -680,7 +680,7 @@ void CMSimdCFLower::findAndSplitJoinPoints()
   // cannot iterate the simd-branch blocks directly because some blocks may
   // be splitted in the loop, and the owner-block of a simd-branch may be
   // changed. So we collect the simd-branches first.
-  SmallVector<TerminatorInst*, 4> Jumps;
+  SmallVector<Instruction*, 4> Jumps;
   for (auto sbi = SimdBranches.begin(), sbe = SimdBranches.end();
       sbi != sbe; ++sbi) {
     auto Br = sbi->first->getTerminator();
