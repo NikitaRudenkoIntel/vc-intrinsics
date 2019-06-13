@@ -1341,7 +1341,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// * arg5: i32 Immediate offset added to each address, [MBC]
   /// * arg6: i8 The dataum size, [MBC]
   /// * arg7: i8 Number of elements to load per address (vector size), [MBC]
-  /// * arg8: i1 Indicates if the data is transposed during the transfer, [MBC]
+  /// * arg8: i8 Indicates if the data is transposed during the transfer, [MBC]
   /// * arg9: i8 Channel mask, currently ignored, [MBC].
   /// * arg10: {1,32}Xi{16,32,64} The vector register holding addresses.
   /// * arg11: i32 surface to use for this operation.
@@ -1391,7 +1391,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
                                          llvm_i32_ty,       // imm offsets
                                          llvm_i8_ty,        // datum size size
                                          llvm_i8_ty,        // vector size
-                                         llvm_i1_ty,        // transposed
+                                         llvm_i8_ty,        // transposed
                                          llvm_i8_ty,        // channel mask
                                          llvm_any_ty        // addressess
                                          ],
@@ -1405,7 +1405,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
                                          llvm_i32_ty,       // imm offsets
                                          llvm_i8_ty,        // datum size size
                                          llvm_i8_ty,        // vector size
-                                         llvm_i1_ty,        // transposed
+                                         llvm_i8_ty,        // transposed
                                          llvm_i8_ty,        // channel mask
                                          llvm_any_ty        // addressess
                                          ],
@@ -1419,7 +1419,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
                                           llvm_i32_ty,       // imm offsets
                                           llvm_i8_ty,        // datum size size
                                           llvm_i8_ty,        // vector size
-                                          llvm_i1_ty,        // transposed
+                                          llvm_i8_ty,        // transposed
                                           llvm_i8_ty,        // channel mask
                                           llvm_any_ty,       // offsets
                                           llvm_i32_ty        // surface
