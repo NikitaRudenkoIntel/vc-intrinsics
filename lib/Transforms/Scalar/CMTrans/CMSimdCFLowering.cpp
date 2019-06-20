@@ -700,10 +700,6 @@ void CMSimdCFLower::findAndSplitJoinPoints()
     // the join to do a branch to its JIP.
     if (PredicatedBlocks.find(JP) != PredicatedBlocks.end())
       PredicatedBlocks.insert(std::make_pair(SplitBB, PredicatedBlocks[JP]));
-    JP->replaceAllUsesWith(SplitBB);
-    BranchInst::Create(JP, SplitBB)->setDebugLoc(JP->front().getDebugLoc());
-    LLVM_DEBUG(dbgs() << "split join point " << JP->getName() << " out to " << SplitBB->getName() << "\n");
-    JP = SplitBB;
     if (SimdBranches.find(JP) != SimdBranches.end()) {
       assert( SimdBranches[JP] == SimdWidth);
       SimdBranches[SplitBB] = SimdWidth;
