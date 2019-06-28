@@ -1393,7 +1393,8 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
                                          llvm_i8_ty,        // vector size
                                          llvm_i8_ty,        // transposed
                                          llvm_i8_ty,        // channel mask
-                                         llvm_any_ty        // addressess
+                                         llvm_any_ty,       // addressess
+                                         llvm_i32_ty        // surface, ignored
                                          ],
                                         [IntrReadMem]>;
    def int_genx_lsc_load_stateless : Intrinsic<[llvm_anyvector_ty],
@@ -1407,7 +1408,8 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
                                          llvm_i8_ty,        // vector size
                                          llvm_i8_ty,        // transposed
                                          llvm_i8_ty,        // channel mask
-                                         llvm_any_ty        // addressess
+                                         llvm_any_ty,       // addressess
+                                         llvm_i32_ty        // surface, ignored
                                          ],
                                         [IntrReadMem]>;
    def int_genx_lsc_load_bti : Intrinsic<[llvm_anyvector_ty],
@@ -1451,7 +1453,8 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
                                          llvm_i8_ty,        // vector size
                                          llvm_i8_ty,        // transposed
                                          llvm_i8_ty,        // channel mask
-                                         llvm_any_ty        // addressess
+                                         llvm_any_ty,       // addressess
+                                         llvm_i32_ty        // surface, ignored
                                          ],
                                         []>;
 
@@ -1492,7 +1495,8 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
                                          llvm_i8_ty,        // transposed
                                          llvm_i8_ty,        // channel mask
                                          llvm_any_ty,       // addressess
-                                         llvm_anyvector_ty  // data to write
+                                         llvm_anyvector_ty, // data to write
+                                         llvm_i32_ty        // surface, ignored
                                          ],
                                         []>;
    def int_genx_lsc_store_stateless : Intrinsic<[],
@@ -1507,7 +1511,8 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
                                          llvm_i8_ty,        // transposed
                                          llvm_i8_ty,        // channel mask
                                          llvm_any_ty,       // addressess
-                                         llvm_anyvector_ty  // data to write
+                                         llvm_anyvector_ty, // data to write
+                                         llvm_i32_ty        // surface, ignored
                                          ],
                                         []>;
    def int_genx_lsc_store_bti : Intrinsic<[],
