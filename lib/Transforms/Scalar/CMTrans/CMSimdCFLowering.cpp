@@ -1111,6 +1111,9 @@ void CMSimdCFLower::predicateStore(Instruction *SI, unsigned SimdWidth)
   // Scalar store not predicated
   if (!StoreVT || StoreVT->getNumElements() == 1)
     return; 
+  // no predication for ISPC uniform store
+  if (SI->getMetadata("ISPC-Uniform") != nullptr)
+    return;
   // local-variable store that is only used within the same basic block 
   // do not need predicate
   if (isSingleBlockLocalStore(SI))
