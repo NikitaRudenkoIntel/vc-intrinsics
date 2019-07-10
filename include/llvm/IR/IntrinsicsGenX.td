@@ -1996,6 +1996,26 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
     llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_anyint_ty, LLVMMatchType<0>],
     [IntrReadMem]>;
 
+  /// ``llvm.genx.gather.private`` : CMC internal, no VISA 
+  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  ///
+  /// * arg0: v-by-i1 predicate
+  /// * (Num_elts inferred from data type)
+  /// * arg1: base pointer 
+  /// * arg2: vXi32 element offset in elements
+  /// * arg3: old value of the data read
+  ///
+  /// * Return value: the data read
+  ///
+  /// The vector width of the return value is the number of elements to read,
+  /// which must be 1, 8 or 16.
+  ///
+  /// The element offset arg must have the same vector width.
+  ///
+  def int_genx_gather_private : Intrinsic<[llvm_anyvector_ty], 
+    [llvm_anyvector_ty, llvm_anyptr_ty, llvm_anyint_ty, LLVMMatchType<0>],
+    [IntrReadMem]>;
+
   /// ``llvm.genx.gather.scaled`` : vISA GATHER_SCALED instruction
   /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   ///
@@ -2217,6 +2237,21 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   // (Silly name because of LLVM prefix bug.)
   def int_genx_scatter_orig : Intrinsic<[], [llvm_anyvector_ty, llvm_i32_ty,
     llvm_i32_ty, llvm_anyint_ty, llvm_anyvector_ty], []>;
+
+  /// ``llvm.genx.scatter.private`` : CM internal, no VISA 
+  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  ///
+  /// * arg0: v-by-i1 predicate 
+  /// * arg1: base pointer 
+  /// * arg2 vXi32 element offset in elements
+  /// * arg3: the data to write. The first <num_elts> elements will be used.
+  ///
+  /// The vector width of the data to write is the number of elements to write,
+  /// which must be 1, 8 or 16.
+  /// The element offset arg must have the same vector width.
+  ///
+  def int_genx_scatter_private : Intrinsic<[], [llvm_anyvector_ty,
+    llvm_anyptr_ty, llvm_anyint_ty, llvm_anyvector_ty], []>;
 
   /// ``llvm.genx.scatter.scaled`` : vISA SCATTER_SCALED instruction
   /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
