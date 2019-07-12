@@ -2893,6 +2893,17 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   ///
   def int_genx_sbarrier : Intrinsic<[], [llvm_i8_ty], []>;
 
+// __INTEL_EMBARGO_BEGIN__
+  /// ``llvm.genx.nbarrier`` : vISA NBARRIER instruction
+  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  ///
+  /// * arg0: i8 signal flag, constant
+  /// * arg1: i8 barrier id
+  /// * arg2: i8 number of threads
+  ///
+  def int_genx_nbarrier : Intrinsic<[], [llvm_i8_ty, llvm_i8_ty, llvm_i8_ty], []>;
+// __INTEL_EMBARGO_END__
+
   /// ``llvm.genx.cache.flush`` : vISA CACHE_FLUSH instruction
   /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   ///
