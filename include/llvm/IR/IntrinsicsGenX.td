@@ -1389,7 +1389,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
                                          llvm_i8_ty,        // L3 hints
                                          llvm_i16_ty,       // scale
                                          llvm_i32_ty,       // imm offsets
-                                         llvm_i8_ty,        // datum size size
+                                         llvm_i8_ty,        // datum size
                                          llvm_i8_ty,        // vector size
                                          llvm_i8_ty,        // transposed
                                          llvm_i8_ty,        // channel mask
@@ -1398,20 +1398,19 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
                                          ],
                                         [IntrReadMem]>;
    def int_genx_lsc_load_stateless : Intrinsic<[llvm_anyvector_ty],
-                                        [llvm_any_ty,       // predicate
-                                         llvm_i8_ty,        // subopcode
-                                         llvm_i8_ty,        // L1 hints
-                                         llvm_i8_ty,        // L3 hints
-                                         llvm_i16_ty,       // scale
-                                         llvm_i32_ty,       // imm offsets
-                                         llvm_i8_ty,        // datum size size
-                                         llvm_i8_ty,        // vector size
-                                         llvm_i8_ty,        // transposed
-                                         llvm_i8_ty,        // channel mask
-                                         llvm_any_ty,       // addressess
-                                         llvm_i32_ty        // surface, ignored
-                                         ],
-                                        [IntrReadMem]>;
+                                               [llvm_any_ty,       // predicate
+                                                llvm_i8_ty,        // subopcode
+                                                llvm_i8_ty,        // L1 hints
+                                                llvm_i8_ty,        // L3 hints
+                                                llvm_i16_ty,       // scale
+                                                llvm_i32_ty,       // imm offsets
+                                                llvm_i8_ty,        // datum size
+                                                llvm_i8_ty,        // vector size
+                                                llvm_i8_ty,        // transposed
+                                                llvm_i8_ty,        // channel mask
+                                                llvm_any_ty,       // addressess
+                                                llvm_i32_ty        // surface, ignored
+                                               ], [IntrReadMem]>;
    def int_genx_lsc_load_bti : Intrinsic<[llvm_anyvector_ty],
                                          [llvm_any_ty,       // predicate
                                           llvm_i8_ty,        // subopcode
@@ -1419,44 +1418,41 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
                                           llvm_i8_ty,        // L3 hints
                                           llvm_i16_ty,       // scale
                                           llvm_i32_ty,       // imm offsets
-                                          llvm_i8_ty,        // datum size size
+                                          llvm_i8_ty,        // datum size
                                           llvm_i8_ty,        // vector size
                                           llvm_i8_ty,        // transposed
                                           llvm_i8_ty,        // channel mask
                                           llvm_any_ty,       // offsets
                                           llvm_i32_ty        // surface
-                                         ],
-                                        [IntrReadMem]>;
+                                         ], [IntrReadMem]>;
    def int_genx_lsc_prefetch_bti : Intrinsic<[],
-                                         [llvm_any_ty,       // predicate
-                                          llvm_i8_ty,        // subopcode
-                                          llvm_i8_ty,        // L1 hints
-                                          llvm_i8_ty,        // L3 hints
-                                          llvm_i16_ty,       // scale
-                                          llvm_i32_ty,       // imm offsets
-                                          llvm_i8_ty,        // datum size size
-                                          llvm_i8_ty,        // vector size
-                                          llvm_i8_ty,        // transposed
-                                          llvm_i8_ty,        // channel mask
-                                          llvm_any_ty,       // offsets
-                                          llvm_i32_ty        // surface
-                                         ],
-                                        []>;
+                                             [llvm_any_ty,       // predicate
+                                              llvm_i8_ty,        // subopcode
+                                              llvm_i8_ty,        // L1 hints
+                                              llvm_i8_ty,        // L3 hints
+                                              llvm_i16_ty,       // scale
+                                              llvm_i32_ty,       // imm offsets
+                                              llvm_i8_ty,        // datum size
+                                              llvm_i8_ty,        // vector size
+                                              llvm_i8_ty,        // transposed
+                                              llvm_i8_ty,        // channel mask
+                                              llvm_any_ty,       // offsets
+                                              llvm_i32_ty        // surface
+                                             ], []>;
    def int_genx_lsc_prefetch_stateless : Intrinsic<[],
-                                        [llvm_any_ty,       // predicate
-                                         llvm_i8_ty,        // subopcode
-                                         llvm_i8_ty,        // L1 hints
-                                         llvm_i8_ty,        // L3 hints
-                                         llvm_i16_ty,       // scale
-                                         llvm_i32_ty,       // imm offsets
-                                         llvm_i8_ty,        // datum size size
-                                         llvm_i8_ty,        // vector size
-                                         llvm_i8_ty,        // transposed
-                                         llvm_i8_ty,        // channel mask
-                                         llvm_any_ty,       // addressess
-                                         llvm_i32_ty        // surface, ignored
-                                         ],
-                                        []>;
+                                                   [llvm_any_ty,       // predicate
+                                                    llvm_i8_ty,        // subopcode
+                                                    llvm_i8_ty,        // L1 hints
+                                                    llvm_i8_ty,        // L3 hints
+                                                    llvm_i16_ty,       // scale
+                                                    llvm_i32_ty,       // imm offsets
+                                                    llvm_i8_ty,        // datum size
+                                                    llvm_i8_ty,        // vector size
+                                                    llvm_i8_ty,        // transposed
+                                                    llvm_i8_ty,        // channel mask
+                                                    llvm_any_ty,       // addressess
+                                                    llvm_i32_ty        // surface, ignored
+                                                   ], []>;
 
   /// ``llvm.genx.lsc.store.*`` : lsc_store instructions
   /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1484,53 +1480,201 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// * Return value: void
   ///
   def int_genx_lsc_store_slm : Intrinsic<[],
-                                        [llvm_any_ty,       // predicate
-                                         llvm_i8_ty,        // subopcode
-                                         llvm_i8_ty,        // L1 hints
-                                         llvm_i8_ty,        // L3 hints
-                                         llvm_i16_ty,       // scale
-                                         llvm_i32_ty,       // imm offsets
-                                         llvm_i8_ty,        // datum size size
-                                         llvm_i8_ty,        // vector size
-                                         llvm_i8_ty,        // transposed
-                                         llvm_i8_ty,        // channel mask
-                                         llvm_any_ty,       // addressess
-                                         llvm_anyvector_ty, // data to write
-                                         llvm_i32_ty        // surface, ignored
-                                         ],
-                                        []>;
-   def int_genx_lsc_store_stateless : Intrinsic<[],
-                                        [llvm_any_ty,       // predicate
-                                         llvm_i8_ty,        // subopcode
-                                         llvm_i8_ty,        // L1 hints
-                                         llvm_i8_ty,        // L3 hints
-                                         llvm_i16_ty,       // scale
-                                         llvm_i32_ty,       // imm offsets
-                                         llvm_i8_ty,        // datum size size
-                                         llvm_i8_ty,        // vector size
-                                         llvm_i8_ty,        // transposed
-                                         llvm_i8_ty,        // channel mask
-                                         llvm_any_ty,       // addressess
-                                         llvm_anyvector_ty, // data to write
-                                         llvm_i32_ty        // surface, ignored
-                                         ],
-                                        []>;
-   def int_genx_lsc_store_bti : Intrinsic<[],
                                          [llvm_any_ty,       // predicate
                                           llvm_i8_ty,        // subopcode
                                           llvm_i8_ty,        // L1 hints
                                           llvm_i8_ty,        // L3 hints
                                           llvm_i16_ty,       // scale
                                           llvm_i32_ty,       // imm offsets
-                                          llvm_i8_ty,        // datum size size
+                                          llvm_i8_ty,        // datum size
                                           llvm_i8_ty,        // vector size
                                           llvm_i8_ty,        // transposed
                                           llvm_i8_ty,        // channel mask
-                                          llvm_any_ty,       // offsets
+                                          llvm_any_ty,       // addressess
                                           llvm_anyvector_ty, // data to write
-                                          llvm_i32_ty        // surface
-                                         ],
-                                        []>;
+                                          llvm_i32_ty        // surface, ignored
+                                         ], []>;
+   def int_genx_lsc_store_stateless : Intrinsic<[],
+                                                [llvm_any_ty,       // predicate
+                                                 llvm_i8_ty,        // subopcode
+                                                 llvm_i8_ty,        // L1 hints
+                                                 llvm_i8_ty,        // L3 hints
+                                                 llvm_i16_ty,       // scale
+                                                 llvm_i32_ty,       // imm offsets
+                                                 llvm_i8_ty,        // datum size
+                                                 llvm_i8_ty,        // vector size
+                                                 llvm_i8_ty,        // transposed
+                                                 llvm_i8_ty,        // channel mask
+                                                 llvm_any_ty,       // addressess
+                                                 llvm_anyvector_ty, // data to write
+                                                 llvm_i32_ty        // surface, ignored
+                                                ], []>;
+   def int_genx_lsc_store_bti : Intrinsic<[],
+                                          [llvm_any_ty,       // predicate
+                                           llvm_i8_ty,        // subopcode
+                                           llvm_i8_ty,        // L1 hints
+                                           llvm_i8_ty,        // L3 hints
+                                           llvm_i16_ty,       // scale
+                                           llvm_i32_ty,       // imm offsets
+                                           llvm_i8_ty,        // datum size
+                                           llvm_i8_ty,        // vector size
+                                           llvm_i8_ty,        // transposed
+                                           llvm_i8_ty,        // channel mask
+                                           llvm_any_ty,       // offsets
+                                           llvm_anyvector_ty, // data to write
+                                           llvm_i32_ty        // surface
+                                          ], []>;
+
+   /// ``llvm.genx.lsc.load2d.*`` : lsc_load2d instructions
+   /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   ///
+   /// * ``llvm.genx.lsc.load2d.bti`` :
+   /// * ``llvm.genx.lsc.prefetch2d.bti`` :
+   ///
+   /// * Exec_size ignored unless operation is transposed (DataOrder == Tranpose)
+   /// * arg0: {1,32}Xi1 predicate
+   /// * arg1: i8 Caching behavior for L1, [MBC]
+   /// * arg2: i8 Caching behavior for L3, [MBC]
+   /// * arg3: i8 The dataum size, [MBC]
+   /// * arg4: i8 Indicates if the data is transposed during the transfer, [MBC]
+   /// * arg5: i8 number of blocks, [MBC]
+   /// * arg6: i32 BlockHeight, [MBC]
+   /// * arg7: i32 BlockWidth, [MBC]
+   /// * arg8: i8 VNNI. This performs a VNNI transform during the access.
+   /// * arg9: i32 surface to use for this operation. This can be an immediate or a register.
+   /// * arg10: i32 Src0AddrY, the base Y position of the 2D region to load or store.
+   /// * arg11: i32 Src0AddrX, the base X position of the 2D region to load or store.
+   ///
+   /// * Return value: the value read
+   ///
+   def int_genx_lsc_load2d_bti : Intrinsic<[llvm_anyvector_ty],
+                                           [llvm_any_ty,       // predicate
+                                            llvm_i8_ty,        // L1 hints
+                                            llvm_i8_ty,        // L3 hints
+                                            llvm_i8_ty,        // datum size
+                                            llvm_i8_ty,        // transposed
+                                            llvm_i8_ty,        // number of blocks
+                                            llvm_i16_ty,       // BlockHeight
+                                            llvm_i16_ty,       // BlockWidth
+                                            llvm_i8_ty,        // VNNI
+                                            llvm_i32_ty,       // surface
+                                            llvm_i32_ty,       // Src0AddrY
+                                            llvm_i32_ty        // Src0AddrX
+                                           ], [IntrReadMem]>;
+
+   def int_genx_lsc_prefetch2d_bti : Intrinsic<[],
+                                               [llvm_any_ty,       // predicate
+                                                llvm_i8_ty,        // L1 hints
+                                                llvm_i8_ty,        // L3 hints
+                                                llvm_i8_ty,        // datum size
+                                                llvm_i8_ty,        // transposed
+                                                llvm_i8_ty,        // number of blocks
+                                                llvm_i16_ty,       // BlockHeight
+                                                llvm_i16_ty,       // BlockWidth
+                                                llvm_i8_ty,        // VNNI
+                                                llvm_i32_ty,       // surface
+                                                llvm_i32_ty,       // Src0AddrY
+                                                llvm_i32_ty        // Src0AddrX
+                                               ], []>;
+
+  /// ``llvm.genx.lsc.store2d.bti`` : lsc_store2d instruction
+  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  ///
+  /// * ``llvm.genx.lsc.store2d.bti`` :
+  ///
+  /// * Exec_size ignored unless operation is transposed (DataOrder == Tranpose)
+  /// * arg0: {1,32}Xi1 predicate
+  /// * arg1: i8 Caching behavior for L1, [MBC]
+  /// * arg2: i8 Caching behavior for L3, [MBC]
+  /// * arg3: i8 The dataum size, [MBC]
+  /// * arg4: i8 Indicates if the data is transposed during the transfer, [MBC]
+  /// * arg5: i8 number of blocks, [MBC]
+  /// * arg6: i32 BlockHeight, [MBC]
+  /// * arg7: i32 BlockWidth, [MBC]
+  /// * arg8: i8 VNNI. This performs a VNNI transform during the access.
+  /// * arg9: i32 surface to use for this operation. This can be an immediate or a register.
+  /// * arg10: i32 Src0AddrY, the base Y position of the 2D region to load or store.
+  /// * arg11: i32 Src0AddrX, the base X position of the 2D region to load or store.
+  /// * arg12: data to write
+  ///
+  /// * Return value: void
+  ///
+  def int_genx_lsc_store2d_bti : Intrinsic<[],
+                                           [llvm_any_ty,       // predicate
+                                            llvm_i8_ty,        // L1 hints
+                                            llvm_i8_ty,        // L3 hints
+                                            llvm_i8_ty,        // datum size
+                                            llvm_i8_ty,        // transposed
+                                            llvm_i8_ty,        // number of blocks
+                                            llvm_i16_ty,       // BlockHeight
+                                            llvm_i16_ty,       // BlockWidth
+                                            llvm_i8_ty,        // VNNI
+                                            llvm_i32_ty,       // surface
+                                            llvm_i32_ty,       // Src0AddrY
+                                            llvm_i32_ty,       // Src0AddrX
+                                            llvm_anyvector_ty  // data to write
+                                           ], []>;
+
+  /// ``llvm.genx.lsc.atomic.*`` : lsc_atomic instructions
+  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  ///
+  /// * ``llvm.genx.lsc.atomic.bti`` :
+  /// * ``llvm.genx.lsc.atomic.slm`` :
+  /// * ``llvm.genx.lsc.atomic.slateless`` :
+  ///
+  def int_genx_lsc_atomic_bti : Intrinsic<[llvm_anyvector_ty],
+                                          [llvm_any_ty,       // predicate
+                                           llvm_i8_ty,        // subopcode
+                                           llvm_i8_ty,        // L1 hints
+                                           llvm_i8_ty,        // L3 hints
+                                           llvm_i16_ty,       // scale
+                                           llvm_i32_ty,       // imm offsets
+                                           llvm_i8_ty,        // datum size
+                                           llvm_i8_ty,        // transposed
+                                           llvm_i8_ty,        // vector size
+                                           llvm_i8_ty,        // channel mask
+                                           llvm_i32_ty,        // surface
+                                           llvm_anyvector_ty, // addressess
+                                           LLVMMatchType<0>,  // Src1Data
+                                           LLVMMatchType<0>,  // Src2Data
+                                           LLVMMatchType<0>   // Old Value
+                                          ], []>;
+
+   def int_genx_lsc_atomic_slm : Intrinsic<[llvm_anyvector_ty],
+                                           [llvm_any_ty,       // predicate
+                                            llvm_i8_ty,        // subopcode
+                                            llvm_i8_ty,        // L1 hints
+                                            llvm_i8_ty,        // L3 hints
+                                            llvm_i16_ty,       // scale
+                                            llvm_i32_ty,       // imm offsets
+                                            llvm_i8_ty,        // datum size
+                                            llvm_i8_ty,        // transposed
+                                            llvm_i8_ty,        // vector size
+                                            llvm_i8_ty,        // channel mask
+                                            llvm_i32_ty,       // surface (ignored)
+                                            llvm_anyvector_ty, // addressess
+                                            LLVMMatchType<0>,  // Src1Data
+                                            LLVMMatchType<0>,  // Src2Data
+                                            LLVMMatchType<0>   // Old Value
+                                           ], []>;
+
+   def int_genx_lsc_atomic_stateless : Intrinsic<[llvm_anyvector_ty],
+                                                 [llvm_any_ty,       // predicate
+                                                  llvm_i8_ty,        // subopcode
+                                                  llvm_i8_ty,        // L1 hints
+                                                  llvm_i8_ty,        // L3 hints
+                                                  llvm_i16_ty,       // scale
+                                                  llvm_i32_ty,       // imm offsets
+                                                  llvm_i8_ty,        // datum size
+                                                  llvm_i8_ty,        // transposed
+                                                  llvm_i8_ty,        // vector size
+                                                  llvm_i8_ty,        // channel mask
+                                                  llvm_i32_ty,       // surface (ignored)
+                                                  llvm_anyvector_ty, // addressess
+                                                  LLVMMatchType<0>,  // Src1Data
+                                                  LLVMMatchType<0>,  // Src2Data
+                                                  LLVMMatchType<0>   // Old Value
+                                                 ], []>;
 
 // __INTEL_EMBARGO_END__
 
