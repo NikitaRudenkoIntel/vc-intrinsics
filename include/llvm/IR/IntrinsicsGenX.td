@@ -1622,7 +1622,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// * ``llvm.genx.lsc.atomic.slm`` :
   /// * ``llvm.genx.lsc.atomic.slateless`` :
   ///
-  def int_genx_lsc_atomic_bti : Intrinsic<[llvm_anyvector_ty],
+  def int_genx_lsc_atomic_bti : Intrinsic<[llvm_any_ty],
                                           [llvm_any_ty,       // predicate
                                            llvm_i8_ty,        // subopcode
                                            llvm_i8_ty,        // L1 hints
@@ -1633,14 +1633,14 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
                                            llvm_i8_ty,        // transposed
                                            llvm_i8_ty,        // vector size
                                            llvm_i8_ty,        // channel mask
-                                           llvm_i32_ty,        // surface
+                                           llvm_i32_ty,       // surface
                                            llvm_anyvector_ty, // addressess
                                            LLVMMatchType<0>,  // Src1Data
                                            LLVMMatchType<0>,  // Src2Data
                                            LLVMMatchType<0>   // Old Value
                                           ], []>;
 
-   def int_genx_lsc_atomic_slm : Intrinsic<[llvm_anyvector_ty],
+   def int_genx_lsc_atomic_slm : Intrinsic<[llvm_any_ty],
                                            [llvm_any_ty,       // predicate
                                             llvm_i8_ty,        // subopcode
                                             llvm_i8_ty,        // L1 hints
@@ -1658,7 +1658,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
                                             LLVMMatchType<0>   // Old Value
                                            ], []>;
 
-   def int_genx_lsc_atomic_stateless : Intrinsic<[llvm_anyvector_ty],
+   def int_genx_lsc_atomic_stateless : Intrinsic<[llvm_any_ty],
                                                  [llvm_any_ty,       // predicate
                                                   llvm_i8_ty,        // subopcode
                                                   llvm_i8_ty,        // L1 hints
