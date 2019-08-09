@@ -3137,14 +3137,15 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// * (exec_size inferred from predicate vector width, defaulting to 16
   ///          if predicate is i1)
   /// * arg1: i1/vXi1 predicate
-  /// * arg2: i32 extended message descriptor, constant
+  /// * arg2: i8 sfid
+  /// * arg3: i32 extended message descriptor, constant
   /// * (numsrc inferred from src size)
   /// * (numsrc2 inferred from src2 size)
   /// * (numdst inferred from dst size)
-  /// * arg3: i32 desc
-  /// * arg4: src
-  /// * arg5: src2
-  /// * arg6: old_dst
+  /// * arg4: i32 desc
+  /// * arg5: src
+  /// * arg6: src2
+  /// * arg7: old_dst
   ///
   /// * Return value: dst
   ///
@@ -3164,7 +3165,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// width determining the execution size.
   ///
   def int_genx_raw_sends : Intrinsic<[llvm_anyvector_ty], [llvm_i32_ty,
-    llvm_anyint_ty, llvm_i32_ty, llvm_i32_ty, llvm_anyvector_ty,
+    llvm_anyint_ty, llvm_i8_ty, llvm_i32_ty, llvm_i32_ty, llvm_anyvector_ty,
     llvm_anyvector_ty, LLVMMatchType<0>], []>;
 
   /// ``llvm.genx.raw.sends.noresult`` : vISA RAW_SENDS instruction with no result
@@ -3174,13 +3175,14 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// * (exec_size inferred from predicate vector width, defaulting to 16
   ///          if predicate is i1)
   /// * arg1: i1/vXi1 predicate
-  /// * arg2: i32 extended message descriptor
+  /// * arg2: i8 sfid
+  /// * arg3: i32 extended message descriptor
   /// * (numsrc inferred from src size)
   /// * (numsrc2 inferred from src2 size)
   /// * (numdst is 0)
-  /// * arg3: i32 desc
-  /// * arg4: src
-  /// * arg5: src2
+  /// * arg4: i32 desc
+  /// * arg5: src
+  /// * arg6: src2
   ///
   /// The SENDS instruction has a field for the size of each of src and src2.
   /// These are inferred by rounding the size of each of src and src2 up to the
@@ -3191,7 +3193,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// width determining the execution size.
   ///
   def int_genx_raw_sends_noresult : Intrinsic<[], [llvm_i32_ty, llvm_anyint_ty,
-    llvm_i32_ty, llvm_i32_ty, llvm_anyvector_ty, llvm_anyvector_ty], []>;
+    llvm_i8_ty, llvm_i32_ty, llvm_i32_ty, llvm_anyvector_ty, llvm_anyvector_ty], []>;
 
   /// ---------------------------
   /// Video Analytics Instrinsics
