@@ -62,6 +62,7 @@ enum SourceLanguage {
     SourceLanguageOpenCL_C = 3,
     SourceLanguageOpenCL_CPP = 4,
     SourceLanguageHLSL = 5,
+    SourceLanguageCM = 6,
     SourceLanguageMax = 0x7fffffff,
 };
 
@@ -126,6 +127,10 @@ enum ExecutionMode {
     ExecutionModeFinalizer = 34,
     ExecutionModeSubgroupSize = 35,
     ExecutionModeSubgroupsPerWorkgroup = 36,
+    ExecutionModeCMKernelSharedLocalMemorySizeINTEL = 5580,
+#ifdef __INTEL_EMBARGO__
+  ExecutionModeCMKernelNamedBarrierCountINTEL = 5581,
+#endif // __INTEL_EMBARGO__
     ExecutionModeMax = 0x7fffffff,
 };
 
@@ -382,6 +387,7 @@ enum Decoration {
     DecorationInputAttachmentIndex = 43,
     DecorationAlignment = 44,
     DecorationMaxByteOffset = 45,
+    DecorationCMKernelArgKind = 46,
     DecorationNoSignedWrap = 4469,
     DecorationNoUnsignedWrap = 4470,
     DecorationOverrideCoverageNV = 5248,
@@ -389,6 +395,8 @@ enum Decoration {
     DecorationViewportRelativeNV = 5252,
     DecorationSecondaryViewportRelativeNV = 5256,
     DecorationUserSemantic = 5635,
+    DecorationCMKernelArgumentTypeINTEL = 5581,
+    DecorationCMKernelArgumentDescINTEL = 5582,
     DecorationMax = 0x7fffffff,
 };
 

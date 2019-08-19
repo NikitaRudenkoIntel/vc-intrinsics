@@ -468,6 +468,10 @@ void SPIRVExecutionMode::decode(std::istream &I) {
   case ExecutionModeInvocations:
   case ExecutionModeOutputVertices:
   case ExecutionModeVecTypeHint:
+  case ExecutionModeCMKernelSharedLocalMemorySizeINTEL:
+#ifdef __INTEL_EMBARGO__
+  case ExecutionModeCMKernelNamedBarrierCountINTEL:
+#endif // __INTEL_EMBARGO__
   case ExecutionModeSubgroupSize:
     WordLiterals.resize(1);
     break;

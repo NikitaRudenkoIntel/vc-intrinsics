@@ -69,6 +69,7 @@ public:
 
   bool runOnModule(Module &M) override;
   void visit(Module *M);
+  void transCMMD(Module *M);
 
   static char ID;
 
@@ -83,16 +84,90 @@ bool PreprocessMetadata::runOnModule(Module &Module) {
   M = &Module;
   Ctx = &M->getContext();
 
-  LLVM_DEBUG(dbgs() << "Enter PreprocessMetadata:\n");
-  visit(M);
+  Triple TargetTriple(M->getTargetTriple());
+  Triple::ArchType Arch = TargetTriple.getArch();
+  bool SourceCM = (Arch == Triple::genx32 || Arch == Triple::genx64);
 
-  LLVM_DEBUG(dbgs() << "After PreprocessMetadata:\n" << *M);
+  if (SourceCM) {
+    LLVM_DEBUG(dbgs() << "Enter TransCMMD:\n");
+    transCMMD(M);
+    LLVM_DEBUG(dbgs() << "After TransCMMD:\n" << *M);
+  } else {
+    LLVM_DEBUG(dbgs() << "Enter PreprocessMetadata:\n");
+    visit(M);
+    LLVM_DEBUG(dbgs() << "After PreprocessMetadata:\n" << *M);
+  }
+
   std::string Err;
   raw_string_ostream ErrorOS(Err);
   if (verifyModule(*M, &ErrorOS)) {
     LLVM_DEBUG(errs() << "Fails to verify module: " << ErrorOS.str());
   }
   return true;
+}
+
+void PreprocessMetadata::transCMMD(Module *M) {
+  SPIRVMDBuilder B(*M);
+  SPIRVMDWalker W(*M);
+  B.addNamedMD(kSPIRVMD::Source)
+      .addOp()
+      .add(spv::SourceLanguageCM)
+      .add(36) // version
+      .done();
+
+  Triple TT(M->getTargetTriple());
+  auto Arch = TT.getArch();
+  assert((Arch == Triple::genx32 || Arch == Triple::genx64) &&
+         "Invalid triple");
+  B.addNamedMD(kSPIRVMD::MemoryModel)
+      .addOp()
+      .add(Arch == Triple::genx32 ? spv::AddressingModelPhysical32
+                                  : spv::AddressingModelPhysical64)
+      .add(spv::MemoryModelSimple)
+      .done();
+
+  // Add entry points
+  auto EP = B.addNamedMD(kSPIRVMD::EntryPoint);
+  auto EM = B.addNamedMD(kSPIRVMD::ExecutionMode);
+
+  // Add execution mode
+  NamedMDNode *KernelMDs = M->getNamedMetadata(SPIR_MD_CM_KERNELS);
+  if (!KernelMDs)
+    return;
+
+  for (unsigned I = 0, E = KernelMDs->getNumOperands(); I < E; ++I) {
+    MDNode *KernelMD = KernelMDs->getOperand(I);
+    if (KernelMD->getNumOperands() == 0)
+      continue;
+    Function *Kernel = mdconst::dyn_extract<Function>(KernelMD->getOperand(0));
+
+    // Workaround for OCL 2.0 producer not using SPIR_KERNEL calling convention
+#if SPCV_RELAX_KERNEL_CALLING_CONV
+    Kernel->setCallingConv(CallingConv::SPIR_KERNEL);
+#endif
+
+    MDNode *EPNode;
+    EP.addOp()
+        .add(spv::ExecutionModelKernel)
+        .add(Kernel)
+        .add(Kernel->getName())
+        .done(&EPNode);
+
+    EM.addOp().add(Kernel).add(spv::ExecutionModeContractionOff).done();
+
+    // get the slm-size info
+    if (KernelMD->getNumOperands() >= 5) {
+      if (auto VM = dyn_cast<ValueAsMetadata>(KernelMD->getOperand(4)))
+        if (auto V = dyn_cast<ConstantInt>(VM->getValue())) {
+          auto SLMSize = V->getZExtValue();
+          EM.addOp()
+              .add(Kernel)
+              .add(spv::ExecutionModeCMKernelSharedLocalMemorySizeINTEL)
+              .add(SLMSize)
+              .done();
+        }
+    }
+  }
 }
 
 void PreprocessMetadata::visit(Module *M) {

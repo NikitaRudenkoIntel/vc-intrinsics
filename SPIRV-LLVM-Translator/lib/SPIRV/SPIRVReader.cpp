@@ -104,7 +104,7 @@ const static char *Restrict = "restrict";
 const static char *Pipe = "pipe";
 } // namespace kOCLTypeQualifierName
 
-static bool isOpenCLKernel(SPIRVFunction *BF) {
+static bool isKernel(SPIRVFunction *BF) {
   return BF->getModule()->isEntryPoint(ExecutionModelKernel, BF->getId());
 }
 
@@ -390,7 +390,13 @@ Type *SPIRVToLLVM::transType(SPIRVType *T, bool IsClassMember) {
     return mapType(T, StructType::create(*Context, T->getName()));
   case OpTypeFunction: {
     auto FT = static_cast<SPIRVTypeFunction *>(T);
-    auto RT = transType(FT->getReturnType());
+    auto RT0 = transType(FT->getReturnType());
+    // if function returns a structure, we need to use a literal type in llvm
+    // meaning struct-type should be compared by content, not by name
+    auto RT = RT0;
+    if (RT0->isStructTy() && cast<StructType>(RT0)->getName().startswith(".spv.unnamed.structtype")) {
+      RT = StructType::get(*Context, cast<StructType>(RT0)->elements());
+    }
     std::vector<Type *> PT;
     for (size_t I = 0, E = FT->getNumParameters(); I != E; ++I)
       PT.push_back(transType(FT->getParameterType(I)));
@@ -416,7 +422,7 @@ Type *SPIRVToLLVM::transType(SPIRVType *T, bool IsClassMember) {
       if (auto OldST = M->getTypeByName(Name))
         OldST->setName("");
     } else {
-      Name = "structtype";
+      Name = ".spv.unnamed.structtype";
     }
     auto *StructTy = StructType::create(*Context, Name);
     mapType(ST, StructTy);
@@ -789,26 +795,29 @@ bool SPIRVToLLVM::postProcessOCL() {
   std::string DemangledName;
   SPIRVWord SrcLangVer = 0;
   BM->getSourceLanguage(&SrcLangVer);
-  bool IsCpp = SrcLangVer == kOCLVer::CL21;
-  for (auto I = M->begin(), E = M->end(); I != E;) {
-    auto F = I++;
-    if (F->hasName() && F->isDeclaration()) {
-      LLVM_DEBUG(dbgs() << "[postProcessOCL sret] " << *F << '\n');
-      if (F->getReturnType()->isStructTy() &&
+  SourceLanguage Lang = BM->getSourceLanguage(&SrcLangVer);
+  if (Lang == SourceLanguageOpenCL_C && Lang == SourceLanguageOpenCL_CPP) {
+    bool IsCpp = SrcLangVer == kOCLVer::CL21;
+    for (auto I = M->begin(), E = M->end(); I != E;) {
+      auto F = I++;
+      if (F->hasName() && F->isDeclaration()) {
+        LLVM_DEBUG(dbgs() << "[postProcessOCL sret] " << *F << '\n');
+        if (F->getReturnType()->isStructTy() &&
           oclIsBuiltin(F->getName(), &DemangledName, IsCpp)) {
-        if (!postProcessOCLBuiltinReturnStruct(&(*F)))
-          return false;
+          if (!postProcessOCLBuiltinReturnStruct(&(*F)))
+            return false;
+        }
       }
     }
-  }
-  for (auto I = M->begin(), E = M->end(); I != E;) {
-    auto F = I++;
-    if (F->hasName() && F->isDeclaration()) {
-      LLVM_DEBUG(dbgs() << "[postProcessOCL array arg] " << *F << '\n');
-      if (hasArrayArg(&(*F)) &&
+    for (auto I = M->begin(), E = M->end(); I != E;) {
+      auto F = I++;
+      if (F->hasName() && F->isDeclaration()) {
+        LLVM_DEBUG(dbgs() << "[postProcessOCL array arg] " << *F << '\n');
+        if (hasArrayArg(&(*F)) &&
           oclIsBuiltin(F->getName(), &DemangledName, IsCpp))
-        if (!postProcessOCLBuiltinWithArrayArguments(&(*F), DemangledName))
-          return false;
+          if (!postProcessOCLBuiltinWithArrayArguments(&(*F), DemangledName))
+            return false;
+      }
     }
   }
   return true;
@@ -2363,7 +2372,7 @@ bool SPIRVToLLVM::transFPContractMetadata() {
   bool ContractOff = false;
   for (unsigned I = 0, E = BM->getNumFunctions(); I != E; ++I) {
     SPIRVFunction *BF = BM->getFunction(I);
-    if (!isOpenCLKernel(BF))
+    if (!isKernel(BF))
       continue;
     if (BF->getExecutionMode(ExecutionModeContractionOff)) {
       ContractOff = true;
@@ -2435,6 +2444,83 @@ static bool transKernelArgTypeMedataFromString(LLVMContext *Ctx,
 }
 
 bool SPIRVToLLVM::transKernelMetadata() {
+  SPIRVWord SrcLangVer = 0;
+  SourceLanguage Lang = BM->getSourceLanguage(&SrcLangVer);
+  if (Lang == SourceLanguageCM) {
+    NamedMDNode *KernelMDs = M->getOrInsertNamedMetadata(SPIR_MD_CM_KERNELS);
+    for (unsigned I = 0, E = BM->getNumFunctions(); I != E; ++I) {
+      SPIRVFunction *BF = BM->getFunction(I);
+      Function *F = static_cast<Function *>(getTranslatedValue(BF));
+      assert(F && "Invalid translated function");
+      if (F->getCallingConv() != CallingConv::SPIR_KERNEL)
+        continue;
+      // cmc-backend use this approach to mark kernel
+      F->setDLLStorageClass(llvm::GlobalVariable::DLLExportStorageClass);
+
+      std::vector<llvm::Metadata *> KernelMD;
+      // function pointer
+      KernelMD.push_back(ValueAsMetadata::get(F));
+      // kernel name
+      SmallString<32> NameStr(F->getName());
+      llvm::raw_svector_ostream KernelName(NameStr);
+      KernelMD.push_back(
+          llvm::MDString::get(F->getContext(), KernelName.str()));
+      // asm name, use kernel name for now
+      KernelMD.push_back(
+          llvm::MDString::get(F->getContext(), KernelName.str()));
+      // argument kind
+      // slm-size
+      // argument-offset
+      // argument-inout
+      llvm::Type *I32Ty = llvm::Type::getInt32Ty(*Context);
+      llvm::SmallVector<llvm::Metadata *, 8> ArgKinds;
+      llvm::SmallVector<llvm::Metadata *, 8> ArgInOutKinds;
+      llvm::SmallVector<llvm::Metadata *, 8> ArgOffsets;
+      llvm::SmallVector<llvm::Metadata *, 8> ArgDescs;
+      for (size_t I = 0, E = BF->getNumArguments(); I != E; ++I) {
+        auto BA = BF->getArgument(I);
+        SPIRVWord Kind = 0;
+        BA->hasDecorate(DecorationCMKernelArgKind, 0, &Kind);
+        ArgKinds.push_back(
+            llvm::ValueAsMetadata::get(llvm::ConstantInt::get(I32Ty, Kind)));
+        ArgInOutKinds.push_back(
+            llvm::ValueAsMetadata::get(llvm::ConstantInt::get(I32Ty, 0)));
+        ArgOffsets.push_back(
+            llvm::ValueAsMetadata::get(llvm::ConstantInt::get(I32Ty, 0)));
+
+        string ArgDesc;
+        SPIRVWord ID = 0;
+        if (BA->hasDecorate(DecorationCMKernelArgumentDescINTEL, 0, &ID))
+          ArgDesc = static_cast<SPIRVString *>(BM->getEntry(ID))->getStr();
+        ArgDescs.push_back(llvm::MDString::get(F->getContext(), ArgDesc));
+      }
+      KernelMD.push_back(llvm::MDNode::get(*Context, ArgKinds));
+      // Generate metadata for slm-size
+      unsigned int SLMSize = 0;
+      if (auto EM = BF->getExecutionMode(
+              ExecutionModeCMKernelSharedLocalMemorySizeINTEL))
+        SLMSize = EM->getLiterals()[0];
+      KernelMD.push_back(
+          ConstantAsMetadata::get(ConstantInt::get(I32Ty, SLMSize)));
+      // placeholder for IOKInd, ArgOffset and ArgDescs.
+      KernelMD.push_back(llvm::MDNode::get(*Context, ArgOffsets));
+      KernelMD.push_back(llvm::MDNode::get(*Context, ArgInOutKinds));
+      KernelMD.push_back(llvm::MDNode::get(*Context, ArgDescs));
+#ifdef __INTEL_EMBARGO__
+      unsigned int NBarrierCnt = 0;
+      if (auto EM =
+              BF->getExecutionMode(ExecutionModeCMKernelNamedBarrierCountINTEL))
+        NBarrierCnt = EM->getLiterals()[8];
+      KernelMD.push_back(
+          ConstantAsMetadata::get(ConstantInt::get(I32Ty, NBarrierCnt)));
+#endif // __INTEL_EMBARGO__
+
+      llvm::MDNode *Node = MDNode::get(F->getContext(), KernelMD);
+      KernelMDs->addOperand(Node);
+    }
+    return true;
+  }
+
   for (unsigned I = 0, E = BM->getNumFunctions(); I != E; ++I) {
     SPIRVFunction *BF = BM->getFunction(I);
     Function *F = static_cast<Function *>(getTranslatedValue(BF));
@@ -2665,22 +2751,20 @@ Instruction *SPIRVToLLVM::transOCLBuiltinFromExtInst(SPIRVExtInst *BC,
 bool SPIRVToLLVM::transSourceLanguage() {
   SPIRVWord Ver = 0;
   SourceLanguage Lang = BM->getSourceLanguage(&Ver);
-  assert((Lang == SourceLanguageUnknown || // Allow unknown for debug info test
-          Lang == SourceLanguageOpenCL_C || Lang == SourceLanguageOpenCL_CPP) &&
-         "Unsupported source language");
-  unsigned short Major = 0;
-  unsigned char Minor = 0;
-  unsigned char Rev = 0;
-  std::tie(Major, Minor, Rev) = decodeOCLVer(Ver);
   SPIRVMDBuilder Builder(*M);
   Builder.addNamedMD(kSPIRVMD::Source).addOp().add(Lang).add(Ver).done();
-  // ToDo: Phasing out usage of old SPIR metadata
-  if (Ver <= kOCLVer::CL12)
-    addOCLVersionMetadata(Context, M, kSPIR2MD::SPIRVer, 1, 2);
-  else
-    addOCLVersionMetadata(Context, M, kSPIR2MD::SPIRVer, 2, 0);
-
-  addOCLVersionMetadata(Context, M, kSPIR2MD::OCLVer, Major, Minor);
+  if (Lang == SourceLanguageOpenCL_C || Lang == SourceLanguageOpenCL_CPP) {
+    unsigned short Major = 0;
+    unsigned char Minor = 0;
+    unsigned char Rev = 0;
+    std::tie(Major, Minor, Rev) = decodeOCLVer(Ver);
+    // ToDo: Phasing out usage of old SPIR metadata
+    if (Ver <= kOCLVer::CL12)
+      addOCLVersionMetadata(Context, M, kSPIR2MD::SPIRVer, 1, 2);
+    else
+      addOCLVersionMetadata(Context, M, kSPIR2MD::SPIRVer, 2, 0);
+    addOCLVersionMetadata(Context, M, kSPIR2MD::OCLVer, Major, Minor);
+  }
   return true;
 }
 
@@ -2863,9 +2947,13 @@ llvm::convertSpirvToLLVM(LLVMContext &C, SPIRVModule &BM, std::string &ErrMsg) {
     return nullptr;
   }
 
-  llvm::legacy::PassManager PassMgr;
-  PassMgr.add(createSPIRVToOCL(*M));
-  PassMgr.run(*M);
+  SPIRVWord SrcLangVer = 0;
+  SourceLanguage Lang = BM.getSourceLanguage(&SrcLangVer);
+  if (Lang == SourceLanguageOpenCL_C && Lang == SourceLanguageOpenCL_CPP) {
+    llvm::legacy::PassManager PassMgr;
+    PassMgr.add(createSPIRVToOCL(*M));
+    PassMgr.run(*M);
+  }
 
   return M;
 }

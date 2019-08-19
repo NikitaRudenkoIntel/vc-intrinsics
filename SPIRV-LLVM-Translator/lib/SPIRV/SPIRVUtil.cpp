@@ -79,7 +79,8 @@ cl::opt<bool, true> EnableDbgOutput("spirv-debug",
 
 bool isSupportedTriple(Triple T) {
   Triple::ArchType Arch = T.getArch();
-  return Arch == Triple::spir || Arch == Triple::spir64;
+  return Arch == Triple::spir || Arch == Triple::spir64
+    || Arch == Triple::genx32 || Arch == Triple::genx64;
 }
 
 void addFnAttr(CallInst *Call, Attribute::AttrKind Attr) {

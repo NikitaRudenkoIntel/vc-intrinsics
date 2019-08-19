@@ -332,6 +332,7 @@ template <> inline void SPIRVMap<Decoration, std::string>::init() {
   add(DecorationNoSignedWrap, "NoSignedWrap");
   add(DecorationNoUnsignedWrap, "NoUnsignedWrap");
   add(DecorationUserSemantic, "UserSemantic");
+  add(DecorationCMKernelArgumentTypeINTEL, "CMKernelArgumentTypeINTEL");
 }
 SPIRV_DEF_NAMEMAP(Decoration, SPIRVDecorationNameMap)
 

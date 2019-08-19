@@ -155,8 +155,9 @@ private:
                                SPIRVExtInstSetKind *BuiltinSet = nullptr,
                                SPIRVWord *EntryPoint = nullptr,
                                SmallVectorImpl<std::string> *Dec = nullptr);
-  bool oclIsKernel(Function *F);
+  bool isKernel(Function *F);
   bool transOCLKernelMetadata();
+  bool transCMKernelMetadata();
   SPIRVInstruction *transBuiltinToInst(const std::string &DemangledName,
                                        const std::string &MangledName,
                                        CallInst *CI, SPIRVBasicBlock *BB);
