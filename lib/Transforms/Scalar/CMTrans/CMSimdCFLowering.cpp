@@ -1009,7 +1009,11 @@ void CMSimdCFLower::predicateInst(Instruction *Inst, unsigned SimdWidth) {
     // An IntrNoMem intrinsic is an ALU intrinsic and can be ignored.
     if (Callee->doesNotAccessMemory() || CI->getNumArgOperands() == 0)
       return;
- 
+    // no predication for intrinsic marked as ISPC uniform, 
+	// for example, atomic and oword_store used in printf
+    if (CI->getMetadata("ISPC-Uniform") != nullptr)
+      return;
+
     // Look for a predicate operand in operand 2, 1 or 0.
     unsigned PredNum = CI->getNumArgOperands() - 1;
     for (;;) {
