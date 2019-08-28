@@ -2081,10 +2081,10 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// * arg1: i32 surface index
   /// * arg2: vXT src0
   /// * arg3: vXT src1
-  /// * arg3: vXi32 u
-  /// * arg4: vXi32 v - can be a constant 0 and becomes undef in lowering
-  /// * arg5: vXi32 r - can be a constant 0 and becomes undef in lowering
-  /// * arg6: vXi32 LOD - can be a constant 0 and becomes undef in lowering
+  /// * arg4: vXi32 u
+  /// * arg5: vXi32 v - can be a constant 0 and becomes undef in lowering
+  /// * arg6: vXi32 r - can be a constant 0 and becomes undef in lowering
+  /// * arg7: vXi32 LOD - can be a constant 0 and becomes undef in lowering
   ///
   /// * Return value: vXi32 the old value read
   ///
@@ -2732,10 +2732,10 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// * (exec_size inferred from element offset type)
   /// * arg0: vXi1 predicate
   /// * arg1: i32 channel mask, constant
-  /// * arg3: i16 scale, constant
-  /// * arg4: i64 global address in bytes
-  /// * arg5: vXi64 element offset in bytes
-  /// * arg6: data to write
+  /// * arg2: i16 scale, constant
+  /// * arg3: i64 global address in bytes
+  /// * arg4: vXi64 element offset in bytes
+  /// * arg5: data to write
   ///
   /// The vector width of the element offset arg is the number of elements to
   /// read, which must be 8 or 16.
