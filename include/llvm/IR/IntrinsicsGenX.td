@@ -1233,6 +1233,19 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
               Intrinsic<[llvm_anyvector_ty],
                     [LLVMMatchType<0>, llvm_anyvector_ty, llvm_anyvector_ty, llvm_i32_ty], [IntrNoMem]>;
 
+  /// ``llvm.genx.dpas.nosrc0`` : dpas instruction (Dot Product Accumulate Systolic) with no src0
+  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  ///
+  /// * arg0: second input value, vector integer/float type
+  /// * arg1: third input value, vector integer/float type
+  /// * arg2: fourth input value, integer type
+  ///
+  /// * Return value: result
+  ///
+  def int_genx_dpas_nosrc0 :
+              Intrinsic<[llvm_anyvector_ty],
+                    [llvm_anyvector_ty, llvm_anyvector_ty, llvm_i32_ty], [IntrNoMem]>;
+
   /// ``llvm.genx.dpasw`` : dpasw instruction (Dot Product Accumulate Systolic)
   /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   ///
@@ -1246,6 +1259,19 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   def int_genx_dpasw :
               Intrinsic<[llvm_anyvector_ty],
                     [LLVMMatchType<0>, llvm_anyvector_ty, llvm_anyvector_ty, llvm_i32_ty], [IntrNoMem]>;
+
+  /// ``llvm.genx.dpasw.nosrc0`` : dpasw instruction (Dot Product Accumulate Systolic) with no src0
+  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  ///
+  /// * arg0: second input value, vector integer/float type
+  /// * arg1: third input value, vector integer/float type
+  /// * arg2: fourth input value, integer type
+  ///
+  /// * Return value: result
+  ///
+  def int_genx_dpasw_nosrc0 :
+              Intrinsic<[llvm_anyvector_ty],
+                    [llvm_anyvector_ty, llvm_anyvector_ty, llvm_i32_ty], [IntrNoMem]>;
 
   /// ``llvm.genx.dp4a`` : dp4a instruction (Dot Product 4 Accumulate)
   /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
