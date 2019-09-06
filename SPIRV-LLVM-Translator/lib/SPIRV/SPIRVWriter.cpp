@@ -1679,6 +1679,12 @@ bool LLVMToSPIRV::transCMKernelMetadata() {
     assert(BF && "Kernel function should be translated first");
     assert(Kernel && isKernel(Kernel) &&
            "Invalid kernel calling convention or metadata");
+    // add kernel name decoration
+    StringRef KernelName = cast<MDString>(KernelMD->getOperand(1).get())->getString();
+    BF->addDecorate(new SPIRVDecorate(DecorationCMKernelNameINTEL, BF, BM->getString(KernelName)->getId()));
+    // add kernel asm name decoration
+    StringRef AsmName = cast<MDString>(KernelMD->getOperand(2).get())->getString();
+    BF->addDecorate(new SPIRVDecorate(DecorationCMKernelAsmNameINTEL, BF, BM->getString(AsmName)->getId()));
     // get the ArgKind info
     if (KernelMD->getNumOperands() >= 4) {
       if (auto KindsNode = dyn_cast<MDNode>(KernelMD->getOperand(3))) {
@@ -1689,7 +1695,7 @@ bool LLVMToSPIRV::transCMKernelMetadata() {
               SPIRVFunctionParameter *BA = BF->getArgument(i);
               if (BA) {
                 BA->addDecorate(
-                    new SPIRVDecorate(DecorationCMKernelArgKind, BA, ArgKind));
+                    new SPIRVDecorate(DecorationCMKernelArgumentTypeINTEL, BA, ArgKind));
               }
             }
         }

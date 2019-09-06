@@ -387,7 +387,6 @@ enum Decoration {
     DecorationInputAttachmentIndex = 43,
     DecorationAlignment = 44,
     DecorationMaxByteOffset = 45,
-    DecorationCMKernelArgKind = 46,
     DecorationNoSignedWrap = 4469,
     DecorationNoUnsignedWrap = 4470,
     DecorationOverrideCoverageNV = 5248,
@@ -397,6 +396,8 @@ enum Decoration {
     DecorationUserSemantic = 5635,
     DecorationCMKernelArgumentTypeINTEL = 5581,
     DecorationCMKernelArgumentDescINTEL = 5582,
+    DecorationCMKernelNameINTEL = 5583,
+    DecorationCMKernelAsmNameINTEL = 5584,
     DecorationMax = 0x7fffffff,
 };
 

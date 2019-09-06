@@ -2461,13 +2461,22 @@ bool SPIRVToLLVM::transKernelMetadata() {
       // function pointer
       KernelMD.push_back(ValueAsMetadata::get(F));
       // kernel name
-      SmallString<32> NameStr(F->getName());
-      llvm::raw_svector_ostream KernelName(NameStr);
+      SPIRVWord NameId;
+      string KernelName;
+      if (BF->hasDecorate(DecorationCMKernelNameINTEL, 0, &NameId))
+        KernelName = static_cast<SPIRVString *>(BM->getEntry(NameId))->getStr();
+      else
+        llvm_unreachable("CM kernel name missing");
       KernelMD.push_back(
-          llvm::MDString::get(F->getContext(), KernelName.str()));
-      // asm name, use kernel name for now
+          llvm::MDString::get(F->getContext(), KernelName.c_str()));
+      // asm name
+      string AsmName;
+      if (BF->hasDecorate(DecorationCMKernelAsmNameINTEL, 0, &NameId))
+        AsmName = static_cast<SPIRVString *>(BM->getEntry(NameId))->getStr();
+      else
+        llvm_unreachable("CM kernel asm name missing");
       KernelMD.push_back(
-          llvm::MDString::get(F->getContext(), KernelName.str()));
+          llvm::MDString::get(F->getContext(), AsmName.c_str()));
       // argument kind
       // slm-size
       // argument-offset
@@ -2480,7 +2489,7 @@ bool SPIRVToLLVM::transKernelMetadata() {
       for (size_t I = 0, E = BF->getNumArguments(); I != E; ++I) {
         auto BA = BF->getArgument(I);
         SPIRVWord Kind = 0;
-        BA->hasDecorate(DecorationCMKernelArgKind, 0, &Kind);
+        BA->hasDecorate(DecorationCMKernelArgumentTypeINTEL, 0, &Kind);
         ArgKinds.push_back(
             llvm::ValueAsMetadata::get(llvm::ConstantInt::get(I32Ty, Kind)));
         ArgInOutKinds.push_back(
