@@ -390,13 +390,7 @@ Type *SPIRVToLLVM::transType(SPIRVType *T, bool IsClassMember) {
     return mapType(T, StructType::create(*Context, T->getName()));
   case OpTypeFunction: {
     auto FT = static_cast<SPIRVTypeFunction *>(T);
-    auto RT0 = transType(FT->getReturnType());
-    // if function returns a structure, we need to use a literal type in llvm
-    // meaning struct-type should be compared by content, not by name
-    auto RT = RT0;
-    if (RT0->isStructTy() && cast<StructType>(RT0)->getName().startswith(".spv.unnamed.structtype")) {
-      RT = StructType::get(*Context, cast<StructType>(RT0)->elements());
-    }
+    auto RT = transType(FT->getReturnType());
     std::vector<Type *> PT;
     for (size_t I = 0, E = FT->getNumParameters(); I != E; ++I)
       PT.push_back(transType(FT->getParameterType(I)));
@@ -418,18 +412,21 @@ Type *SPIRVToLLVM::transType(SPIRVType *T, bool IsClassMember) {
   case OpTypeStruct: {
     auto ST = static_cast<SPIRVTypeStruct *>(T);
     auto Name = ST->getName();
-    if (!Name.empty()) {
+    bool IsLiteral = Name.empty();
+    if (!IsLiteral) {
       if (auto OldST = M->getTypeByName(Name))
         OldST->setName("");
-    } else {
-      Name = ".spv.unnamed.structtype";
     }
     auto *StructTy = StructType::create(*Context, Name);
-    mapType(ST, StructTy);
     SmallVector<Type *, 4> MT;
     for (size_t I = 0, E = ST->getMemberCount(); I != E; ++I)
       MT.push_back(transType(ST->getMemberType(I), true));
     StructTy->setBody(MT, ST->isPacked());
+    // If structure has no name then it should be literal
+    // so intrinsics will return correct literal type.
+    if (IsLiteral)
+      StructTy = StructType::get(*Context, StructTy->elements());
+    mapType(ST, StructTy);
     return StructTy;
   }
   case OpTypePipe: {
