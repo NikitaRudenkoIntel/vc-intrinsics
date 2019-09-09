@@ -1277,6 +1277,14 @@ Value *SPIRVToLLVM::transValueWithoutDecoration(SPIRVValue *BV, Function *F,
       return mapValue(BV, new AllocaInst(Ty, 0, BV->getName(), BB));
     }
     auto AddrSpace = SPIRSPIRVAddrSpaceMap::rmap(BS);
+
+    // Convert CM global addrspace and set initializer.
+    if (BM->getSourceLanguage(nullptr) == SourceLanguageCM && AddrSpace == SPIRAS_Global) {
+      AddrSpace = static_cast<SPIRAddressSpace>(0);
+      if (!Initializer)
+        Initializer = UndefValue::get(Ty);
+    }
+
     auto LVar = new GlobalVariable(*M, Ty, IsConst, LinkageTy, Initializer,
                                    BV->getName(), 0,
                                    GlobalVariable::NotThreadLocal, AddrSpace);
@@ -1284,6 +1292,16 @@ Value *SPIRVToLLVM::transValueWithoutDecoration(SPIRVValue *BV, Function *F,
                           Ty->getArrayElementType()->isIntegerTy(8))
                              ? GlobalValue::UnnamedAddr::Global
                              : GlobalValue::UnnamedAddr::None);
+
+    // Add volatile and offset attributes.
+    if (BM->getSourceLanguage(nullptr) == SourceLanguageCM) {
+      SPIRVWord Offset;
+      if (BVar->hasDecorate(DecorationCMGlobalOffsetINTEL, 0, &Offset))
+        LVar->addAttribute("genx_byte_offset", utostr(Offset));
+      if (BVar->hasDecorate(DecorationCMVolatileGlobalINTEL))
+        LVar->addAttribute("genx_volatile");
+    }
+
     SPIRVBuiltinVariableKind BVKind;
     if (BVar->isBuiltin(&BVKind))
       BuiltinGVMap[LVar] = BVKind;

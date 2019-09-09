@@ -398,6 +398,8 @@ enum Decoration {
     DecorationCMKernelArgumentDescINTEL = 5582,
     DecorationCMKernelNameINTEL = 5583,
     DecorationCMKernelAsmNameINTEL = 5584,
+    DecorationCMVolatileGlobalINTEL = 5585,
+    DecorationCMGlobalOffsetINTEL = 5586,
     DecorationMax = 0x7fffffff,
 };
 

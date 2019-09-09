@@ -738,13 +738,29 @@ SPIRVValue *LLVMToSPIRV::transValueWithoutDecoration(Value *V,
       BVarInit = transValue(Init, nullptr);
     }
 
+    SPIRAddressSpace SPVAddrSpace;
+    // Map genx globals to openCL globals.
+    if (SrcLang == SourceLanguageCM)
+      SPVAddrSpace = SPIRAS_Global;
+    else
+      SPVAddrSpace = static_cast<SPIRAddressSpace>(Ty->getAddressSpace());
+
     auto BVar = static_cast<SPIRVVariable *>(BM->addVariable(
         transType(Ty), GV->isConstant(), transLinkageType(GV), BVarInit,
-        GV->getName(),
-        SPIRSPIRVAddrSpaceMap::map(
-            static_cast<SPIRAddressSpace>(Ty->getAddressSpace())),
-        nullptr));
+        GV->getName(), SPIRSPIRVAddrSpaceMap::map(SPVAddrSpace), nullptr));
     mapValue(V, BVar);
+
+    // Add volatile decorations.
+    if (SrcLang == SourceLanguageCM) {
+      if (GV->hasAttribute("genx_byte_offset")) {
+        SPIRVWord Offset;
+        GV->getAttribute("genx_byte_offset").getValueAsString().getAsInteger(0, Offset);
+        BVar->addDecorate(DecorationCMGlobalOffsetINTEL, Offset);
+      }
+      if (GV->hasAttribute("genx_volatile"))
+        BVar->addDecorate(DecorationCMVolatileGlobalINTEL);
+    }
+
     spv::BuiltIn Builtin = spv::BuiltInPosition;
     if (!GV->hasName() || !getSPIRVBuiltin(GV->getName().str(), Builtin))
       return BVar;
