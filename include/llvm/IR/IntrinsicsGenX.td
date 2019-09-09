@@ -1349,6 +1349,19 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   ///
   def int_genx_bf_cvt : Intrinsic<[llvm_anyfloat_ty], [llvm_anyfloat_ty], [IntrNoMem]>;
 
+  /// qf_cvt
+  /// ^^^^^^
+  ///
+  /// ``llvm.genx.qf.cvt`` : qf_cvt instruction
+  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  /// * ``llvm.genx.qf.cvt`` :
+  ///
+  /// * arg0: first input, any scalar/vector i8/half type
+  ///
+  /// * Return value: result, must be i8 if arg0 is half, or half if arg0 is i8.
+  ///
+  def int_genx_qf_cvt : Intrinsic<[llvm_anyvector_ty], [llvm_anyvector_ty], [IntrNoMem]>;
+
   /// ``llvm.genx.lsc.load.*`` : lsc_load instructions
   /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   ///
