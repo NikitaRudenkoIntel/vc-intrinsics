@@ -477,6 +477,16 @@ SPIRVFunction *LLVMToSPIRV::transFunctionDecl(Function *F) {
   else if (F->getLinkage() != GlobalValue::InternalLinkage)
     BF->setLinkageType(transLinkageType(F));
   auto Attrs = F->getAttributes();
+
+  // Add CM float control decoration.
+  if (Attrs.hasFnAttribute("CMFloatControl")) {
+    SPIRVWord Mode = 0;
+    Attrs.getAttribute(AttributeList::FunctionIndex, "CMFloatControl")
+        .getValueAsString()
+        .getAsInteger(0, Mode);
+    BF->addDecorate(DecorationCMFloatControlINTEL, Mode);
+  }
+
   for (Function::arg_iterator I = F->arg_begin(), E = F->arg_end(); I != E;
        ++I) {
     auto ArgNo = I->getArgNo();

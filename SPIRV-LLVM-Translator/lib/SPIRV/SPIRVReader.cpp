@@ -1824,6 +1824,14 @@ Function *SPIRVToLLVM::transFunction(SPIRVFunction *BF) {
                        [&](Attribute::AttrKind Attr) { F->addFnAttr(Attr); });
   }
 
+  // Add CM float control attribute.
+  SPIRVWord CMFloatControlMode = 0;
+  if (BF->hasDecorate(DecorationCMFloatControlINTEL, 0, &CMFloatControlMode)) {
+    Attribute Attr = Attribute::get(*Context, "CMFloatControl",
+                                    std::to_string(CMFloatControlMode));
+    F->addAttribute(AttributeList::FunctionIndex, Attr);
+  }
+
   for (Function::arg_iterator I = F->arg_begin(), E = F->arg_end(); I != E;
        ++I) {
     auto BA = BF->getArgument(I->getArgNo());

@@ -400,6 +400,7 @@ enum Decoration {
     DecorationCMKernelAsmNameINTEL = 5584,
     DecorationCMVolatileGlobalINTEL = 5585,
     DecorationCMGlobalOffsetINTEL = 5586,
+    DecorationCMFloatControlINTEL = 5587,
     DecorationMax = 0x7fffffff,
 };
 
