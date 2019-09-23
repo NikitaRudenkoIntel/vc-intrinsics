@@ -2724,10 +2724,10 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// * (exec_size inferred from element offset type)
   /// * arg0: vXi1 predicate
   /// * arg1: i32 channel mask, constant
-  /// * arg3: i16 scale, constant
-  /// * arg4: i64 global address in bytes
-  /// * arg5: vXi64 element offset in bytes
-  /// * arg6: old value of the data read
+  /// * arg2: i16 scale, constant
+  /// * arg3: i64 global address in bytes
+  /// * arg4: vXi64 element offset in bytes
+  /// * arg5: old value of the data read
   ///
   /// * Return value: the data read
   ///
