@@ -1633,6 +1633,13 @@ bool LLVMToSPIRV::transExecutionMode() {
         BF->addExecutionMode(new SPIRVExecutionMode(
             BF, static_cast<ExecutionMode>(EMode), NBarrierCnt));
       } break;
+
+      case spv::ExecutionModeCMKernelRegularBarrierCountINTEL: {
+        unsigned RegularBarrierCnt;
+        N.get(RegularBarrierCnt);
+        BF->addExecutionMode(new SPIRVExecutionMode(
+          BF, static_cast<ExecutionMode>(EMode), RegularBarrierCnt));
+      } break;
 #endif // __INTEL_EMBARGO__
       default:
         llvm_unreachable("invalid execution mode");

@@ -2545,6 +2545,13 @@ bool SPIRVToLLVM::transKernelMetadata() {
         NBarrierCnt = EM->getLiterals()[8];
       KernelMD.push_back(
           ConstantAsMetadata::get(ConstantInt::get(I32Ty, NBarrierCnt)));
+
+      unsigned int RegularBarrierCnt = 0;
+      if (auto EM =
+        BF->getExecutionMode(ExecutionModeCMKernelRegularBarrierCountINTEL))
+        RegularBarrierCnt = EM->getLiterals()[9];
+      KernelMD.push_back(
+        ConstantAsMetadata::get(ConstantInt::get(I32Ty, RegularBarrierCnt)));
 #endif // __INTEL_EMBARGO__
 
       llvm::MDNode *Node = MDNode::get(F->getContext(), KernelMD);

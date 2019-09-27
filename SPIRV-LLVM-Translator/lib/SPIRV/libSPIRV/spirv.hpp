@@ -129,7 +129,8 @@ enum ExecutionMode {
     ExecutionModeSubgroupsPerWorkgroup = 36,
     ExecutionModeCMKernelSharedLocalMemorySizeINTEL = 5580,
 #ifdef __INTEL_EMBARGO__
-  ExecutionModeCMKernelNamedBarrierCountINTEL = 5581,
+    ExecutionModeCMKernelNamedBarrierCountINTEL = 5581,
+    ExecutionModeCMKernelRegularBarrierCountINTEL = 5582,
 #endif // __INTEL_EMBARGO__
     ExecutionModeMax = 0x7fffffff,
 };

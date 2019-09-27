@@ -471,6 +471,7 @@ void SPIRVExecutionMode::decode(std::istream &I) {
   case ExecutionModeCMKernelSharedLocalMemorySizeINTEL:
 #ifdef __INTEL_EMBARGO__
   case ExecutionModeCMKernelNamedBarrierCountINTEL:
+  case ExecutionModeCMKernelRegularBarrierCountINTEL:
 #endif // __INTEL_EMBARGO__
   case ExecutionModeSubgroupSize:
     WordLiterals.resize(1);
