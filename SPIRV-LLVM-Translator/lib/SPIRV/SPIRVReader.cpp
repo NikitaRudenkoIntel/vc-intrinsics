@@ -577,7 +577,6 @@ SPIRVToLLVM::getMetadataFromNameAndParameter(std::string Name,
 void SPIRVToLLVM::setLLVMLoopMetadata(SPIRVLoopMerge *LM, BranchInst *BI) {
   if (!LM)
     return;
-  llvm::MDString *Name = nullptr;
   auto Temp = MDNode::getTemporary(*Context, None);
   auto Self = MDNode::get(*Context, Temp.get());
   Self->replaceOperandWith(0, Self);
