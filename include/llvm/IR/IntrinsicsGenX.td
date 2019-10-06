@@ -1272,6 +1272,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   def int_genx_dpasw_nosrc0 :
               Intrinsic<[llvm_anyvector_ty],
                     [llvm_anyvector_ty, llvm_anyvector_ty, llvm_i32_ty], [IntrNoMem]>;
+// __INTEL_EMBARGO_END__
 
   /// ``llvm.genx.dp4a`` : dp4a instruction (Dot Product 4 Accumulate)
   /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1336,6 +1337,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   def int_genx_bfn : Intrinsic<[llvm_anyint_ty],
                 [llvm_anyint_ty, LLVMMatchType<1>, LLVMMatchType<1>, llvm_i8_ty], [IntrNoMem]>;
 
+// __INTEL_EMBARGO_BEGIN__
   /// bf_cvt
   /// ^^^^^^
   ///
