@@ -1385,43 +1385,53 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// * arg8: i8 Indicates if the data is transposed during the transfer, [MBC]
   /// * arg9: i8 Channel mask, currently ignored, [MBC].
   /// * arg10: {1,32}Xi{16,32,64} The vector register holding addresses.
-  /// * arg11: i32 surface to use for this operation.
-  ///         This can be an immediate or a register.
+  /// * arg11: i32 surface to use for this operation. This can be an immediate or a register.
   ///
-  /// * Return value: the value read
+  /// * Return value: the value read or void for prefetch
   ///
-  /// [2] Mappings are:
-  ///     0 -> .df (default)
-  ///     1 -> .uc (uncached)
-  ///     2 -> .wb (writeback)
-  ///     3 -> .wt (writethrough)
-  ///     4 -> .st (streaming)
-  ///     5 -> .ri (read-invalidate)
+  /// Cache mappings are:
   ///
-  ///     Only certain combinations of CachingL1 with CachingL3 are valid on hardware.
+  ///   - 0 -> .df (default)
+  ///   - 1 -> .uc (uncached)
+  ///   - 2 -> .wb (writeback)
+  ///   - 3 -> .wt (writethrough)
+  ///   - 4 -> .st (streaming)
+  ///   - 5 -> .ri (read-invalidate)
   ///
-  ///    L1       L3  Notes
+  /// Only certain combinations of CachingL1 with CachingL3 are valid on hardware.
   ///
-  ///   .df      .df  default behavior on both L1 and L3 (L3 uses MOCS settings)
-  ///   .ri/.wb  .wb  read-invalidate on reads (e.g. last use) / writeback on Stores for L1
-  ///   .uc      .uc  uncached (bypass) both L1 and L3
-  ///   .uc      .wb  bypass L1 / writeback L3
-  ///   .wt      .uc  writethrough L1 / bypass L3
-  ///   .wt      .wb  writethrough L1 / writeback L3
-  ///   .st      .uc  streaming L1 / bypass L3
-  ///   .st      .wb  streaming L1 / writeback L3
+  /// +---------+-----+-----------------------------------------------------------------------+
+  /// |  L1     |  L3 | Notes                                                                 |
+  /// +---------+-----+-----------------------------------------------------------------------+
+  /// | .df     | .df | default behavior on both L1 and L3 (L3 uses MOCS settings)            |
+  /// +---------+-----+-----------------------------------------------------------------------+
+  /// | .ri/.wb | .wb | read-invalidate on reads (e.g. last use) / writeback on Stores for L1 |
+  /// +---------+-----+-----------------------------------------------------------------------+
+  /// | .uc     | .uc | uncached (bypass) both L1 and L3                                      |
+  /// +---------+-----+-----------------------------------------------------------------------+
+  /// | .uc     | .wb | bypass L1 / writeback L3                                              |
+  /// +---------+-----+-----------------------------------------------------------------------+
+  /// | .wt     | .uc | writethrough L1 / bypass L3                                           |
+  /// +---------+-----+-----------------------------------------------------------------------+
+  /// | .wt     | .wb | writethrough L1 / writeback L3                                        |
+  /// +---------+-----+-----------------------------------------------------------------------+
+  /// | .st     | .uc | streaming L1 / bypass L3                                              |
+  /// +---------+-----+-----------------------------------------------------------------------+
+  /// | .st     | .wb | streaming L1 / writeback L3                                           |
+  /// +---------+-----+-----------------------------------------------------------------------+ 
   ///
-  /// [5] Immediate offset added to each address. The compiler may be able to
-  ///     fuse this add into the message, otherwise additional instructions are generated
-  ///     to honor the semantics.
+  /// Immediate offset. The compiler may be able to fuse this add into the message, otherwise
+  /// additional instructions are generated to honor the semantics.
   ///
-  /// [6] 1 = :u8,
-  ///     2 = :u16,
-  ///     3 = :u32,
-  ///     4 = :u64,
-  ///     5 = :u8u32 (load 8b, zero extend to 32b; store the opposite),
-  ///     6 = :u16u32 (load 8b, zero extend to 32b; store the opposite),
-  ///     7 = :u16u32h (load 16b into high 16 of each 32b; store the high 16)
+  /// Dataum size mapping is
+  ///
+  ///   - 1 = :u8
+  ///   - 2 = :u16
+  ///   - 3 = :u32
+  ///   - 4 = :u64
+  ///   - 5 = :u8u32 (load 8b, zero extend to 32b; store the opposite),
+  ///   - 6 = :u16u32 (load 8b, zero extend to 32b; store the opposite),
+  ///   - 7 = :u16u32h (load 16b into high 16 of each 32b; store the high 16)
   ///
   def int_genx_lsc_load_slm : Intrinsic<[llvm_anyvector_ty],
                                         [llvm_any_ty,       // predicate
@@ -1515,8 +1525,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// * arg9: i8 Channel mask, currently ignored, [MBC].
   /// * arg10: {1,32}Xi{16,32,64} The vector register holding addresses.
   /// * arg11: VXi{16,32,64} The data to write.
-  /// * arg12: i32 surface to use for this operation.
-  ///         This can be an immediate or a register.
+  /// * arg12: i32 surface to use for this operation. This can be an immediate or a register.
   ///
   /// * Return value: void
   ///
@@ -1586,7 +1595,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
    /// * arg10: i32 Src0AddrY, the base Y position of the 2D region to load or store.
    /// * arg11: i32 Src0AddrX, the base X position of the 2D region to load or store.
    ///
-   /// * Return value: the value read
+   /// * Return value: the value read or void for prefetch
    ///
    def int_genx_lsc_load2d_bti : Intrinsic<[llvm_anyvector_ty],
                                            [llvm_any_ty,       // predicate
