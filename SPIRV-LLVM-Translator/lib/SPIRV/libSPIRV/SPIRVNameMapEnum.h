@@ -119,6 +119,11 @@ template <> inline void SPIRVMap<ExecutionMode, std::string>::init() {
   add(ExecutionModeOutputTriangleStrip, "OutputTriangleStrip");
   add(ExecutionModeVecTypeHint, "VecTypeHint");
   add(ExecutionModeContractionOff, "ContractionOff");
+  add(ExecutionModeCMKernelSharedLocalMemorySizeINTEL, "CMKernelSharedLocalMemorySizeINTEL");
+#ifdef __INTEL_EMBARGO__
+  add(ExecutionModeCMKernelNamedBarrierCountINTEL, "CMKernelNamedBarrierCountINTEL");
+  add(ExecutionModeCMKernelRegularBarrierCountINTEL, "CMKernelRegularBarrierCountINTEL");
+#endif // __INTEL_EMBARGO__
 }
 SPIRV_DEF_NAMEMAP(ExecutionMode, SPIRVExecutionModeNameMap)
 
@@ -333,6 +338,12 @@ template <> inline void SPIRVMap<Decoration, std::string>::init() {
   add(DecorationNoUnsignedWrap, "NoUnsignedWrap");
   add(DecorationUserSemantic, "UserSemantic");
   add(DecorationCMKernelArgumentTypeINTEL, "CMKernelArgumentTypeINTEL");
+  add(DecorationCMKernelArgumentDescINTEL, "CMKernelArgumentDescINTEL");
+  add(DecorationCMKernelNameINTEL, "CMKernelNameINTEL");
+  add(DecorationCMKernelAsmNameINTEL, "CMKernelAsmNameINTEL");
+  add(DecorationCMVolatileGlobalINTEL, "CMVolatileGlobalINTEL");
+  add(DecorationCMGlobalOffsetINTEL, "CMGlobalOffsetINTEL");
+  add(DecorationCMFloatControlINTEL, "CMFloatControlINTEL");
 }
 SPIRV_DEF_NAMEMAP(Decoration, SPIRVDecorationNameMap)
 
