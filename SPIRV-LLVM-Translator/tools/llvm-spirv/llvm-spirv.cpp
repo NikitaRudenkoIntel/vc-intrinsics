@@ -231,7 +231,7 @@ static int convertSPIRV() {
     return 0;
   };
   if (OutputFile != "-") {
-    std::ofstream OFS(OutputFile);
+    std::ofstream OFS(OutputFile, std::ios::binary);
     return Action(OFS);
   } else
     return Action(std::cout);
