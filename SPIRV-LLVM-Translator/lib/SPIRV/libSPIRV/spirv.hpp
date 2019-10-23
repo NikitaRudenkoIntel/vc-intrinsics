@@ -402,6 +402,7 @@ enum Decoration {
     DecorationCMVolatileGlobalINTEL = 5585,
     DecorationCMGlobalOffsetINTEL = 5586,
     DecorationCMFloatControlINTEL = 5587,
+    DecorationCMOpenCLSimdSizeINTEL = 5588,
     DecorationMax = 0x7fffffff,
 };
 

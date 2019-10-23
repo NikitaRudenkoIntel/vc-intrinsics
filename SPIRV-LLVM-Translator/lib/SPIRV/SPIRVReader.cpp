@@ -1830,6 +1830,13 @@ Function *SPIRVToLLVM::transFunction(SPIRVFunction *BF) {
                                     std::to_string(CMFloatControlMode));
     F->addAttribute(AttributeList::FunctionIndex, Attr);
   }
+  // Add oclrt attribute if any.
+  SPIRVWord SIMDSize = 0;
+  if (BF->hasDecorate(DecorationCMOpenCLSimdSizeINTEL, 0, &SIMDSize)) {
+    Attribute Attr =
+        Attribute::get(*Context, "oclrt", std::to_string(SIMDSize));
+    F->addAttribute(AttributeList::FunctionIndex, Attr);
+  }
 
   for (Function::arg_iterator I = F->arg_begin(), E = F->arg_end(); I != E;
        ++I) {

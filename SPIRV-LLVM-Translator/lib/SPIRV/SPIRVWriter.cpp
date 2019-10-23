@@ -459,8 +459,8 @@ SPIRVFunction *LLVMToSPIRV::transFunctionDecl(Function *F) {
     if (!(F->getName().startswith("llvm.genx."))) {
       // We should not translate LLVM intrinsics as a function
       assert(none_of(F->user_begin(), F->user_end(),
-		     [this](User *U) { return getTranslatedValue(U); }) &&
-	     "LLVM intrinsics shouldn't be called in SPIRV");
+                     [this](User *U) { return getTranslatedValue(U); }) &&
+             "LLVM intrinsics shouldn't be called in SPIRV");
       return nullptr;
     }
   }
@@ -485,6 +485,14 @@ SPIRVFunction *LLVMToSPIRV::transFunctionDecl(Function *F) {
         .getValueAsString()
         .getAsInteger(0, Mode);
     BF->addDecorate(DecorationCMFloatControlINTEL, Mode);
+  }
+  // Add oclrt attribute if any.
+  if (Attrs.hasFnAttribute("oclrt")) {
+    SPIRVWord SIMDSize = 0;
+    Attrs.getAttribute(AttributeList::FunctionIndex, "oclrt")
+        .getValueAsString()
+        .getAsInteger(0, SIMDSize);
+    BF->addDecorate(DecorationCMOpenCLSimdSizeINTEL, SIMDSize);
   }
 
   for (Function::arg_iterator I = F->arg_begin(), E = F->arg_end(); I != E;
