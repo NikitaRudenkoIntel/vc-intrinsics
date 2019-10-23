@@ -29,6 +29,26 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   def int_genx_aaaabegin : Intrinsic<[llvm_anyvector_ty], [], []>;
   def int_genx_zzzzend : Intrinsic<[llvm_anyvector_ty], [], []>;
 
+  /// ``llvm.genx.gather.alloca`` : CMC internal, no VISA
+  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  ///
+  /// Indicates memory allocation in thread-private memory
+  ///
+  /// * arg0: type to allocate in thread-private memory
+  ///
+  /// * Return value: offset in stack surface
+  ///
+  def int_genx_alloca : Intrinsic<[llvm_i32_ty], [llvm_any_ty],[]>;
+
+  /// ``llvm.genx.gather.dealloca`` : CMC internal, no VISA
+  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  ///
+  /// Indicates memory deallocation in thread-private memory
+  ///
+  /// * arg0: type to deallocate in thread-private memory
+  ///
+  def int_genx_dealloca : Intrinsic<[], [llvm_any_ty],[]>;
+
   // --------------------------------
   /// Region/element access intrinsics
   /// --------------------------------
