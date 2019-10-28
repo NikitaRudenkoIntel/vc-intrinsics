@@ -1646,6 +1646,65 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
                                                 llvm_i32_ty,       // Src0AddrY
                                                 llvm_i32_ty        // Src0AddrX
                                                ], []>;
+   
+   ///
+   /// * ``llvm.genx.lsc.load2d.stateless`` :
+   /// * ``llvm.genx.lsc.prefetch2d.stateless`` :
+   ///
+   /// * Exec_size ignored unless operation is transposed (DataOrder == Tranpose)
+   /// * arg0: {1,32}Xi1 predicate
+   /// * arg1: i8 Caching behavior for L1, [MBC]
+   /// * arg2: i8 Caching behavior for L3, [MBC]
+   /// * arg3: i8 The dataum size, [MBC]
+   /// * arg4: i8 Indicates if the data is transposed during the transfer, [MBC]
+   /// * arg5: i8 number of blocks, [MBC]
+   /// * arg6: i32 BlockHeight, [MBC]
+   /// * arg7: i32 BlockWidth, [MBC]
+   /// * arg8: i8 VNNI. This performs a VNNI transform during the access.
+   /// * arg9: i32 surface base to use for this operation. This can be an immediate or a register.
+   /// * arg10: i32 surface width.
+   /// * arg11: i32 surface height.
+   /// * arg12: i32 surface pitch.
+   /// * arg13: i32 Src0AddrY, the base Y position of the 2D region to load or store.
+   /// * arg14: i32 Src0AddrX, the base X position of the 2D region to load or store.
+   ///
+   /// * Return value: the value read or void for prefetch
+   ///
+   def int_genx_lsc_load2d_stateless : Intrinsic<[llvm_anyvector_ty],
+                                                 [llvm_any_ty,       // predicate
+                                                  llvm_i8_ty,        // L1 hints
+                                                  llvm_i8_ty,        // L3 hints
+                                                  llvm_i8_ty,        // datum size
+                                                  llvm_i8_ty,        // transposed
+                                                  llvm_i8_ty,        // number of blocks
+                                                  llvm_i16_ty,       // BlockHeight
+                                                  llvm_i16_ty,       // BlockWidth
+                                                  llvm_i8_ty,        // VNNI
+                                                  llvm_any_ty,       // surface base address
+                                                  llvm_i32_ty,       // surface width
+                                                  llvm_i32_ty,       // surface height
+                                                  llvm_i32_ty,       // surface pitch
+                                                  llvm_i32_ty,       // Src0AddrY
+                                                  llvm_i32_ty        // Src0AddrX
+                                                 ], [IntrReadMem]>;
+
+   def int_genx_lsc_prefetch2d_stateless : Intrinsic<[],
+                                                     [llvm_any_ty,       // predicate
+                                                      llvm_i8_ty,        // L1 hints
+                                                      llvm_i8_ty,        // L3 hints
+                                                      llvm_i8_ty,        // datum size
+                                                      llvm_i8_ty,        // transposed
+                                                      llvm_i8_ty,        // number of blocks
+                                                      llvm_i16_ty,       // BlockHeight
+                                                      llvm_i16_ty,       // BlockWidth
+                                                      llvm_i8_ty,        // VNNI
+                                                      llvm_any_ty,       // surface base address
+                                                      llvm_i32_ty,       // surface width
+                                                      llvm_i32_ty,       // surface height
+                                                      llvm_i32_ty,       // surface pitch
+                                                      llvm_i32_ty,       // Src0AddrY
+                                                      llvm_i32_ty        // Src0AddrX
+                                                     ], []>;
 
   /// ``llvm.genx.lsc.store2d.bti`` : lsc_store2d instruction
   /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1684,6 +1743,48 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
                                             llvm_i32_ty,       // Src0AddrX
                                             llvm_anyvector_ty  // data to write
                                            ], []>;
+  
+  ///
+  /// * ``llvm.genx.lsc.store2d.stateless`` :
+  ///
+  /// * Exec_size ignored unless operation is transposed (DataOrder == Tranpose)
+  /// * arg0: {1,32}Xi1 predicate
+  /// * arg1: i8 Caching behavior for L1, [MBC]
+  /// * arg2: i8 Caching behavior for L3, [MBC]
+  /// * arg3: i8 The dataum size, [MBC]
+  /// * arg4: i8 Indicates if the data is transposed during the transfer, [MBC]
+  /// * arg5: i8 number of blocks, [MBC]
+  /// * arg6: i32 BlockHeight, [MBC]
+  /// * arg7: i32 BlockWidth, [MBC]
+  /// * arg8: i8 VNNI. This performs a VNNI transform during the access.
+  /// * arg9: i32 surface base to use for this operation. This can be an immediate or a register.
+  /// * arg10: i32 surface width.
+  /// * arg11: i32 surface height.
+  /// * arg12: i32 surface pitch.
+  /// * arg13: i32 Src0AddrY, the base Y position of the 2D region to load or store.
+  /// * arg14: i32 Src0AddrX, the base X position of the 2D region to load or store.
+  /// * arg15: data to write
+  ///
+  /// * Return value: void
+  ///
+  def int_genx_lsc_store2d_stateless : Intrinsic<[],
+                                                 [llvm_any_ty,       // predicate
+                                                  llvm_i8_ty,        // L1 hints
+                                                  llvm_i8_ty,        // L3 hints
+                                                  llvm_i8_ty,        // datum size
+                                                  llvm_i8_ty,        // transposed
+                                                  llvm_i8_ty,        // number of blocks
+                                                  llvm_i16_ty,       // BlockHeight
+                                                  llvm_i16_ty,       // BlockWidth
+                                                  llvm_i8_ty,        // VNNI
+                                                  llvm_any_ty,       // surface base address
+                                                  llvm_i32_ty,       // surface width
+                                                  llvm_i32_ty,       // surface height
+                                                  llvm_i32_ty,       // surface pitch
+                                                  llvm_i32_ty,       // Src0AddrY
+                                                  llvm_i32_ty,       // Src0AddrX
+                                                  llvm_anyvector_ty  // data to write
+                                                 ], []>;
 
   /// ``llvm.genx.lsc.atomic.*`` : lsc_atomic instructions
   /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
