@@ -18,6 +18,7 @@
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Intrinsics.h"
+#include "llvm/IR/Instructions.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Type.h"
 #include <llvm/ADT/StringExtras.h>
@@ -32,10 +33,6 @@ static cl::opt<bool> EnableGenXIntrinsicsCache(
     "enable-genx-intrinsics-cache", cl::init(true), cl::Hidden,
     cl::desc("Enable metadata caching of genx intrinsics"));
 
-/// Intrinsic::getType(ID) - Return the function type for an intrinsic.
-///
-static FunctionType *getType(LLVMContext &Context, GenXIntrinsic::ID id,
-                             ArrayRef<Type *> Tys = None);
 
 /// Intrinsic::isOverloaded(ID) - Returns true if the intrinsic can be
 /// overloaded.
@@ -384,27 +381,6 @@ void getIntrinsicInfoTableEntries(
     DecodeIITType(NextElt, IITEntries, T);
 }
 
-FunctionType *getType(LLVMContext &Context,
-				       GenXIntrinsic::ID id, ArrayRef<Type*> Tys) {
-  SmallVector<Intrinsic::IITDescriptor, 8> Table;
-  getIntrinsicInfoTableEntries(id, Table);
-
-  ArrayRef<Intrinsic::IITDescriptor> TableRef = Table;
-  Type *ResultTy = DecodeFixedType(TableRef, Tys, Context);
-
-  SmallVector<Type*, 8> ArgTys;
-  while (!TableRef.empty())
-    ArgTys.push_back(DecodeFixedType(TableRef, Tys, Context));
-
-  // DecodeFixedType returns Void for IITDescriptor::Void and IITDescriptor::VarArg
-  // If we see void type as the type of the last argument, it is vararg intrinsic
-  if (!ArgTys.empty() && ArgTys.back()->isVoidTy()) {
-    ArgTys.pop_back();
-    return FunctionType::get(ResultTy, ArgTys, true);
-  }
-  return FunctionType::get(ResultTy, ArgTys, false);
-}
-
 /// Returns a stable mangling for the type specified for use in the name
 /// mangling scheme used by 'any' types in intrinsic signatures.  The mangling
 /// of named types is simply their name.  Manglings for unnamed types consist
@@ -455,18 +431,6 @@ static const char * const GenXIntrinsicNameTable[] = {
 #undef GET_INTRINSIC_NAME_TABLE
   };
 
-
-std::string GenXIntrinsic::getName(GenXIntrinsic::ID id, ArrayRef<Type*> Tys) {
-  assert(id >= GenXIntrinsic::not_genx_intrinsic && "Invalid intrinsic ID!");
-  assert(id < GenXIntrinsic::num_genx_intrinsics && "Invalid intrinsic ID!");
-  id = static_cast<GenXIntrinsic::ID>(id - GenXIntrinsic::not_genx_intrinsic);
-  std::string Result(GenXIntrinsicNameTable[id]);
-  for (Type *Ty : Tys) {
-    Result += "." + getMangledTypeStr(Ty);
-  }
-  return Result;
-}
-
 bool isOverloaded(GenXIntrinsic::ID id) {
   id = static_cast<GenXIntrinsic::ID>(id - GenXIntrinsic::not_genx_intrinsic);
 #define GET_INTRINSIC_OVERLOAD_TABLE
@@ -481,25 +445,6 @@ bool isOverloaded(GenXIntrinsic::ID id) {
 
 static StringRef GenXIntrinsicMDName{ "genx_intrinsic_id" };
 
-Function *GenXIntrinsic::getDeclaration(Module *M, GenXIntrinsic::ID id, ArrayRef<Type*> Tys) {
-  Function *F = cast<Function>(M->getOrInsertFunction(
-      getName(id, Tys), getType(M->getContext(), id, Tys)));
-
-  //Since Function::isIntrinsic() will return true due to llvm. prefix, Module::getOrInsertFunction fails to add the attributes.
-  //explicitly adding the attribute to handle this problem.
-  //This since is setup on the function declaration, attribute assignment is global and hence this approach suffices.
-  F->setAttributes(GenXIntrinsic::getAttributes(M->getContext(), id));
-
-  // Cache intrinsic ID in metadata.
-  if (EnableGenXIntrinsicsCache && !F->hasMetadata(GenXIntrinsicMDName)) {
-    LLVMContext &Ctx = F->getContext();
-    auto *Ty = IntegerType::getInt32Ty(Ctx);
-    auto *Cached = ConstantInt::get(Ty, id);
-    auto *MD = MDNode::get(Ctx, { ConstantAsMetadata::get(Cached) });
-    F->addMetadata(GenXIntrinsicMDName, *MD);
-  }
-  return F;
-}
 
 /// Table of per-target intrinsic name tables.
 #define GET_INTRINSIC_TARGET_DATA
@@ -526,7 +471,8 @@ static ArrayRef<const char *> findTargetSubtable(StringRef Name) {
   return makeArrayRef(&GenXIntrinsicNameTable[1] + TI.Offset, TI.Count);
 }
 
-GenXIntrinsic::ID GenXIntrinsic::getIntrinsicID(const Function *F) {
+
+GenXIntrinsic::ID GenXIntrinsic::getGenXIntrinsicID(const Function *F) {
   llvm::StringRef Name = F->getName();
   if (!Name.startswith(getGenXIntrinsicPrefix()))
     return GenXIntrinsic::not_genx_intrinsic;
@@ -535,13 +481,39 @@ GenXIntrinsic::ID GenXIntrinsic::getIntrinsicID(const Function *F) {
   if (auto *MD = F->getMetadata(GenXIntrinsicMDName)) {
     assert(MD->getNumOperands() == 1 && "Invalid intrinsic metadata");
     auto Val = cast<ValueAsMetadata>(MD->getOperand(0))->getValue();
-    return static_cast<GenXIntrinsic::ID>(cast<ConstantInt>(Val)->getZExtValue());
+    return static_cast<GenXIntrinsic::ID>(
+        cast<ConstantInt>(Val)->getZExtValue());
   }
 
   // Fallback to string lookup.
   auto ID = lookupGenXIntrinsicID(Name);
   assert(ID != GenXIntrinsic::not_genx_intrinsic && "Intrinsic not found!");
   return ID;
+}
+
+// static inline ID getGenXIntrinsicID(const Value *V)
+
+// static inline bool isGenXIntrinsic(unsigned ID)
+
+// static inline bool isGenXIntrinsic(const Function *CF)
+
+// static inline bool GenXIntrinsic::isGenXIntrinsic(const Value *V)
+
+// static inline bool isGenXNonTrivialIntrinsic(unsigned ID)
+
+// static inline bool isGenXNonTrivialIntrinsic(const Function *CF)
+
+// static inline bool isGenXNonTrivialIntrinsic(const Value *V)
+
+std::string GenXIntrinsic::getGenXName(GenXIntrinsic::ID id,
+                                       ArrayRef<Type *> Tys) {
+  assert(isGenXIntrinsic(id) && "Invalid intrinsic ID!");
+  id = static_cast<GenXIntrinsic::ID>(id - GenXIntrinsic::not_genx_intrinsic);
+  std::string Result(GenXIntrinsicNameTable[id]);
+  for (Type *Ty : Tys) {
+    Result += "." + getMangledTypeStr(Ty);
+  }
+  return Result;
 }
 
 GenXIntrinsic::ID GenXIntrinsic::lookupGenXIntrinsicID(StringRef Name) {
@@ -561,4 +533,167 @@ GenXIntrinsic::ID GenXIntrinsic::lookupGenXIntrinsicID(StringRef Name) {
   assert(Name.size() >= MatchSize && "Expected either exact or prefix match");
   bool IsExactMatch = Name.size() == MatchSize;
   return IsExactMatch || isOverloaded(ID) ? ID : GenXIntrinsic::not_genx_intrinsic;
+}
+
+FunctionType *GenXIntrinsic::getGenXType(LLVMContext &Context,
+                                         GenXIntrinsic::ID id,
+                                         ArrayRef<Type *> Tys) {
+  SmallVector<Intrinsic::IITDescriptor, 8> Table;
+  getIntrinsicInfoTableEntries(id, Table);
+
+  ArrayRef<Intrinsic::IITDescriptor> TableRef = Table;
+  Type *ResultTy = DecodeFixedType(TableRef, Tys, Context);
+
+  SmallVector<Type *, 8> ArgTys;
+  while (!TableRef.empty())
+    ArgTys.push_back(DecodeFixedType(TableRef, Tys, Context));
+
+  // DecodeFixedType returns Void for IITDescriptor::Void and
+  // IITDescriptor::VarArg If we see void type as the type of the last argument,
+  // it is vararg intrinsic
+  if (!ArgTys.empty() && ArgTys.back()->isVoidTy()) {
+    ArgTys.pop_back();
+    return FunctionType::get(ResultTy, ArgTys, true);
+  }
+  return FunctionType::get(ResultTy, ArgTys, false);
+}
+
+Function *GenXIntrinsic::getGenXDeclaration(Module *M, GenXIntrinsic::ID id,
+                                            ArrayRef<Type *> Tys) {
+  assert(isGenXNonTrivialIntrinsic(id));
+  Function *F = cast<Function>(M->getOrInsertFunction(
+      getGenXName(id, Tys), getGenXType(M->getContext(), id, Tys)));
+
+  // Since Function::isIntrinsic() will return true due to llvm. prefix,
+  // Module::getOrInsertFunction fails to add the attributes. explicitly adding
+  // the attribute to handle this problem. This since is setup on the function
+  // declaration, attribute assignment is global and hence this approach
+  // suffices.
+  F->setAttributes(GenXIntrinsic::getAttributes(M->getContext(), id));
+
+  // Cache intrinsic ID in metadata.
+  if (EnableGenXIntrinsicsCache && !F->hasMetadata(GenXIntrinsicMDName)) {
+    LLVMContext &Ctx = F->getContext();
+    auto *Ty = IntegerType::getInt32Ty(Ctx);
+    auto *Cached = ConstantInt::get(Ty, id);
+    auto *MD = MDNode::get(Ctx, {ConstantAsMetadata::get(Cached)});
+    F->addMetadata(GenXIntrinsicMDName, *MD);
+  }
+  return F;
+}
+
+
+
+
+// static inline unsigned getAnyIntrinsicID(const Function *F)
+
+// static inline unsigned getAnyIntrinsicID(const Value *V)
+
+// static inline bool isAnyNonTrivialIntrinsic(unsigned id)
+
+// static inline bool isAnyNonTrivialIntrinsic(const Function *CF)
+
+// static inline bool isAnyNonTrivialIntrinsic(const Value *V)
+
+
+std::string GenXIntrinsic::getAnyName(unsigned id, ArrayRef<Type *> Tys) {
+  assert(isAnyIntrinsic(id));
+  if (id == not_any_intrinsic) {
+    std::string Result("not_any_intrinsic");
+    for (Type *Ty : Tys) {
+      Result += "." + getMangledTypeStr(Ty);
+    }
+    return Result;
+  } else if (isGenXIntrinsic(id))
+    return getGenXName((GenXIntrinsic::ID)id, Tys);
+  else
+    return Intrinsic::getName((Intrinsic::ID)id, Tys);
+}
+
+// static inline FunctionType *getAnyType(LLVMContext &Context, unsigned id,
+//        ArrayRef<Type *> Tys = None)
+
+// static inline Function *getAnyDeclaration(Module *M, unsigned id,
+//                                          ArrayRef<Type *> Tys = None)
+
+// todo: delete everything below
+
+/// Intrinsic::getType(ID) - Return the function type for an intrinsic.
+///
+static FunctionType *getType(LLVMContext &Context, GenXIntrinsic::ID id,
+                             ArrayRef<Type *> Tys = None);
+
+FunctionType *getType(LLVMContext &Context, GenXIntrinsic::ID id,
+                      ArrayRef<Type *> Tys) {
+  SmallVector<Intrinsic::IITDescriptor, 8> Table;
+  getIntrinsicInfoTableEntries(id, Table);
+
+  ArrayRef<Intrinsic::IITDescriptor> TableRef = Table;
+  Type *ResultTy = DecodeFixedType(TableRef, Tys, Context);
+
+  SmallVector<Type *, 8> ArgTys;
+  while (!TableRef.empty())
+    ArgTys.push_back(DecodeFixedType(TableRef, Tys, Context));
+
+  // DecodeFixedType returns Void for IITDescriptor::Void and
+  // IITDescriptor::VarArg If we see void type as the type of the last argument,
+  // it is vararg intrinsic
+  if (!ArgTys.empty() && ArgTys.back()->isVoidTy()) {
+    ArgTys.pop_back();
+    return FunctionType::get(ResultTy, ArgTys, true);
+  }
+  return FunctionType::get(ResultTy, ArgTys, false);
+}
+
+GenXIntrinsic::ID GenXIntrinsic::getIntrinsicID(const Function *F) {
+  llvm::StringRef Name = F->getName();
+  if (!Name.startswith(getGenXIntrinsicPrefix()))
+    return GenXIntrinsic::not_genx_intrinsic;
+
+  // Check metadata cache.
+  if (auto *MD = F->getMetadata(GenXIntrinsicMDName)) {
+    assert(MD->getNumOperands() == 1 && "Invalid intrinsic metadata");
+    auto Val = cast<ValueAsMetadata>(MD->getOperand(0))->getValue();
+    return static_cast<GenXIntrinsic::ID>(
+        cast<ConstantInt>(Val)->getZExtValue());
+  }
+
+  // Fallback to string lookup.
+  auto ID = lookupGenXIntrinsicID(Name);
+  assert(ID != GenXIntrinsic::not_genx_intrinsic && "Intrinsic not found!");
+  return ID;
+}
+
+std::string GenXIntrinsic::getName(GenXIntrinsic::ID id, ArrayRef<Type *> Tys) {
+  assert(id >= GenXIntrinsic::not_genx_intrinsic && "Invalid intrinsic ID!");
+  assert(id < GenXIntrinsic::num_genx_intrinsics && "Invalid intrinsic ID!");
+  id = static_cast<GenXIntrinsic::ID>(id - GenXIntrinsic::not_genx_intrinsic);
+  std::string Result(GenXIntrinsicNameTable[id]);
+  for (Type *Ty : Tys) {
+    Result += "." + getMangledTypeStr(Ty);
+  }
+  return Result;
+}
+
+Function *GenXIntrinsic::getDeclaration(Module *M, GenXIntrinsic::ID id,
+                                        ArrayRef<Type *> Tys) {
+  Function *F = cast<Function>(M->getOrInsertFunction(
+      getName(id, Tys), getType(M->getContext(), id, Tys)));
+
+  // Since Function::isIntrinsic() will return true due to llvm. prefix,
+  // Module::getOrInsertFunction fails to add the attributes. explicitly adding
+  // the attribute to handle this problem. This since is setup on the function
+  // declaration, attribute assignment is global and hence this approach
+  // suffices.
+  F->setAttributes(GenXIntrinsic::getAttributes(M->getContext(), id));
+
+  // Cache intrinsic ID in metadata.
+  if (EnableGenXIntrinsicsCache && !F->hasMetadata(GenXIntrinsicMDName)) {
+    LLVMContext &Ctx = F->getContext();
+    auto *Ty = IntegerType::getInt32Ty(Ctx);
+    auto *Cached = ConstantInt::get(Ty, id);
+    auto *MD = MDNode::get(Ctx, {ConstantAsMetadata::get(Cached)});
+    F->addMetadata(GenXIntrinsicMDName, *MD);
+  }
+  return F;
 }
