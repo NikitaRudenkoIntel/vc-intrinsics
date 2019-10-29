@@ -6,6 +6,9 @@ add_llvm_library(LLVMGenXIntrinsics
   ADDITIONAL_HEADER_DIRS
   ${LLVM_MAIN_INCLUDE_DIR}/llvm/GenXIntrinsics
 
+  LINK_LIBS
+    LLVMCodeGen
+
   DEPENDS
     GenXIntrinsicsGen
     intrinsics_gen
