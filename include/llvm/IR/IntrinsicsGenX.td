@@ -1726,6 +1726,46 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
                                                   LLVMMatchType<0>   // Old Value
                                                  ], []>;
 
+   /// ``llvm.genx.lsc.fence`` : lsc_fence instruction
+   /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   ///
+   /// * ``llvm.genx.lsc.fence`` :
+   ///
+   /// * Exec_size ignored unless operation is transposed (DataOrder == Tranpose)
+   /// * arg0: {1,32}Xi1 predicate
+   /// * arg1: i8 SFID
+   /// * arg2: i8 Fence operation
+   /// * arg3: i8 Fence operation scope
+   ///
+   /// [2] Mappings are:
+   ///     0 -> .ugm (unified global memory)
+   ///     1 -> .ugml (low-bandwith untyped global memory)
+   ///     2 -> .tgm (typed global memory)
+   ///     3 -> .slm (shared local memory)
+   ///
+   /// [3] Mappings are:
+   ///     0 -> .none (no operation)
+   ///     1 -> .evict (dirty lines evicted and invalidated from L1)
+   ///     2 -> .invalidate (invalidate all clean lines)
+   ///     3 -> .discard (direct and clean lines are discarded w/o eviction)
+   ///     4 -> .clean (dirty lines are written to memory, but retained in cache in clean state)
+   ///     5 -> .flushl3 (flush only L3)
+   ///
+   /// [4] Mappings are:
+   ///     0 -> .group (flush out to the threadgroup's scope)
+   ///     1 -> .local (flush out to the local scope)
+   ///     2 -> .tile (tile, flush out to several DSSs)
+   ///     3 -> .gpu (entire GPU, flush out to the GPUs LLC)
+   ///     4 -> .gpus (all GPUs in the system, flush out to memory shared by all GPUs)
+   ///     5 -> .system (the entire system memory space)
+   ///     6 -> .sysacq (the entire system memory space with system-acquire semantics)
+   ///
+   def int_genx_lsc_fence : Intrinsic<[],
+                                      [llvm_any_ty,       // predicate
+                                       llvm_i8_ty,        // subopcode
+                                       llvm_i8_ty,        // L1 hints
+                                       llvm_i8_ty         // L3 hints
+                                      ], []>;
 // __INTEL_EMBARGO_END__
 
   /// subb
