@@ -1157,7 +1157,7 @@ void CMSimdCFLower::predicateStore(Instruction *SI, unsigned SimdWidth)
     // We have a wrregion. Check its input width.
     unsigned Width = 0;
     Value *Input = WrRegion->getArgOperand(
-        Intrinsic::GenXRegion::NewValueOperandNum);
+        GenXIntrinsic::GenXRegion::NewValueOperandNum);
     if (auto VT = dyn_cast<VectorType>(Input->getType()))
       Width = VT->getNumElements();
     if (Width == SimdWidth) {
@@ -1165,17 +1165,17 @@ void CMSimdCFLower::predicateStore(Instruction *SI, unsigned SimdWidth)
       if (WrRegionToPredicate) {
         // is this right? what if there is bitcast in between?
         UseNeedsUpdate = &WrRegionToPredicate->getOperandUse(
-            Intrinsic::GenXRegion::NewValueOperandNum);
+            GenXIntrinsic::GenXRegion::NewValueOperandNum);
       }
       else {
         UseNeedsUpdate = U;
       }
       WrRegionToPredicate = WrRegion;
       V = WrRegionToPredicate->getArgOperand(
-          Intrinsic::GenXRegion::NewValueOperandNum);
+          GenXIntrinsic::GenXRegion::NewValueOperandNum);
       // See if it is already predicated, other than by an all true constant.
       Value *Pred = WrRegion->getArgOperand(
-          Intrinsic::GenXRegion::PredicateOperandNum);
+          GenXIntrinsic::GenXRegion::PredicateOperandNum);
       if (auto C = dyn_cast<Constant>(Pred)) {
         if (C->isAllOnesValue())
           Pred = nullptr;
@@ -1343,7 +1343,7 @@ CallInst *CMSimdCFLower::predicateWrRegion(CallInst *WrR, unsigned SimdWidth)
   for (unsigned i = 0, e = WrR->getNumArgOperands(); i != e; ++i)
     Args.push_back(WrR->getArgOperand(i));
   // Modify the predicate in Args.
-  Value *Pred = Args[Intrinsic::GenXRegion::PredicateOperandNum];
+  Value *Pred = Args[GenXIntrinsic::GenXRegion::PredicateOperandNum];
   if (auto C = dyn_cast<Constant>(Pred))
     if (C->isAllOnesValue())
       Pred = nullptr;
@@ -1356,7 +1356,7 @@ CallInst *CMSimdCFLower::predicateWrRegion(CallInst *WrR, unsigned SimdWidth)
     And->setDebugLoc(WrR->getDebugLoc());
     Pred = And;
   }
-  Args[Intrinsic::GenXRegion::PredicateOperandNum] = Pred;
+  Args[GenXIntrinsic::GenXRegion::PredicateOperandNum] = Pred;
   return createWrRegion(Args, WrR->getName(), WrR);
 }
 
