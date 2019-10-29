@@ -45,7 +45,7 @@ public:
   /// getIntrinsicID - Return the intrinsic ID of this intrinsic.
   ///
   GenXIntrinsic::ID getIntrinsicID() const {
-    return GenXIntrinsic::getIntrinsicID(getCalledFunction());
+    return GenXIntrinsic::getGenXIntrinsicID(getCalledFunction());
   }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:

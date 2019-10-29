@@ -111,7 +111,7 @@ TEST(GenXIntrinsics, DeclToID) {
   for (unsigned LLVMID = BeginLLVMGenXID; LLVMID < EndLLVMGenXID; ++LLVMID) {
     generateOverloadedTypes(static_cast<Intrinsic::ID>(LLVMID), Ctx, Tys);
     auto LLVMDecl = Intrinsic::getDeclaration(M, static_cast<Intrinsic::ID>(LLVMID), Tys);
-    unsigned GenXID = GenXIntrinsic::getIntrinsicID(LLVMDecl);
+    unsigned GenXID = GenXIntrinsic::getGenXIntrinsicID(LLVMDecl);
     EXPECT_EQ(LLVMID - BeginLLVMGenXID, GenXID - BeginGenXID);
     ++LLVMID;
     Tys.clear();

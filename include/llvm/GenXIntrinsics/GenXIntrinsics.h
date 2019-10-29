@@ -9,7 +9,7 @@
 //
 // This file defines a set of enums which allow processing of intrinsic
 // functions.  Values of these enum types are returned by
-// GenXIntrinsic::getIntrinsicID.
+// GenXIntrinsic::getGenXIntrinsicID.
 //
 //===----------------------------------------------------------------------===//
 
@@ -47,7 +47,7 @@ static inline ID getGenXIntrinsicID(const Value *V) {
   if (V)
     if (const CallInst *CI = dyn_cast<CallInst>(V))
       if (Function *Callee = CI->getCalledFunction())
-        return GenXIntrinsic::getGenXIntrinsicID(Callee);
+        return getGenXIntrinsicID(Callee);
   return GenXIntrinsic::not_genx_intrinsic;
 }
 
@@ -74,7 +74,7 @@ static inline bool isGenXIntrinsic(const Value *V) {
   if (V)
     if (const CallInst *CI = dyn_cast<CallInst>(V))
       if (Function *Callee = CI->getCalledFunction())
-        return GenXIntrinsic::isGenXIntrinsic(Callee);
+        return isGenXIntrinsic(Callee);
   return false;
 }
 
@@ -125,8 +125,8 @@ Function *getGenXDeclaration(Module *M, ID id, ArrayRef<Type *> Tys = None);
 /// If is not intrinsic returns not_any_intrinsic
 /// Note that Function::getIntrinsicID returns ONLY LLVM intrinsics
 static inline unsigned getAnyIntrinsicID(const Function *F) {
-  if (GenXIntrinsic::isGenXNonTrivialIntrinsic(F))
-    return GenXIntrinsic::getGenXIntrinsicID(F);
+  if (isGenXNonTrivialIntrinsic(F))
+    return getGenXIntrinsicID(F);
   else {
     unsigned IID = F->getIntrinsicID();
     if (IID == Intrinsic::not_intrinsic)
@@ -143,7 +143,7 @@ static inline unsigned getAnyIntrinsicID(const Value *V) {
   if (V)
     if (const CallInst *CI = dyn_cast<CallInst>(V))
       if (Function *Callee = CI->getCalledFunction())
-        return GenXIntrinsic::getAnyIntrinsicID(Callee);
+        return getAnyIntrinsicID(Callee);
   return GenXIntrinsic::not_any_intrinsic;
 }
 
@@ -157,10 +157,10 @@ static inline bool isAnyIntrinsic(unsigned id) {
 /// GenXIntrinsic::isAnyNonTrivialIntrinsic(id) - Is GenX or LLVM intrinsic,
 /// which is not equal to not_genx_intrinsic, not_any_intrinsic or not_intrinsic
 static inline bool isAnyNonTrivialIntrinsic(unsigned id) {
-	return id <  num_genx_intrinsics &&
-		   id != not_genx_intrinsic &&
-		   id != not_any_intrinsic &&
-		   id != Intrinsic::not_intrinsic;
+    return id <  num_genx_intrinsics &&
+           id != not_genx_intrinsic &&
+           id != not_any_intrinsic &&
+           id != Intrinsic::not_intrinsic;
 }
 
 /// GenXIntrinsic::isAnyNonTrivialIntrinsic(ID) - Is GenX or LLVM intrinsic,
@@ -200,7 +200,7 @@ static inline FunctionType *getAnyType(LLVMContext &Context, unsigned id,
 static inline Function *getAnyDeclaration(Module *M, unsigned id,
                                           ArrayRef<Type *> Tys = None) {
   assert(isAnyNonTrivialIntrinsic(id));
-  if (GenXIntrinsic::isGenXIntrinsic(id)) {
+  if (isGenXIntrinsic(id)) {
     return getGenXDeclaration(M, (ID)id, Tys);
   } else {
     return Intrinsic::getDeclaration(M, (Intrinsic::ID)id, Tys);
@@ -213,6 +213,8 @@ static inline bool isRdRegion(unsigned IntrinID) {
   switch (IntrinID) {
   case GenXIntrinsic::genx_rdregioni:
   case GenXIntrinsic::genx_rdregionf:
+  case Intrinsic::genx_rdregioni:
+  case Intrinsic::genx_rdregionf:
     return true;
   default:
     return false;
@@ -220,11 +222,11 @@ static inline bool isRdRegion(unsigned IntrinID) {
 }
 
 static inline bool isRdRegion(Function *F) {
-  return GenXIntrinsic::isRdRegion(GenXIntrinsic::getGenXIntrinsicID(F));
+  return isRdRegion(getGenXIntrinsicID(F));
 }
 
 static inline bool isRdRegion(Value *V) {
-  return GenXIntrinsic::isRdRegion(GenXIntrinsic::getGenXIntrinsicID(V));
+  return isRdRegion(getGenXIntrinsicID(V));
 }
 
 static inline bool isWrRegion(unsigned IntrinID) {
@@ -232,6 +234,9 @@ static inline bool isWrRegion(unsigned IntrinID) {
   case GenXIntrinsic::genx_wrregioni:
   case GenXIntrinsic::genx_wrregionf:
   case GenXIntrinsic::genx_wrconstregion:
+  case Intrinsic::genx_wrregioni:
+  case Intrinsic::genx_wrregionf:
+  case Intrinsic::genx_wrconstregion:
     return true;
   default:
     return false;
@@ -239,11 +244,11 @@ static inline bool isWrRegion(unsigned IntrinID) {
 }
 
 static inline bool isWrRegion(Function *F) {
-  return isWrRegion(GenXIntrinsic::getGenXIntrinsicID(F));
+  return isWrRegion(getGenXIntrinsicID(F));
 }
 
 static inline bool isWrRegion(Value *V) {
-  return isWrRegion(GenXIntrinsic::getGenXIntrinsicID(V));
+  return isWrRegion(getGenXIntrinsicID(V));
 }
 
 static inline bool isIntegerSat(unsigned IID) {
@@ -252,55 +257,75 @@ static inline bool isIntegerSat(unsigned IID) {
   case GenXIntrinsic::genx_sutrunc_sat:
   case GenXIntrinsic::genx_ustrunc_sat:
   case GenXIntrinsic::genx_uutrunc_sat:
+  case Intrinsic::genx_sstrunc_sat:
+  case Intrinsic::genx_sutrunc_sat:
+  case Intrinsic::genx_ustrunc_sat:
+  case Intrinsic::genx_uutrunc_sat:
     return true;
   default:
     return false;
   }
 }
 
+static inline bool isAbs(unsigned IntrinID) {
+    if ((IntrinID == GenXIntrinsic::genx_absf || IntrinID == GenXIntrinsic::genx_absi) ||
+        (IntrinID == Intrinsic::genx_absf || IntrinID == Intrinsic::genx_absi))
+        return true;
+    return false;
+}
+
+static inline bool isAbs(Function *F) {
+    return isAbs(getGenXIntrinsicID(F));
+}
+
+static inline bool isAbs(Value *V) {
+    return isAbs(getGenXIntrinsicID(V));
+}
+
 static inline bool isIntegerSat(Function *F) {
-  return isIntegerSat(GenXIntrinsic::getGenXIntrinsicID(F));
+  return isIntegerSat(getGenXIntrinsicID(F));
 }
 
 static inline bool isIntegerSat(Value *V) {
-  return isIntegerSat(GenXIntrinsic::getGenXIntrinsicID(V));
+  return isIntegerSat(getGenXIntrinsicID(V));
 }
 
 static inline bool isVLoad(unsigned IntrinID) {
-  return IntrinID == GenXIntrinsic::genx_vload;
+  return (IntrinID == GenXIntrinsic::genx_vload ||
+          IntrinID == Intrinsic::genx_vload);
 }
 
 static inline bool isVLoad(Function *F) {
-  return isVLoad(GenXIntrinsic::getGenXIntrinsicID(F));
+  return isVLoad(getGenXIntrinsicID(F));
 }
 
 static inline bool isVLoad(Value *V) {
-  return isVLoad(GenXIntrinsic::getGenXIntrinsicID(V));
+  return isVLoad(getGenXIntrinsicID(V));
 }
 
 static inline bool isVStore(unsigned IntrinID) {
-  return IntrinID == GenXIntrinsic::genx_vstore;
+  return (IntrinID == GenXIntrinsic::genx_vstore ||
+          IntrinID == Intrinsic::genx_vstore);
 }
 
 static inline bool isVStore(Function *F) {
-  return isVStore(GenXIntrinsic::getGenXIntrinsicID(F));
+  return isVStore(getGenXIntrinsicID(F));
 }
 
 static inline bool isVStore(Value *V) {
-  return isVStore(GenXIntrinsic::getGenXIntrinsicID(V));
+  return isVStore(getGenXIntrinsicID(V));
 }
 
 static inline bool isVLoadStore(unsigned IntrinID) {
-  return IntrinID == GenXIntrinsic::genx_vload ||
-         IntrinID == GenXIntrinsic::genx_vstore;
+  return isVLoad(IntrinID) || isVStore(IntrinID);
 }
 
 static inline bool isVLoadStore(Function *F) {
-  return isVLoadStore(GenXIntrinsic::getGenXIntrinsicID(F));
+  return isVLoadStore(getGenXIntrinsicID(F));
 }
 
 static inline bool isVLoadStore(Value *V) {
-  return isVLoadStore(GenXIntrinsic::getGenXIntrinsicID(V));
+  return isVLoadStore(getGenXIntrinsicID(V));
 }
 
 } // namespace GenXIntrinsic
@@ -324,13 +349,6 @@ std::string getName(ID id, ArrayRef<Type *> Tys = None);
 Function *getDeclaration(Module *M, ID id, ArrayRef<Type *> Tys = None);
 
 AttributeList getAttributes(LLVMContext &C, ID id);
-
-static inline bool isIntrinsic(const Function *CF) {
-  return CF->getName().startswith(getGenXIntrinsicPrefix());
-}
-
-/// DEPRECATED use GenXIntrinsic::getGenXIntrinsicID instead
-ID getIntrinsicID(const Function *F);
 
 } // namespace GenXIntrinsic
 

@@ -497,7 +497,7 @@ GenXIntrinsic::ID GenXIntrinsic::getGenXIntrinsicID(const Function *F) {
 
 // static inline bool isGenXIntrinsic(const Function *CF)
 
-// static inline bool GenXIntrinsic::isGenXIntrinsic(const Value *V)
+// static inline bool isGenXIntrinsic(const Value *V)
 
 // static inline bool isGenXNonTrivialIntrinsic(unsigned ID)
 
@@ -643,25 +643,6 @@ FunctionType *getType(LLVMContext &Context, GenXIntrinsic::ID id,
     return FunctionType::get(ResultTy, ArgTys, true);
   }
   return FunctionType::get(ResultTy, ArgTys, false);
-}
-
-GenXIntrinsic::ID GenXIntrinsic::getIntrinsicID(const Function *F) {
-  llvm::StringRef Name = F->getName();
-  if (!Name.startswith(getGenXIntrinsicPrefix()))
-    return GenXIntrinsic::not_genx_intrinsic;
-
-  // Check metadata cache.
-  if (auto *MD = F->getMetadata(GenXIntrinsicMDName)) {
-    assert(MD->getNumOperands() == 1 && "Invalid intrinsic metadata");
-    auto Val = cast<ValueAsMetadata>(MD->getOperand(0))->getValue();
-    return static_cast<GenXIntrinsic::ID>(
-        cast<ConstantInt>(Val)->getZExtValue());
-  }
-
-  // Fallback to string lookup.
-  auto ID = lookupGenXIntrinsicID(Name);
-  assert(ID != GenXIntrinsic::not_genx_intrinsic && "Intrinsic not found!");
-  return ID;
 }
 
 std::string GenXIntrinsic::getName(GenXIntrinsic::ID id, ArrayRef<Type *> Tys) {
