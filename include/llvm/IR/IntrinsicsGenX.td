@@ -3138,14 +3138,14 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// ``llvm.genx.barrier`` : vISA BARRIER instruction
   /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   ///
-  def int_genx_barrier : Intrinsic<[],[],[]>;
+  def int_genx_barrier : Intrinsic<[],[],[IntrConvergent]>;
 
   /// ``llvm.genx.sbarrier`` : vISA SBARRIER instruction
   /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   ///
   /// * arg0: i8 signal flag, constant
   ///
-  def int_genx_sbarrier : Intrinsic<[], [llvm_i8_ty], []>;
+  def int_genx_sbarrier : Intrinsic<[], [llvm_i8_ty], [IntrConvergent]>;
 
 // __INTEL_EMBARGO_BEGIN__
   /// ``llvm.genx.nbarrier`` : vISA NBARRIER instruction
@@ -3155,7 +3155,7 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   /// * arg1: i8 barrier id
   /// * arg2: i8 number of threads
   ///
-  def int_genx_nbarrier : Intrinsic<[], [llvm_i8_ty, llvm_i8_ty, llvm_i8_ty], []>;
+  def int_genx_nbarrier : Intrinsic<[], [llvm_i8_ty, llvm_i8_ty, llvm_i8_ty], [IntrConvergent]>;
 // __INTEL_EMBARGO_END__
 
   /// ``llvm.genx.cache.flush`` : vISA CACHE_FLUSH instruction
