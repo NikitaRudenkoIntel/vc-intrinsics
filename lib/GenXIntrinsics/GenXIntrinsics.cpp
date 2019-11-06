@@ -645,36 +645,3 @@ FunctionType *getType(LLVMContext &Context, GenXIntrinsic::ID id,
   return FunctionType::get(ResultTy, ArgTys, false);
 }
 
-std::string GenXIntrinsic::getName(GenXIntrinsic::ID id, ArrayRef<Type *> Tys) {
-  assert(id >= GenXIntrinsic::not_genx_intrinsic && "Invalid intrinsic ID!");
-  assert(id < GenXIntrinsic::num_genx_intrinsics && "Invalid intrinsic ID!");
-  id = static_cast<GenXIntrinsic::ID>(id - GenXIntrinsic::not_genx_intrinsic);
-  std::string Result(GenXIntrinsicNameTable[id]);
-  for (Type *Ty : Tys) {
-    Result += "." + getMangledTypeStr(Ty);
-  }
-  return Result;
-}
-
-Function *GenXIntrinsic::getDeclaration(Module *M, GenXIntrinsic::ID id,
-                                        ArrayRef<Type *> Tys) {
-  Function *F = cast<Function>(M->getOrInsertFunction(
-      getName(id, Tys), getType(M->getContext(), id, Tys)));
-
-  // Since Function::isIntrinsic() will return true due to llvm. prefix,
-  // Module::getOrInsertFunction fails to add the attributes. explicitly adding
-  // the attribute to handle this problem. This since is setup on the function
-  // declaration, attribute assignment is global and hence this approach
-  // suffices.
-  F->setAttributes(GenXIntrinsic::getAttributes(M->getContext(), id));
-
-  // Cache intrinsic ID in metadata.
-  if (EnableGenXIntrinsicsCache && !F->hasMetadata(GenXIntrinsicMDName)) {
-    LLVMContext &Ctx = F->getContext();
-    auto *Ty = IntegerType::getInt32Ty(Ctx);
-    auto *Cached = ConstantInt::get(Ty, id);
-    auto *MD = MDNode::get(Ctx, {ConstantAsMetadata::get(Cached)});
-    F->addMetadata(GenXIntrinsicMDName, *MD);
-  }
-  return F;
-}

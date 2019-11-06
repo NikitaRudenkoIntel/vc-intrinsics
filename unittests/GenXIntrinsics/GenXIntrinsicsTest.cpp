@@ -31,7 +31,7 @@ TEST(GenXIntrinsics, IdenticalNames) {
   unsigned GenXID = BeginGenXID;
   while (LLVMID < EndLLVMGenXID) {
     StringRef LLVMName = Intrinsic::getName(static_cast<Intrinsic::ID>(LLVMID), {});
-    StringRef GenXName = GenXIntrinsic::getName(static_cast<GenXIntrinsic::ID>(GenXID), {});
+    StringRef GenXName = GenXIntrinsic::getGenXName(static_cast<GenXIntrinsic::ID>(GenXID), {});
     EXPECT_EQ(LLVMName, GenXName);
     ++LLVMID;
     ++GenXID;
@@ -96,7 +96,7 @@ TEST(GenXIntrinsics, IdenticalDecls) {
   while (LLVMID < EndLLVMGenXID) {
     generateOverloadedTypes(static_cast<Intrinsic::ID>(LLVMID), Ctx, Tys);
     auto LLVMDecl = Intrinsic::getDeclaration(M, static_cast<Intrinsic::ID>(LLVMID), Tys);
-    auto GenXDecl = GenXIntrinsic::getDeclaration(M, static_cast<GenXIntrinsic::ID>(GenXID), Tys);
+    auto GenXDecl = GenXIntrinsic::getGenXDeclaration(M, static_cast<GenXIntrinsic::ID>(GenXID), Tys);
     EXPECT_EQ(LLVMDecl, GenXDecl);
     ++LLVMID;
     ++GenXID;
@@ -124,7 +124,7 @@ TEST(GenXIntrinsics, DeclToIDGenX) {
   SmallVector<Type *, 8> Tys;
   for (unsigned GenXID = BeginGenXID; GenXID < EndGenXID; ++GenXID) {
     generateOverloadedTypes(static_cast<Intrinsic::ID>(GenXID - BeginGenXID + BeginLLVMGenXID), Ctx, Tys);
-    auto GenXDecl = GenXIntrinsic::getDeclaration(M, static_cast<GenXIntrinsic::ID>(GenXID), Tys);
+    auto GenXDecl = GenXIntrinsic::getGenXDeclaration(M, static_cast<GenXIntrinsic::ID>(GenXID), Tys);
     unsigned LLVMID = GenXDecl->getIntrinsicID();
     EXPECT_EQ(LLVMID - BeginLLVMGenXID, GenXID - BeginGenXID);
     ++GenXID;
@@ -134,10 +134,29 @@ TEST(GenXIntrinsics, DeclToIDGenX) {
 
 TEST(GenXIntrinsics, NameMatch) {
   for (unsigned GenXID = BeginGenXID; GenXID < EndGenXID; ++GenXID) {
-    std::string Name = GenXIntrinsic::getName(static_cast<GenXIntrinsic::ID>(GenXID), {});
+    std::string Name = GenXIntrinsic::getGenXName(static_cast<GenXIntrinsic::ID>(GenXID), {});
     unsigned FromNameID = GenXIntrinsic::lookupGenXIntrinsicID(Name);
     EXPECT_EQ(GenXID, FromNameID);
   }
 }
 
+TEST(GenXIntrinsics, any2llvmCoherence) {
+  for (auto i = Intrinsic::not_intrinsic; i < Intrinsic::num_intrinsics;
+       i = (Intrinsic::ID)((unsigned)i + 1)) {
+    EXPECT_EQ(GenXIntrinsic::any2llvm(i), i);
+    EXPECT_EQ(GenXIntrinsic::any2llvm(GenXIntrinsic::llvm2any(i)), i);
+  }
+}
+
+TEST(GenXIntrinsics, llvm2anyCoherence) {
+  for (auto i = GenXIntrinsic::not_genx_intrinsic;
+       i <= GenXIntrinsic::not_any_intrinsic;
+       i = (GenXIntrinsic::ID)((unsigned)i + 1)) {
+    if (i == GenXIntrinsic::not_genx_intrinsic ||
+        i == GenXIntrinsic::num_genx_intrinsics)
+      continue;
+    EXPECT_EQ(GenXIntrinsic::llvm2any(i), i);
+    EXPECT_EQ(GenXIntrinsic::llvm2any(GenXIntrinsic::any2llvm(i)), i);
+  }
+}
 } // namespace
