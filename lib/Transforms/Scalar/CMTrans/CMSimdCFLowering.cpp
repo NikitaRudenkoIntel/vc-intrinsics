@@ -166,6 +166,7 @@
 
 #include "llvm/ADT/MapVector.h"
 #include "llvm/Analysis/PostDominators.h"
+#include "llvm/GenXIntrinsics/GenXIntrinsics.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DebugInfo.h"
 #include "llvm/IR/DiagnosticInfo.h"
@@ -341,9 +342,8 @@ bool CMSimdCFLowering::doInitialization(Module &M)
       auto Inst = *UI++;
       if (auto LI = dyn_cast<LoadInst>(Inst)) {
         IRBuilder<> Builder(LI);
-        auto ID = Intrinsic::genx_vload;
         Type *Tys[] = {LI->getType(), LI->getPointerOperandType()};
-        Function *Fn = Intrinsic::getDeclaration(&M, ID, Tys);
+        Function *Fn = GenXIntrinsic::getGenXDeclaration(&M, GenXIntrinsic::genx_vload, Tys);
         Value *VLoad = Builder.CreateCall(Fn, LI->getPointerOperand(), "gload");
         LI->replaceAllUsesWith(VLoad);
         LI->eraseFromParent();
@@ -351,11 +351,10 @@ bool CMSimdCFLowering::doInitialization(Module &M)
         if (!SI->getValueOperand()->getType()->isVectorTy())
           continue;
         IRBuilder<> Builder(SI);
-        auto ID = Intrinsic::genx_vstore;
         Type *Tys[] = {SI->getValueOperand()->getType(),
                        SI->getPointerOperandType()};
         Value *Args[] = {SI->getValueOperand(), SI->getPointerOperand()};
-        Function *Fn = Intrinsic::getDeclaration(&M, ID, Tys);
+        Function *Fn = GenXIntrinsic::getGenXDeclaration(&M, GenXIntrinsic::genx_vstore, Tys);
         Builder.CreateCall(Fn, Args);
         SI->eraseFromParent();
       }
@@ -367,8 +366,8 @@ bool CMSimdCFLowering::doInitialization(Module &M)
   bool HasSimdCF = false;
   for (unsigned Width = 2; Width <= CMSimdCFLower::MAX_SIMD_CF_WIDTH; Width <<= 1) {
     auto VT = VectorType::get(Type::getInt1Ty(M.getContext()), Width);
-    Function *SimdCFAny = Intrinsic::getDeclaration(
-        &M, Intrinsic::genx_simdcf_any, VT);
+    Function *SimdCFAny = GenXIntrinsic::getGenXDeclaration(
+        &M, GenXIntrinsic::genx_simdcf_any, VT);
     if (!SimdCFAny->use_empty()) {
       HasSimdCF = true;
       break;
@@ -395,8 +394,8 @@ bool CMSimdCFLowering::doInitialization(Module &M)
   // so can be deleted.
   for (auto mi = M.begin(), me = M.end(); mi != me; ++ mi) {
     Function *F = &*mi;
-    unsigned IntrinsicID = F->getIntrinsicID();
-    if (IntrinsicID != Intrinsic::genx_simdcf_predicate)
+    if (GenXIntrinsic::getGenXIntrinsicID(F) !=
+        GenXIntrinsic::genx_simdcf_predicate)
       continue;
     while (!F->use_empty()) {
       auto CI = cast<CallInst>(F->use_begin()->getUser());
@@ -945,20 +944,13 @@ static CallInst *createWrRegion(ArrayRef<Value *> Args, const Twine &Name,
   Type *OverloadedTypes[] = { Args[0]->getType(), Args[1]->getType(),
       Args[5]->getType(), Args[7]->getType() };
   Module *M = InsertBefore->getParent()->getParent()->getParent();
-  Function *Decl = Intrinsic::getDeclaration(M,
+  Function *Decl = GenXIntrinsic::getGenXDeclaration(M,
       OverloadedTypes[0]->isFPOrFPVectorTy()
-        ? llvm::Intrinsic::genx_wrregionf : llvm::Intrinsic::genx_wrregioni,
+        ? GenXIntrinsic::genx_wrregionf : GenXIntrinsic::genx_wrregioni,
       OverloadedTypes);
   auto WrRegion = CallInst::Create(Decl, Args, Name, InsertBefore);
   WrRegion->setDebugLoc(InsertBefore->getDebugLoc());
   return WrRegion;
-}
-
-static unsigned getIntrinsicID(const Value *V) {
-  if (auto CI = dyn_cast_or_null<CallInst>(V))
-    if (auto F = CI->getCalledFunction())
-      return F->getIntrinsicID();
-  return Intrinsic::not_intrinsic;
 }
 
 /***********************************************************************
@@ -968,37 +960,35 @@ static unsigned getIntrinsicID(const Value *V) {
  *          SimdWidth = simd cf width in force
  */
 void CMSimdCFLower::predicateInst(Instruction *Inst, unsigned SimdWidth) {
-  if (isa<StoreInst>(Inst) || getIntrinsicID(Inst) == Intrinsic::genx_vstore) {
+  if (isa<StoreInst>(Inst) || GenXIntrinsic::isVStore(Inst)) {
     predicateStore(Inst, SimdWidth);
     return;
   }
 
   if (auto CI = dyn_cast<CallInst>(Inst)) {
-    unsigned IntrinsicID = Intrinsic::not_intrinsic;
+    unsigned IntrinsicID = GenXIntrinsic::getAnyIntrinsicID(Inst);
     auto Callee = CI->getCalledFunction();
-    if (Callee)
-      IntrinsicID = Callee->getIntrinsicID();
     switch (IntrinsicID) {
-      case Intrinsic::genx_rdregioni:
-      case Intrinsic::genx_rdregionf:
-      case Intrinsic::genx_wrregioni:
-      case Intrinsic::genx_wrregionf:
-      case Intrinsic::genx_simdcf_any:
-      case Intrinsic::genx_vload:
-      case Intrinsic::genx_vstore:
+      case GenXIntrinsic::genx_rdregioni:
+      case GenXIntrinsic::genx_rdregionf:
+      case GenXIntrinsic::genx_wrregioni:
+      case GenXIntrinsic::genx_wrregionf:
+      case GenXIntrinsic::genx_simdcf_any:
+      case GenXIntrinsic::genx_vload:
+      case GenXIntrinsic::genx_vstore:
       case Intrinsic::lifetime_start:
       case Intrinsic::lifetime_end:
         return; // ignore these intrinsics
-      case Intrinsic::genx_simdcf_predicate:
+      case GenXIntrinsic::genx_simdcf_predicate:
         rewritePredication(CI, SimdWidth);
         return;
-      case Intrinsic::genx_raw_send:
-      case Intrinsic::genx_raw_send_noresult:
-      case Intrinsic::genx_raw_sends:
-      case Intrinsic::genx_raw_sends_noresult:
+      case GenXIntrinsic::genx_raw_send:
+      case GenXIntrinsic::genx_raw_send_noresult:
+      case GenXIntrinsic::genx_raw_sends:
+      case GenXIntrinsic::genx_raw_sends_noresult:
         predicateSend(CI, IntrinsicID, SimdWidth);
         return;
-      case Intrinsic::not_intrinsic:
+      case GenXIntrinsic::not_any_intrinsic:
         // Call to real subroutine.
         // ignore those SIMT entry function.
         if (!Callee->hasFnAttribute("CMGenxSIMT")) {
@@ -1067,7 +1057,7 @@ static bool IsBitCastForLifetimeMark(const Value *V) {
     return false;
   }
   for (auto U : V->users()) {
-    unsigned IntrinsicID = getIntrinsicID(U);
+    unsigned IntrinsicID = GenXIntrinsic::getAnyIntrinsicID(U);
     if (IntrinsicID != Intrinsic::lifetime_start &&
         IntrinsicID != Intrinsic::lifetime_end) {
       return false;
@@ -1086,8 +1076,7 @@ static bool isSingleBlockLocalStore(const Instruction *SI)
     auto BLK = SI->getParent();
     for (auto U : P->users()) {
       if (isa<LoadInst>(U) || isa<StoreInst>(U) ||
-          getIntrinsicID(U) == Intrinsic::genx_vload ||
-          getIntrinsicID(U) == Intrinsic::genx_vstore) {
+          GenXIntrinsic::isVLoadStore(U)) {
         if (cast<Instruction>(U)->getParent() != BLK)
           return false;
       } else if (!IsBitCastForLifetimeMark(U))
@@ -1144,9 +1133,9 @@ void CMSimdCFLower::predicateStore(Instruction *SI, unsigned SimdWidth)
     auto Callee = WrRegion->getCalledFunction();
     if (!Callee)
       break;
-    unsigned IID = Callee->getIntrinsicID();
-    if (IID != Intrinsic::genx_wrregioni
-         && Callee->getIntrinsicID() != Intrinsic::genx_wrregionf) {
+    unsigned IID = GenXIntrinsic::getGenXIntrinsicID(WrRegion);
+    if (IID != GenXIntrinsic::genx_wrregioni
+         && IID != GenXIntrinsic::genx_wrregionf) {
       // Not wrregion. See if it is an intrinsic that has already been
       // predicated; if so do not attempt to predicate the store.
       if (AlreadyPredicated.find(WrRegion) != AlreadyPredicated.end())
@@ -1214,10 +1203,11 @@ void CMSimdCFLower::predicateStore(Instruction *SI, unsigned SimdWidth)
         SInst->getPointerOperand(),
         SInst->getPointerOperand()->getName() + ".simdcfpred.load", SI);
   else {
-    auto ID = llvm::Intrinsic::genx_vload;
+    auto ID = GenXIntrinsic::genx_vload;
     Value *Addr = SI->getOperand(1);
     Type *Tys[] = {Addr->getType()->getPointerElementType(), Addr->getType()};
-    auto Fn = Intrinsic::getDeclaration(SI->getParent()->getParent()->getParent(), ID, Tys);
+    auto Fn = GenXIntrinsic::getGenXDeclaration(
+        SI->getParent()->getParent()->getParent(), ID, Tys);
     Load = CallInst::Create(Fn, Addr, ".simdcfpred.vload", SI);
   }
   Load->setDebugLoc(SI->getDebugLoc());
@@ -1237,6 +1227,7 @@ void CMSimdCFLower::predicateStore(Instruction *SI, unsigned SimdWidth)
 void CMSimdCFLower::predicateSend(CallInst *CI, unsigned IntrinsicID,
       unsigned SimdWidth)
 {
+  IntrinsicID = GenXIntrinsic::llvm2any(IntrinsicID);
   unsigned PredOperandNum = 1;
   if (isa<VectorType>(CI->getOperand(PredOperandNum)->getType())) {
     // We already have a vector predicate.
@@ -1250,31 +1241,34 @@ void CMSimdCFLower::predicateSend(CallInst *CI, unsigned IntrinsicID,
       cast<Constant>(CI->getOperand(PredOperandNum)));
   Function *Decl = nullptr;
   switch (IntrinsicID) {
-    case Intrinsic::genx_raw_send: {
+    case GenXIntrinsic::genx_raw_send: {
       Type *Tys[] = { CI->getType(), Pred->getType(),
           CI->getOperand(4)->getType() };
-      Decl = Intrinsic::getDeclaration(CI->getParent()->getParent()->getParent(),
-            (Intrinsic::ID)IntrinsicID, Tys);
+      Decl = GenXIntrinsic::getGenXDeclaration(CI->getParent()->getParent()->getParent(),
+            (GenXIntrinsic::ID)IntrinsicID, Tys);
       break;
     }
-    case Intrinsic::genx_raw_send_noresult: {
+    case GenXIntrinsic::genx_raw_send_noresult: {
       Type *Tys[] = { Pred->getType(), CI->getOperand(4)->getType() };
-      Decl = Intrinsic::getDeclaration(CI->getParent()->getParent()->getParent(),
-            (Intrinsic::ID)IntrinsicID, Tys);
+      Decl = GenXIntrinsic::getGenXDeclaration(
+          CI->getParent()->getParent()->getParent(),
+            (GenXIntrinsic::ID)IntrinsicID, Tys);
       break;
     }
-    case Intrinsic::genx_raw_sends: {
+    case GenXIntrinsic::genx_raw_sends: {
       Type *Tys[] = { CI->getType(), Pred->getType(),
           CI->getOperand(4)->getType(), CI->getOperand(5)->getType() };
-      Decl = Intrinsic::getDeclaration(CI->getParent()->getParent()->getParent(),
-            (Intrinsic::ID)IntrinsicID, Tys);
+      Decl = GenXIntrinsic::getGenXDeclaration(
+          CI->getParent()->getParent()->getParent(),
+            (GenXIntrinsic::ID)IntrinsicID, Tys);
       break;
     }
-    case Intrinsic::genx_raw_sends_noresult: {
+    case GenXIntrinsic::genx_raw_sends_noresult: {
       Type *Tys[] = { Pred->getType(), CI->getOperand(4)->getType(),
           CI->getOperand(5)->getType() };
-      Decl = Intrinsic::getDeclaration(CI->getParent()->getParent()->getParent(),
-            (Intrinsic::ID)IntrinsicID, Tys);
+      Decl = GenXIntrinsic::getGenXDeclaration(
+          CI->getParent()->getParent()->getParent(),
+            (GenXIntrinsic::ID)IntrinsicID, Tys);
       break;
     }
     default:
@@ -1432,8 +1426,8 @@ void CMSimdCFLower::lowerSimdCF()
     auto OldRM = new LoadInst(RMAddr, RMAddr->getName(), Br);
     OldRM->setDebugLoc(DL);
     Type *Tys[] = { OldEM->getType(), OldRM->getType() };
-    auto GotoFunc = Intrinsic::getDeclaration(BB->getParent()->getParent(),
-          Intrinsic::genx_simdcf_goto, Tys);
+    auto GotoFunc = GenXIntrinsic::getGenXDeclaration(BB->getParent()->getParent(),
+      GenXIntrinsic::genx_simdcf_goto, Tys);
     Value *Args[] = { OldEM, OldRM, NotCond };
     auto Goto = CallInst::Create(GotoFunc, Args, "goto", Br);
     Goto->setDebugLoc(DL);
@@ -1467,8 +1461,9 @@ void CMSimdCFLower::lowerSimdCF()
     auto RM = new LoadInst(RMAddr, RMAddr->getName(), InsertBefore);
     RM->setDebugLoc(DL);
     Type *Tys[] = { OldEM->getType(), RM->getType() };
-    auto JoinFunc = Intrinsic::getDeclaration(JP->getParent()->getParent(),
-          Intrinsic::genx_simdcf_join, Tys);
+    auto JoinFunc = GenXIntrinsic::getGenXDeclaration(
+        JP->getParent()->getParent(),
+      GenXIntrinsic::genx_simdcf_join, Tys);
     Value *Args[] = { OldEM, RM };
     auto Join = CallInst::Create(JoinFunc, Args, "join", InsertBefore);
     Join->setDebugLoc(DL);
@@ -1516,10 +1511,8 @@ Use *CMSimdCFLower::getSimdConditionUse(Value *Cond)
  */
 CallInst *CMSimdCFLower::isSimdCFAny(Value *V)
 {
-  if (auto CI = dyn_cast_or_null<CallInst>(V))
-    if (Function *Callee = CI->getCalledFunction())
-      if (Callee->getIntrinsicID() == Intrinsic::genx_simdcf_any)
-        return CI;
+  if (GenXIntrinsic::getGenXIntrinsicID(V) == GenXIntrinsic::genx_simdcf_any)
+    return cast<CallInst>(V);
   return nullptr;
 }
 
