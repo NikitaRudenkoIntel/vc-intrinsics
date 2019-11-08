@@ -522,7 +522,32 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
               Intrinsic<[llvm_anyvector_ty, llvm_i1_ty],
                         [LLVMMatchType<0>, llvm_anyvector_ty], []>;
 
-  // --------------
+  /// ``llvm.genx.simdcf.unmask`` :
+  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  ///
+  /// * arg0: OldEM (old execution mask): v32i1
+  ///
+  /// Return value: struct with the following elements:
+  ///
+  /// * ret0: NewEM (updated execution mask): v32i1
+  /// * ret1: i32, old-mask saved as int32 for later restoring 
+  def int_genx_simdcf_unmask :
+              Intrinsic<[llvm_anyvector_ty, llvm_i32_ty],
+                        [LLVMMatchType<0>], [IntrWriteMem, IntrHasSideEffects]>;
+
+  /// ``llvm.genx.simdcf.remask`` :
+  /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  ///
+  /// * arg0: OldEM (old execution mask): v32i1
+  /// * arg1: temp i32 for restoring the EM
+  ///
+  /// Return value: NewEM (updated execution mask): v32i1
+  ///
+  def int_genx_simdcf_remask :
+              Intrinsic<[llvm_anyvector_ty],
+                        [LLVMMatchType<0>, llvm_i32_ty], [IntrWriteMem, IntrHasSideEffects]>;
+
+  /// --------------
   /// ALU intrinsics
   /// --------------
 
@@ -3808,6 +3833,28 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
   //
   def int_genx_simdcf_any :
               Intrinsic<[llvm_i1_ty], [llvm_anyvector_ty], []>;
+
+  /// ``llvm.genx.unmask.begin`` : simd-unmask region begin  
+  ///
+  /// * Return value:  i32 old execution mask 
+  ///
+  /// This intrinsic is used by front-end to mark the beginning of 
+  /// an unmask region, sets execution mask to all-active, and return 
+  /// the old mask in a temp.
+  /// this intrinsic will be replaced by genx.simdcf.unmask by SimdCFLowering
+  ///
+  def int_genx_unmask_begin : Intrinsic<[llvm_i32_ty], [], [IntrWriteMem, IntrHasSideEffects]>;
+
+  /// ``llvm.genx.unmask.end`` : simd-unmask region end 
+  ///
+  /// arg0: temp to restore the execution-mask (1 dword)
+  ///
+  /// * Return value:  void
+  /// This intrinsic is used by front-end to mark the end of an unmask
+  /// region, set execution mask back using the temp value from unmask-begin.
+  /// this intrinsic will be replaced by genx.simdcf.remask by SimdCFLowering
+  ///
+  def int_genx_unmask_end : Intrinsic<[], [llvm_i32_ty], [IntrWriteMem, IntrHasSideEffects]>;
 
   // ``llvm.genx.lane.id`` : implicit lane-id in the simd-fork statement
   // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
