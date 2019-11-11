@@ -490,6 +490,7 @@ void CMSimdCFLower::processFunction(Function *ArgF)
     predicateCode(CMWidth);
     // Lower the control flow.
     lowerSimdCF();
+    lowerUnmaskOps();
   }
   SimdBranches.clear();
   PredicatedBlocks.clear();
@@ -1488,6 +1489,82 @@ void CMSimdCFLower::lowerSimdCF()
       // nothing else references it.
       getRMAddr(JIP, RM->getType()->getVectorNumElements());
     }
+  }
+}
+
+/***********************************************************************
+ * lowerUnmaskOps : lower the simd unmask begins and ends
+ */
+void CMSimdCFLower::lowerUnmaskOps() {
+  std::vector<Instruction *> MaskBegins;
+  std::vector<Instruction *> MaskEnds;
+  for (auto fi = F->begin(), fe = F->end(); fi != fe; ++fi) {
+    BasicBlock *BB = &*fi;
+    for (auto bi = BB->begin(), be = BB->end(); bi != be; ++bi) {
+      Instruction *Inst = &*bi;
+      // doing the work
+      if (auto CIE = dyn_cast_or_null<CallInst>(Inst)) {
+        if (GenXIntrinsic::getGenXIntrinsicID(CIE) ==
+            GenXIntrinsic::genx_unmask_end) {
+          auto LoadV = dyn_cast<LoadInst>(CIE->getArgOperand(0));
+          assert(LoadV);
+          auto PtrV = dyn_cast<AllocaInst>(LoadV->getPointerOperand());
+          assert(PtrV);
+          StoreInst *StoreV = nullptr;
+          // search uses of PtrV
+          for (auto ui = PtrV->use_begin(), ue = PtrV->use_end(); ui != ue;
+                ++ui) {
+            if (auto SI = dyn_cast<StoreInst>(ui->getUser())) {
+              StoreV = SI;
+              break;
+            }
+          }
+          assert(StoreV);
+          auto CIB = dyn_cast<CallInst>(StoreV->getValueOperand());
+          assert(GenXIntrinsic::getGenXIntrinsicID(CIB) ==
+                  GenXIntrinsic::genx_unmask_begin);
+          MaskBegins.push_back(CIB);
+          MaskEnds.push_back(CIE);
+          // put in genx_simdcf_unmask
+          auto DL = cast<CallInst>(CIB)->getDebugLoc();
+          Instruction *OldEM = new LoadInst(EMVar, EMVar->getName(), CIB);
+          OldEM->setDebugLoc(DL);
+          Type *Tys[] = {OldEM->getType()};
+          auto UnmaskFunc =  GenXIntrinsic::getGenXDeclaration(
+                               BB->getParent()->getParent(),
+                               GenXIntrinsic::genx_simdcf_unmask, Tys);
+          Value *Args[] = {OldEM};
+          auto Unmask = CallInst::Create(UnmaskFunc, Args, "unmask", CIB);
+          Unmask->setDebugLoc(DL);
+          Instruction *NewEM =
+              ExtractValueInst::Create(Unmask, 0, "unmask.extractem", CIB);
+          (new StoreInst(NewEM, EMVar, CIB))->setDebugLoc(DL);
+          Instruction *RemaskTmp =
+              ExtractValueInst::Create(Unmask, 1, "unmask.extractem", CIB);
+          CIB->replaceAllUsesWith(RemaskTmp);
+          // put in genx_simdcf_remask
+          DL = CIE->getDebugLoc();
+          OldEM = new LoadInst(EMVar, EMVar->getName(), CIE);
+          OldEM->setDebugLoc(DL);
+          Type *Ty1s[] = {OldEM->getType()};
+          auto RemaskFunc = GenXIntrinsic::getGenXDeclaration(
+                              BB->getParent()->getParent(),
+                              GenXIntrinsic::genx_simdcf_remask, Ty1s);
+          Value *Arg1s[] = {OldEM, LoadV};
+          auto Remask = CallInst::Create(RemaskFunc, Arg1s, "remask", CIE);
+          Remask->setDebugLoc(DL);
+          (new StoreInst(Remask, EMVar, CIE))->setDebugLoc(DL);
+        }
+      }
+    }
+  }
+  // erase Mask Ends
+  for (auto CIE : MaskEnds) {
+    CIE->eraseFromParent();
+  }
+  // erase Mask Begins
+  for (auto CIB : MaskBegins) {
+    CIB->eraseFromParent();
   }
 }
 
