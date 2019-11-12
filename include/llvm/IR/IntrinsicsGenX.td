@@ -1507,6 +1507,20 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
                                                 llvm_any_ty,       // addressess
                                                 llvm_i32_ty        // surface, ignored
                                                ], [IntrReadMem]>;
+   def int_genx_lsc_load_bindless : Intrinsic<[llvm_anyvector_ty],
+                                               [llvm_any_ty,       // predicate
+                                                llvm_i8_ty,        // subopcode
+                                                llvm_i8_ty,        // L1 hints
+                                                llvm_i8_ty,        // L3 hints
+                                                llvm_i16_ty,       // scale
+                                                llvm_i32_ty,       // imm offsets
+                                                llvm_i8_ty,        // datum size
+                                                llvm_i8_ty,        // vector size
+                                                llvm_i8_ty,        // transposed
+                                                llvm_i8_ty,        // channel mask
+                                                llvm_any_ty,       // addressess
+                                                llvm_i32_ty        // surface, ignored
+                                               ], [IntrReadMem]>;
    def int_genx_lsc_load_bti : Intrinsic<[llvm_anyvector_ty],
                                          [llvm_any_ty,       // predicate
                                           llvm_i8_ty,        // subopcode
@@ -1536,6 +1550,20 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
                                               llvm_i32_ty        // surface
                                              ], []>;
    def int_genx_lsc_prefetch_stateless : Intrinsic<[],
+                                                   [llvm_any_ty,       // predicate
+                                                    llvm_i8_ty,        // subopcode
+                                                    llvm_i8_ty,        // L1 hints
+                                                    llvm_i8_ty,        // L3 hints
+                                                    llvm_i16_ty,       // scale
+                                                    llvm_i32_ty,       // imm offsets
+                                                    llvm_i8_ty,        // datum size
+                                                    llvm_i8_ty,        // vector size
+                                                    llvm_i8_ty,        // transposed
+                                                    llvm_i8_ty,        // channel mask
+                                                    llvm_any_ty,       // addressess
+                                                    llvm_i32_ty        // surface, ignored
+                                                   ], []>;
+   def int_genx_lsc_prefetch_bindless : Intrinsic<[],
                                                    [llvm_any_ty,       // predicate
                                                     llvm_i8_ty,        // subopcode
                                                     llvm_i8_ty,        // L1 hints
@@ -1590,6 +1618,21 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
                                           llvm_i32_ty        // surface, ignored
                                          ], []>;
    def int_genx_lsc_store_stateless : Intrinsic<[],
+                                                [llvm_any_ty,       // predicate
+                                                 llvm_i8_ty,        // subopcode
+                                                 llvm_i8_ty,        // L1 hints
+                                                 llvm_i8_ty,        // L3 hints
+                                                 llvm_i16_ty,       // scale
+                                                 llvm_i32_ty,       // imm offsets
+                                                 llvm_i8_ty,        // datum size
+                                                 llvm_i8_ty,        // vector size
+                                                 llvm_i8_ty,        // transposed
+                                                 llvm_i8_ty,        // channel mask
+                                                 llvm_any_ty,       // addressess
+                                                 llvm_anyvector_ty, // data to write
+                                                 llvm_i32_ty        // surface, ignored
+                                                ], []>;
+   def int_genx_lsc_store_bindless : Intrinsic<[],
                                                 [llvm_any_ty,       // predicate
                                                  llvm_i8_ty,        // subopcode
                                                  llvm_i8_ty,        // L1 hints
@@ -1871,7 +1914,23 @@ let TargetPrefix = "genx" in {  // All intrinsics start with "llvm.genx.".
                                                   LLVMMatchType<0>,  // Src2Data
                                                   LLVMMatchType<0>   // Old Value
                                                  ], []>;
-
+   def int_genx_lsc_atomic_bindless : Intrinsic<[llvm_any_ty],
+                                                 [llvm_any_ty,       // predicate
+                                                  llvm_i8_ty,        // subopcode
+                                                  llvm_i8_ty,        // L1 hints
+                                                  llvm_i8_ty,        // L3 hints
+                                                  llvm_i16_ty,       // scale
+                                                  llvm_i32_ty,       // imm offsets
+                                                  llvm_i8_ty,        // datum size
+                                                  llvm_i8_ty,        // transposed
+                                                  llvm_i8_ty,        // vector size
+                                                  llvm_i8_ty,        // channel mask
+                                                  llvm_i32_ty,       // surface (ignored)
+                                                  llvm_anyvector_ty, // addressess
+                                                  LLVMMatchType<0>,  // Src1Data
+                                                  LLVMMatchType<0>,  // Src2Data
+                                                  LLVMMatchType<0>   // Old Value
+                                                 ], []>;
    /// ``llvm.genx.lsc.fence`` : lsc_fence instruction
    /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
    ///
