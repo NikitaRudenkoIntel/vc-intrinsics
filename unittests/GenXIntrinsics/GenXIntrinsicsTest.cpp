@@ -80,7 +80,7 @@ void generateOverloadedTypes(Intrinsic::ID Id, LLVMContext &Ctx, SmallVectorImpl
     if (Desc.Kind != IITDescriptor::Argument)
       continue;
 
-    auto ArgNum = Desc.getArgumentNumber();
+    size_t ArgNum = Desc.getArgumentNumber();
     Tys.resize(std::max(ArgNum + 1, Tys.size()));
 
     Tys[ArgNum] = generateAnyType(Desc.getArgumentKind(), Ctx);

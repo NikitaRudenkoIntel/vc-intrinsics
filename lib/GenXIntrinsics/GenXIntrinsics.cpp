@@ -344,7 +344,7 @@ static Type *DecodeFixedType(ArrayRef<Intrinsic::IITDescriptor> &Infos,
 }
 
 #define GET_INTRINSIC_GENERATOR_GLOBAL
-#include "llvm/GenXIntrinsics/GenXIntrinsicImpl.inc"
+#include "llvm/GenXIntrinsics/GenXIntrinsicDesctiption.gen"
 #undef GET_INTRINSIC_GENERATOR_GLOBAL
 
 void getIntrinsicInfoTableEntries(
@@ -427,20 +427,20 @@ static std::string getMangledTypeStr(Type* Ty) {
 static const char * const GenXIntrinsicNameTable[] = {
     "not_genx_intrinsic",
 #define GET_INTRINSIC_NAME_TABLE
-#include "llvm/GenXIntrinsics/GenXIntrinsicImpl.inc"
+#include "llvm/GenXIntrinsics/GenXIntrinsicDesctiption.gen"
 #undef GET_INTRINSIC_NAME_TABLE
   };
 
 bool isOverloaded(GenXIntrinsic::ID id) {
   id = static_cast<GenXIntrinsic::ID>(id - GenXIntrinsic::not_genx_intrinsic);
 #define GET_INTRINSIC_OVERLOAD_TABLE
-#include "llvm/GenXIntrinsics/GenXIntrinsicImpl.inc"
+#include "llvm/GenXIntrinsics/GenXIntrinsicDesctiption.gen"
 #undef GET_INTRINSIC_OVERLOAD_TABLE
 }
 
 /// This defines the "getAttributes(ID id)" method.
 #define GET_INTRINSIC_ATTRIBUTES
-#include "llvm/GenXIntrinsics/GenXIntrinsicImpl.inc"
+#include "llvm/GenXIntrinsics/GenXIntrinsicDesctiption.gen"
 #undef GET_INTRINSIC_ATTRIBUTES
 
 static StringRef GenXIntrinsicMDName{ "genx_intrinsic_id" };
@@ -448,7 +448,7 @@ static StringRef GenXIntrinsicMDName{ "genx_intrinsic_id" };
 
 /// Table of per-target intrinsic name tables.
 #define GET_INTRINSIC_TARGET_DATA
-#include "llvm/GenXIntrinsics/GenXIntrinsicImpl.inc"
+#include "llvm/GenXIntrinsics/GenXIntrinsicDesctiption.gen"
 #undef GET_INTRINSIC_TARGET_DATA
 
 /// Find the segment of \c IntrinsicNameTable for intrinsics with the same

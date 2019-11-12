@@ -29,17 +29,12 @@ namespace GenXIntrinsic {
 enum ID : unsigned {
   not_genx_intrinsic = Intrinsic::num_intrinsics,
 #define GET_INTRINSIC_ENUM_VALUES
-#include "llvm/GenXIntrinsics/GenXIntrinsicEnum.inc"
+#include "llvm/GenXIntrinsics/GenXIntrinsicDesctiption.gen"
 #undef GET_INTRINSIC_ENUM_VALUES
-  ,
   num_genx_intrinsics,
   // note that Intrinsic::not_intrinsic means that it is not a LLVM intrinsic
   not_any_intrinsic
 };
-
-// todo: delete this
-static inline unsigned llvm2any(unsigned id);
-static inline Intrinsic::ID any2llvm(unsigned id);
 
 static inline const char *getGenXIntrinsicPrefix() { return "llvm.genx."; }
 
@@ -215,7 +210,6 @@ static inline Function *getAnyDeclaration(Module *M, unsigned id,
 
 
 static inline bool isRdRegion(unsigned IntrinID) {
-  IntrinID = llvm2any(IntrinID);
   switch (IntrinID) {
   case GenXIntrinsic::genx_rdregioni:
   case GenXIntrinsic::genx_rdregionf:
@@ -234,7 +228,6 @@ static inline bool isRdRegion(const Value *V) {
 }
 
 static inline bool isWrRegion(unsigned IntrinID) {
-  IntrinID = llvm2any(IntrinID);
   switch (IntrinID) {
   case GenXIntrinsic::genx_wrregioni:
   case GenXIntrinsic::genx_wrregionf:
@@ -254,7 +247,6 @@ static inline bool isWrRegion(const Value *V) {
 }
 
 static inline bool isAbs(unsigned IntrinID) {
-    IntrinID = llvm2any(IntrinID);
     if (IntrinID == GenXIntrinsic::genx_absf || IntrinID == GenXIntrinsic::genx_absi)
         return true;
     return false;
@@ -269,7 +261,6 @@ static inline bool isAbs(const Value *V) {
 }
 
 static inline bool isIntegerSat(unsigned IID) {
-    IID = llvm2any(IID);
     switch (IID) {
     case GenXIntrinsic::genx_sstrunc_sat:
     case GenXIntrinsic::genx_sutrunc_sat:
@@ -290,7 +281,6 @@ static inline bool isIntegerSat(const Value *V) {
 }
 
 static inline bool isVLoad(unsigned IntrinID) {
-  IntrinID = llvm2any(IntrinID);
   return IntrinID == GenXIntrinsic::genx_vload;
 }
 
@@ -303,7 +293,6 @@ static inline bool isVLoad(const Value *V) {
 }
 
 static inline bool isVStore(unsigned IntrinID) {
-  IntrinID = llvm2any(IntrinID);
   return IntrinID == GenXIntrinsic::genx_vstore;
 }
 
@@ -332,37 +321,6 @@ static inline bool isVLoadStore(const Value *V) {
 // todo: delete this
 namespace GenXIntrinsic {
 AttributeList getAttributes(LLVMContext &C, ID id);
-
-/// migration helper method
-/// llvm.genx -> genx
-/// llvm      -> llvm
-/// genx      -> genx
-static inline unsigned llvm2any(unsigned ID) {
-  if (isGenXIntrinsic(ID) || ID == GenXIntrinsic::not_any_intrinsic)
-    return ID;
-  if (ID == Intrinsic::not_intrinsic)
-    return GenXIntrinsic::not_any_intrinsic;
-  auto Name = Intrinsic::getName((Intrinsic::ID)ID, None);
-  if (StringRef(Name).startswith(getGenXIntrinsicPrefix()))
-    return lookupGenXIntrinsicID(Name);
-  return ID;
-}
-
-/// migration helper method
-/// llvm.genx -> llvm
-/// llvm      -> llvm
-/// genx      -> llvm
-static inline Intrinsic::ID any2llvm(unsigned ID) {
-  assert(ID != GenXIntrinsic::not_genx_intrinsic &&
-         "Do not use this with getGenX... methods!");
-  if (isGenXIntrinsic(ID) || ID == GenXIntrinsic::not_any_intrinsic) {
-    if (ID == GenXIntrinsic::not_any_intrinsic)
-      return Intrinsic::not_intrinsic;
-    auto Name = GenXIntrinsic::getGenXName((GenXIntrinsic::ID)ID);
-    return Function::lookupIntrinsicID(Name);
-  }
-  return (Intrinsic::ID)ID;
-}
 
 } // namespace GenXIntrinsic
 

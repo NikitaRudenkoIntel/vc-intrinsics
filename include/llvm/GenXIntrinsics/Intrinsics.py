@@ -91,7 +91,7 @@ attribute_map = {
     "Convergent":          set(["NoUnwind","Convergent"]),
     "InaccessibleMemOnly": set(["NoUnwind","InaccessibleMemOnly"]),
     "WriteMem":            set(["NoUnwind","WriteOnly"]),
-    "SideEffects":         set(["NoUnwind"]), # TODO: double-check
+    "SideEffects":         set(["NoUnwind"]),
 }
 
 def getAttributeList(Attrs):
