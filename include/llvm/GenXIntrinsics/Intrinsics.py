@@ -78,6 +78,8 @@ any_map = \
     "anyptr":4,
 }
 
+vararg_val = "<29>"
+
 attribute_map = {
     "None":                set(["NoUnwind"]),
     "NoMem":               set(["NoUnwind","ReadNone"]),
@@ -88,6 +90,8 @@ attribute_map = {
     "NoDuplicate":         set(["NoUnwind","NoDuplicate"]),
     "Convergent":          set(["NoUnwind","Convergent"]),
     "InaccessibleMemOnly": set(["NoUnwind","InaccessibleMemOnly"]),
+    "WriteMem":            set(["NoUnwind","WriteOnly"]),
+    "SideEffects":         set(["NoUnwind"]), # TODO: double-check
 }
 
 def getAttributeList(Attrs):
@@ -124,13 +128,30 @@ def emitPrefix():
             "#endif\n\n")
     f.close()
 
+def createTargetData():
+    f = open(outputFile,"a")
+    f.write("// Target mapping\n"
+            "#ifdef GET_INTRINSIC_TARGET_DATA\n")
+    f.write(
+      "struct IntrinsicTargetInfo {\n"
+      "  llvm::StringLiteral Name;\n"
+      "  size_t Offset;\n"
+      "  size_t Count;\n"
+      "};\n"
+      "static constexpr IntrinsicTargetInfo TargetInfos[] = {\n"
+      "  {llvm::StringLiteral(\"\"), 0, 0},\n"
+      "  {llvm::StringLiteral(\"genx\"), 0, " + str(len(ID_array)) + "},\n"
+      "};\n")
+    f.write("#endif\n\n")
+    f.close()
+
 def generateEnums():
     f = open(outputFile,"a")
     f.write("// Enum values for Intrinsics.h\n"
             "#ifdef GET_INTRINSIC_ENUM_VALUES\n")
     for i in range(len(ID_array)):
         pretty_indent = 40 - len(ID_array[i])
-        f.write("  " + ID_array[i]+",")
+        f.write("  genx_" + ID_array[i]+",")
         f.write((" "*pretty_indent)+'// llvm.genx.'+ID_array[i].replace("_",".")+'\n')
     f.write("#endif\n\n")
     f.close()
@@ -269,7 +290,9 @@ def createOverloadTable():
         for j in range(3):
             if isinstance(genISA_Intrinsic[j],list):
                 for z in range(len(genISA_Intrinsic[j])):
-                    if "any" in genISA_Intrinsic[j][z]:
+                    if isinstance(genISA_Intrinsic[j][z],int):
+                        continue
+                    elif "any" in genISA_Intrinsic[j][z]:
                         isOverloadable = True
                         break
             else:
@@ -315,6 +338,8 @@ def encodeTypeString(array_of_types,type_string,array_of_anys):
             type_string += array_of_anys[array_of_types[j]]
         elif array_of_types[j] in type_map:
             type_string += type_map[array_of_types[j]]
+        elif array_of_types[j] == "vararg":
+            type_string += vararg_val
         else: #vector or any case
             if "any" in array_of_types[j]:
                 new_string = addAnyTypes(array_of_types[j], len(array_of_anys))
@@ -407,7 +432,7 @@ def createAttributeTable():
     f = open(outputFile,"a")
     f.write("// Add parameter attributes that are not common to all intrinsics.\n"
             "#ifdef GET_INTRINSIC_ATTRIBUTES\n"
-            "static IGCLLVM::AttributeSet getAttributes(LLVMContext &C, GenISAIntrinsic::ID id) {\n"
+            "AttributeList GenXIntrinsic::getAttributes(LLVMContext &C, GenXIntrinsic::ID id) {\n"
             "  static const uint8_t IntrinsicsToAttributesMap[] = {\n")
     attribute_Array = []
     for i in range(len(ID_array)):
@@ -423,23 +448,23 @@ def createAttributeTable():
             attribute_Array.append(intrinsic_attribute)
     f.write("  };\n\n")
 
-    f.write("  IGCLLVM::AttributeSet AS[1];\n" #Currently only allowed to have one attribute per instrinsic
+    f.write("  AttributeList AS[1];\n" #Currently only allowed to have one attribute per instrinsic
             "  unsigned NumAttrs = 0;\n"
             "  if (id != 0) {\n"
-            "    switch(IntrinsicsToAttributesMap[id - Intrinsic::num_intrinsics]) {\n"
+            "    switch(IntrinsicsToAttributesMap[id - 1 - GenXIntrinsic::not_genx_intrinsic]) {\n"
             "    default: llvm_unreachable(\"Invalid attribute number\");\n")
 
     for i in range(len(attribute_Array)): #Building case statements
         Attrs = getAttributeList([x.strip() for x in attribute_Array[i].split(',')])
         f.write("""    case {num}: {{
       const Attribute::AttrKind Atts[] = {{{attrs}}};
-      AS[0] = IGCLLVM::AttributeSet::get(C, IGCLLVM::AttributeSet::FunctionIndex, Atts);
+      AS[0] = AttributeList::get(C, AttributeList::FunctionIndex, Atts);
       NumAttrs = 1;
       break;
       }}\n""".format(num=i+1, attrs=','.join(Attrs)))
     f.write("    }\n"
             "  }\n"
-            "  return IGCLLVM::AttributeSet::get(C, makeArrayRef(AS, NumAttrs));\n"
+            "  return AttributeList::get(C, makeArrayRef(AS, NumAttrs));\n"
             "}\n"
             "#endif // GET_INTRINSIC_ATTRIBUTES\n\n")
     f.close()
@@ -455,6 +480,7 @@ def emitSuffix():
 
 #main functions in order
 emitPrefix()
+createTargetData()
 generateEnums()
 generateIDArray()
 createOverloadTable()
