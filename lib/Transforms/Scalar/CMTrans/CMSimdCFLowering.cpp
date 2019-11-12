@@ -1228,7 +1228,6 @@ void CMSimdCFLower::predicateStore(Instruction *SI, unsigned SimdWidth)
 void CMSimdCFLower::predicateSend(CallInst *CI, unsigned IntrinsicID,
       unsigned SimdWidth)
 {
-  IntrinsicID = GenXIntrinsic::llvm2any(IntrinsicID);
   unsigned PredOperandNum = 1;
   if (isa<VectorType>(CI->getOperand(PredOperandNum)->getType())) {
     // We already have a vector predicate.
