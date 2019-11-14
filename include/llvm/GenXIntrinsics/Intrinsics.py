@@ -115,7 +115,18 @@ for i in range(len(parse)):
 # Output file is always last
 outputFile = parse[-1]
 
-ID_array = sorted(Intrinsics) #This is the ID order of the Intrinsics
+
+def ik_compare(ikl, ikr):
+  ikl = ikl.replace("_",".")
+  ikr = ikr.replace("_",".")
+  if ikl < ikr:
+    return -1
+  elif ikl > ikr:
+    return 1
+  else:
+    return 0
+# NOTE: the ordering does matter here as lookupLLVMIntrinsicByName depend on it
+ID_array = sorted(Intrinsics, cmp = ik_compare)
 
 def emitPrefix():
     f = open(outputFile,"w")
