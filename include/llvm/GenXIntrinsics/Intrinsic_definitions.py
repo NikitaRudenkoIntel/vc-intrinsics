@@ -519,16 +519,20 @@ Imported_Intrinsics = \
 ### 
     "simdcf_join" : [["anyvector","bool"],[0,"anyvector"],"None"],
 
+### ``llvm.genx.simdcf.savemask`` :
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+###
+### * arg0: OldEM (old execution mask): v32i1
+### * ret:  temp i32 for saving the oldEM 
+    "simdcf_savemask" : ["int",["anyvector"],"WriteMem,SideEffects"],
+
 ### ``llvm.genx.simdcf.unmask`` :
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
-### * arg0: OldEM (old execution mask): v32i1
-###
-### Return value: struct with the following elements:
-###
-### * ret0: NewEM (updated execution mask): v32i1
-### * ret1: i32, old-mask saved as int32 for later restoring 
-    "simdcf_unmask" : [["anyvector","int"],[0],"WriteMem,SideEffects"],
+### * arg0: temp i32 from savemask 
+### * arg1: i32 constant, should be all-one
+### * ret:  NewEM (updated execution mask, all-one): v32i1
+    "simdcf_unmask" : ["anyvector",["int","int"],"WriteMem,SideEffects"],
 
 ### ``llvm.genx.simdcf.remask`` :
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
