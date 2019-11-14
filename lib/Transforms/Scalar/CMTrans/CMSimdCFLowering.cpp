@@ -977,6 +977,11 @@ void CMSimdCFLower::predicateInst(Instruction *Inst, unsigned SimdWidth) {
       case GenXIntrinsic::genx_simdcf_any:
       case GenXIntrinsic::genx_vload:
       case GenXIntrinsic::genx_vstore:
+      case GenXIntrinsic::genx_simdcf_savemask:
+      case GenXIntrinsic::genx_simdcf_unmask:
+      case GenXIntrinsic::genx_simdcf_remask:
+      case GenXIntrinsic::genx_unmask_begin:
+      case GenXIntrinsic::genx_unmask_end:
       case Intrinsic::lifetime_start:
       case Intrinsic::lifetime_end:
         return; // ignore these intrinsics
@@ -1524,33 +1529,37 @@ void CMSimdCFLower::lowerUnmaskOps() {
                   GenXIntrinsic::genx_unmask_begin);
           MaskBegins.push_back(CIB);
           MaskEnds.push_back(CIE);
-          // put in genx_simdcf_unmask
+          // put in genx_simdcf_savemask and genx_simdcf_remask
           auto DL = cast<CallInst>(CIB)->getDebugLoc();
           Instruction *OldEM = new LoadInst(EMVar, EMVar->getName(), CIB);
           OldEM->setDebugLoc(DL);
           Type *Tys[] = {OldEM->getType()};
-          auto UnmaskFunc =  GenXIntrinsic::getGenXDeclaration(
+          auto SavemaskFunc =  GenXIntrinsic::getGenXDeclaration(
                                BB->getParent()->getParent(),
-                               GenXIntrinsic::genx_simdcf_unmask, Tys);
+                               GenXIntrinsic::genx_simdcf_savemask, Tys);
           Value *Args[] = {OldEM};
-          auto Unmask = CallInst::Create(UnmaskFunc, Args, "unmask", CIB);
+          auto Savemask = CallInst::Create(SavemaskFunc, Args, "savemask", CIB);
+          Savemask->setDebugLoc(DL);
+          // the use should be the store for savemask
+          CIB->replaceAllUsesWith(Savemask); 
+          Type *Ty1s[] = {OldEM->getType()};
+          auto UnmaskFunc = GenXIntrinsic::getGenXDeclaration(
+              BB->getParent()->getParent(), GenXIntrinsic::genx_simdcf_unmask,
+              Ty1s);
+          Value *Arg1s[] = {Savemask, ConstantInt::get(Savemask->getType(), 0xFFFFFFFF) };
+          auto Unmask = CallInst::Create(UnmaskFunc, Arg1s, "unmask", CIB);
           Unmask->setDebugLoc(DL);
-          Instruction *NewEM =
-              ExtractValueInst::Create(Unmask, 0, "unmask.extractem", CIB);
-          (new StoreInst(NewEM, EMVar, CIB))->setDebugLoc(DL);
-          Instruction *RemaskTmp =
-              ExtractValueInst::Create(Unmask, 1, "unmask.extractem", CIB);
-          CIB->replaceAllUsesWith(RemaskTmp);
+          (new StoreInst(Unmask, EMVar, CIB))->setDebugLoc(DL);
           // put in genx_simdcf_remask
           DL = CIE->getDebugLoc();
           OldEM = new LoadInst(EMVar, EMVar->getName(), CIE);
           OldEM->setDebugLoc(DL);
-          Type *Ty1s[] = {OldEM->getType()};
+          Type *Ty2s[] = {OldEM->getType()};
           auto RemaskFunc = GenXIntrinsic::getGenXDeclaration(
                               BB->getParent()->getParent(),
-                              GenXIntrinsic::genx_simdcf_remask, Ty1s);
-          Value *Arg1s[] = {OldEM, LoadV};
-          auto Remask = CallInst::Create(RemaskFunc, Arg1s, "remask", CIE);
+                              GenXIntrinsic::genx_simdcf_remask, Ty2s);
+          Value *Arg2s[] = {OldEM, LoadV};
+          auto Remask = CallInst::Create(RemaskFunc, Arg2s, "remask", CIE);
           Remask->setDebugLoc(DL);
           (new StoreInst(Remask, EMVar, CIE))->setDebugLoc(DL);
         }
