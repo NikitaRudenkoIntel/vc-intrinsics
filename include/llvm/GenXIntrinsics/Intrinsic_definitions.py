@@ -1453,9 +1453,9 @@ Imported_Intrinsics = \
 ###
 ### * Return value: the value read or void for prefetch
 ###
-    "lsc_load2d_stateless" : ["anyvector",["any","char","char","char","char","char","short","short","char","any","int","int","int","int","int"],"ReadMem"],
+    "lsc_load2d_stateless" : ["anyvector",["anyvector","char","char","char","char","char","short","short","char","long","int","int","int","int","int"],"ReadMem"],
 
-    "lsc_prefetch2d_stateless" : ["void",["any","char","char","char","char","char","short","short","char","any","int","int","int","int","int"],"None"],
+    "lsc_prefetch2d_stateless" : ["void",["anyvector","char","char","char","char","char","short","short","char","long","int","int","int","int","int"],"None"],
 
 ### ``llvm.genx.lsc.store2d.bti`` : lsc_store2d instruction
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1503,7 +1503,7 @@ Imported_Intrinsics = \
 ###
 ### * Return value: void
 ###
-    "lsc_store2d_stateless" : ["void",["any","char","char","char","char","char","short","short","char","any","int","int","int","int","int","anyvector"],"None"],
+    "lsc_store2d_stateless" : ["void",["anyvector","char","char","char","char","char","short","short","char","long","int","int","int","int","int","anyvector"],"None"],
 
 ### ``llvm.genx.lsc.atomic.*`` : lsc_atomic instructions
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
