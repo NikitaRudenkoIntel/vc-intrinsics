@@ -167,6 +167,8 @@
 #include "llvm/ADT/MapVector.h"
 #include "llvm/Analysis/PostDominators.h"
 #include "llvm/GenXIntrinsics/GenXIntrinsics.h"
+#include "llvm/GenXOpts/GenXOpts.h"
+#include "llvm/GenXOpts/Utils/LowerCMSimdCF.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DebugInfo.h"
 #include "llvm/IR/DiagnosticInfo.h"
@@ -182,12 +184,14 @@
 #include "llvm/Pass.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/MathExtras.h"
-#include "llvm/Transforms/Scalar.h"
-#include "llvm/Transforms/Scalar/LowerCMSimdCF.h"
 #include <algorithm>
 #include <set>
 
 using namespace llvm;
+
+namespace llvm {
+void initializeCMSimdCFLoweringPass(PassRegistry &);
+}
 
 namespace {
 
