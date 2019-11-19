@@ -1814,6 +1814,9 @@ Function *SPIRVToLLVM::transFunction(SPIRVFunction *BF) {
   Function *F = cast<Function>(
       mapValue(BF, Function::Create(FT, Linkage, BF->getName(), M)));
   mapFunction(BF, F);
+  if (IsKernel) {
+    F->addFnAttr("CMGenxMain");
+  }
   if (!F->isIntrinsic()) {
     F->setCallingConv(IsKernel ? CallingConv::SPIR_KERNEL
                                : CallingConv::SPIR_FUNC);
