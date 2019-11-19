@@ -36,6 +36,25 @@ enum ID : unsigned {
   not_any_intrinsic
 };
 
+namespace GenXRegion {
+enum {
+  // Operands in both rdregion and wrregion:
+  OldValueOperandNum = 0,
+  // Operands in rdregion:
+  RdVStrideOperandNum = 1,
+  RdWidthOperandNum = 2,
+  RdStrideOperandNum = 3,
+  RdIndexOperandNum = 4,
+  // Operands in wrregion:
+  NewValueOperandNum = 1,
+  WrVStrideOperandNum = 2,
+  WrWidthOperandNum = 3,
+  WrStrideOperandNum = 4,
+  WrIndexOperandNum = 5,
+  PredicateOperandNum = 7
+};
+} // namespace GenXRegion
+
 static inline const char *getGenXIntrinsicPrefix() { return "llvm.genx."; }
 
 ID getGenXIntrinsicID(const Function *F);
