@@ -2896,6 +2896,87 @@ Imported_Intrinsics = \
 ###
     "raw_sends_noresult" : ["void",["int","anyint","char","int","int","anyvector","anyvector"],"None"],
 
+### ``llvm.genx.raw.send2`` : vISA RAW_SEND instruction
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### * arg0  i8 modifier, bit-0 represents sendc, bit-1 repersents EOT
+### * arg1  i8 exec_size
+### * arg2: i1/vXi1 predicate
+### * arg3: i8 numsrc1
+### * (numsrc2 is 0)
+### * arg4: i8 numdst
+### * arg5: i8 sfid
+### * arg6: i32 extended message descriptor
+### * arg7: i32 message descriptor
+### * arg8: src
+### * (src2 is NULL)
+### * arg9: old_ds
+###
+### * Return value: dst
+###
+### This intrinsic supports full encoding of the vISA raw_send instruction.
+###
+    "raw_send2" : ["anyvector",["char","char","anyvector","char","char","char","int","int","anyvector",0],"None"],
+
+### ``llvm.genx.raw.send2.noresult`` : vISA RAW_SEND instruction with no result
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+###
+### * arg0  i8 modifier, bit-0 represents sendc, bit-1 repersents EOT
+### * arg1  i8 exec_size
+### * arg2: i1/vXi1 predicate
+### * arg3: i8 numsrc1
+### * (numsrc2 is 0)
+### * (numdst is 0)
+### * arg4: i8 sfid
+### * arg5: i32 extended message descriptor
+### * arg6: i32 message descriptor
+### * arg7: src
+### * (src2 is NULL)
+###
+### This intrinsic supports full encoding of the vISA raw_send instruction with no result.
+###
+    "raw_send2_noresult" : ["void",["char","char","anyvector","char","char","int","int","anyvector"],"None"],
+
+### ``llvm.genx.raw.sends2`` : vISA RAW_SENDS instruction
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+###
+### * arg0  i8 modifier, bit-0 represents sendc, bit-1 repersents EOT
+### * arg1  i8 exec_size
+### * arg2: i1/vXi1 predicate
+### * arg3: i8 numsrc1
+### * arg4: i8 numsrc2
+### * arg5: i8 numdst
+### * arg6: i8 sfid
+### * arg7: i32 extended message descriptor
+### * arg8: i32 message descriptor
+### * arg9: src
+### * arg10: src2
+### * arg11: old_dst
+###
+### * Return value: dst
+###
+### This intrinsic supports full encoding of the vISA raw_sends instruction.
+###
+    "raw_sends2" : ["anyvector",["char","char","anyvector","char","char","char","char","int","int","anyvector","anyvector",0],"None"],
+
+### ``llvm.genx.raw.sends2.noresult`` : vISA RAW_SENDS instruction with no result
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+###
+### * arg0  i8 modifier, bit-0 represents sendc, bit-1 repersents EOT
+### * arg1  i8 exec_size
+### * arg2: i1/vXi1 predicate
+### * arg3: i8 numsrc1
+### * arg4: i8 numsrc2
+### * (numdst is 0)
+### * arg5: i8 sfid
+### * arg6: i32 extended message descriptor
+### * arg7: i32 message descriptor
+### * arg8: src
+### * arg9: src2
+###
+### This intrinsic supports full encoding of the vISA raw_sends instruction with no result.
+###
+    "raw_sends2_noresult" : ["void",["char","char","anyvector","char","char","char","int","int","anyvector","anyvector"],"None"],
+
 ## ---------------------------
 ### Video Analytics Instrinsics
 ### ---------------------------
