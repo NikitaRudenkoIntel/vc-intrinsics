@@ -317,6 +317,40 @@ def createOverloadTable():
     f.write("#endif\n\n")
     f.close()
 
+def createOverloadArgsTable():
+    f = open(outputFile,"a")
+    f.write("// Is arg overloaded\n"
+            "#ifdef GET_INTRINSIC_OVERLOAD_ARGS_TABLE\n"
+            "switch(IntrinID) {\n"
+            "default: llvm_unreachable(\"Unknown intrinsic ID\");\n")
+    for i in range(len(ID_array)):
+        f.write("case GenXIntrinsic::genx_" + ID_array[i]+": ")
+        argNums = []
+        genISA_Intrinsic = Intrinsics[ID_array[i]]
+        if isinstance(genISA_Intrinsic[1],list):
+            for z in range(len(genISA_Intrinsic[1])):
+                if isinstance(genISA_Intrinsic[1][z],int):
+                    continue
+                elif "any" in genISA_Intrinsic[1][z]:
+                    argNums.append(z)
+        else:
+            if "any" in genISA_Intrinsic[1]:
+                append.append(0)
+        if not argNums:
+            f.write("\n   return false;\n")
+        else:
+            f.write("{\n    switch(ArgNum) {\n"
+                    "   default: return false;\n")
+            for arg in argNums:
+                f.write("   case " + str(arg) + ": return true;\n")
+            f.write("   }\n}\n")
+    #info for llvm.fma
+    f.write("case Intrinsic::fma:\n"
+            "   return false;\n")
+    f.write("}\n")
+    f.write("#endif\n\n")
+    f.close()
+
 def addAnyTypes(value,argNum):
     return_val = str()
     default_value = str()
@@ -495,6 +529,7 @@ createTargetData()
 generateEnums()
 generateIDArray()
 createOverloadTable()
+createOverloadArgsTable()
 sortedIntrinsicsOnLenth()
 createTypeTable()
 createAttributeTable()

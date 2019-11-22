@@ -135,10 +135,6 @@ FunctionType *getGenXType(LLVMContext &Context, GenXIntrinsic::ID id,
 /// the intrinsic.
 Function *getGenXDeclaration(Module *M, ID id, ArrayRef<Type *> Tys = None);
 
-
-
-
-
 /// GenXIntrinsic::getAnyIntrinsicID(F) - Return LLVM or GenX intrinsic ID
 /// If is not intrinsic returns not_any_intrinsic
 /// Note that Function::getIntrinsicID returns ONLY LLVM intrinsics
@@ -208,6 +204,15 @@ static inline FunctionType *getAnyType(LLVMContext &Context, unsigned id,
   else
     return Intrinsic::getType(Context, (Intrinsic::ID)id, Tys);
 }
+
+/// GenXIntrinsic::isOverloadedArg(ID, ArgNum) - Return true if ArgNum
+/// in intrinsic overloaded
+static bool isOverloadedArg(unsigned IntrinID, unsigned ArgNum) {
+#define GET_INTRINSIC_OVERLOAD_ARGS_TABLE
+#include "llvm/GenXIntrinsics/GenXIntrinsicDesctiption.gen"
+#undef GET_INTRINSIC_OVERLOAD_ARGS_TABLE
+}
+
 
 /// GenXIntrinsic::getAnyDeclaration(M, ID) - Create or insert a LLVM
 /// Function declaration for an intrinsic, and return it.
