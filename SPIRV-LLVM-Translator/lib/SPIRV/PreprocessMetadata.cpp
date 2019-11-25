@@ -84,9 +84,7 @@ bool PreprocessMetadata::runOnModule(Module &Module) {
   M = &Module;
   Ctx = &M->getContext();
 
-  Triple TargetTriple(M->getTargetTriple());
-  Triple::ArchType Arch = TargetTriple.getArch();
-  bool SourceCM = (Arch == Triple::genx32 || Arch == Triple::genx64);
+  bool SourceCM = StringRef(M->getTargetTriple()).startswith("genx");
 
   if (SourceCM) {
     LLVM_DEBUG(dbgs() << "Enter TransCMMD:\n");
@@ -115,14 +113,12 @@ void PreprocessMetadata::transCMMD(Module *M) {
       .add(36) // version
       .done();
 
-  Triple TT(M->getTargetTriple());
-  auto Arch = TT.getArch();
-  assert((Arch == Triple::genx32 || Arch == Triple::genx64) &&
-         "Invalid triple");
+  StringRef TripleStr(M->getTargetTriple());
+  assert(TripleStr.startswith("genx") && "Invalid triple");
   B.addNamedMD(kSPIRVMD::MemoryModel)
       .addOp()
-      .add(Arch == Triple::genx32 ? spv::AddressingModelPhysical32
-                                  : spv::AddressingModelPhysical64)
+      .add(TripleStr.startswith("genx32") ? spv::AddressingModelPhysical32
+                                          : spv::AddressingModelPhysical64)
       .add(spv::MemoryModelSimple)
       .done();
 

@@ -1978,9 +1978,7 @@ bool llvm::writeSpirv(Module *M, const SPIRV::TranslatorOpts &Opts,
     return false;
 
   legacy::PassManager PassMgr;
-  Triple TargetTriple(M->getTargetTriple());
-  Triple::ArchType Arch = TargetTriple.getArch();
-  bool SourceCM = (Arch == Triple::genx32 || Arch == Triple::genx64);
+  bool SourceCM = StringRef(M->getTargetTriple()).startswith("genx");
   addPassesForSPIRV(PassMgr, !SourceCM);
   if (hasLoopUnrollMetadata(M))
     PassMgr.add(createLoopSimplifyPass());
@@ -1999,9 +1997,7 @@ bool llvm::regularizeLlvmForSpirv(Module *M, std::string &ErrMsg) {
     return false;
 
   legacy::PassManager PassMgr;
-  Triple TargetTriple(M->getTargetTriple());
-  Triple::ArchType Arch = TargetTriple.getArch();
-  bool SourceCM = (Arch == Triple::genx32 || Arch == Triple::genx64);
+  bool SourceCM = StringRef(M->getTargetTriple()).startswith("genx");
   addPassesForSPIRV(PassMgr, !SourceCM);
   PassMgr.run(*M);
   return true;

@@ -78,9 +78,10 @@ cl::opt<bool, true> EnableDbgOutput("spirv-debug",
 #endif
 
 bool isSupportedTriple(Triple T) {
+  if (T.getArchName().startswith("genx"))
+    return true;
   Triple::ArchType Arch = T.getArch();
-  return Arch == Triple::spir || Arch == Triple::spir64
-    || Arch == Triple::genx32 || Arch == Triple::genx64;
+  return Arch == Triple::spir || Arch == Triple::spir64;
 }
 
 void addFnAttr(CallInst *Call, Attribute::AttrKind Attr) {
