@@ -1405,31 +1405,6 @@ Imported_Intrinsics = \
     "lsc_store_bindless" : ["void",["any","char","char","char","short","int","char","char","char","char","any","anyvector","int"],"None"],
     "lsc_store_bti" : ["void",["any","char","char","char","short","int","char","char","char","char","any","anyvector","int"],"None"],
 
-### ``llvm.genx.lsc.load2d.*`` : lsc_load2d instructions
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-###
-### * ``llvm.genx.lsc.load2d.bti`` :
-### * ``llvm.genx.lsc.prefetch2d.bti`` :
-###
-### * Exec_size ignored unless operation is transposed (DataOrder == Tranpose)
-### * arg0: {1,32}Xi1 predicate
-### * arg1: i8 Caching behavior for L1, [MBC]
-### * arg2: i8 Caching behavior for L3, [MBC]
-### * arg3: i8 The dataum size, [MBC]
-### * arg4: i8 Indicates if the data is transposed during the transfer, [MBC]
-### * arg5: i8 number of blocks, [MBC]
-### * arg6: i32 BlockHeight, [MBC]
-### * arg7: i32 BlockWidth, [MBC]
-### * arg8: i8 VNNI. This performs a VNNI transform during the access.
-### * arg9: i32 surface to use for this operation. This can be an immediate or a register.
-### * arg10: i32 Src0AddrY, the base Y position of the 2D region to load or store.
-### * arg11: i32 Src0AddrX, the base X position of the 2D region to load or store.
-###
-### * Return value: the value read or void for prefetch
-###
-    "lsc_load2d_bti" : ["anyvector",["any","char","char","char","char","char","short","short","char","int","int","int"],"ReadMem"],
-
-    "lsc_prefetch2d_bti" : ["void",["any","char","char","char","char","char","short","short","char","int","int","int"],"None"],
 ###
 ### * ``llvm.genx.lsc.load2d.stateless`` :
 ### * ``llvm.genx.lsc.prefetch2d.stateless`` :
@@ -1441,45 +1416,21 @@ Imported_Intrinsics = \
 ### * arg3: i8 The dataum size, [MBC]
 ### * arg4: i8 Indicates if the data is transposed during the transfer, [MBC]
 ### * arg5: i8 number of blocks, [MBC]
-### * arg6: i32 BlockHeight, [MBC]
-### * arg7: i32 BlockWidth, [MBC]
+### * arg6: i32 BlockWidth, [MBC]
+### * arg7: i32 BlockHeight, [MBC]
 ### * arg8: i8 VNNI. This performs a VNNI transform during the access.
-### * arg9: i32 surface base to use for this operation. This can be an immediate or a register.
-### * arg10: i32 surface width.
-### * arg11: i32 surface height.
-### * arg12: i32 surface pitch.
-### * arg13: i32 Src0AddrY, the base Y position of the 2D region to load or store.
-### * arg14: i32 Src0AddrX, the base X position of the 2D region to load or store.
+### * arg9: i64 surface base address for this operation.
+### * arg10: i32 surface width minus 1.
+### * arg11: i32 surface height minus 1.
+### * arg12: i32 surface pitch minus 1.
+### * arg13: i32 Src0AddrX, the base X position of the 2D region to load or store.
+### * arg14: i32 Src0AddrY, the base Y position of the 2D region to load or store.
 ###
 ### * Return value: the value read or void for prefetch
 ###
     "lsc_load2d_stateless" : ["anyvector",["anyvector","char","char","char","char","char","short","short","char","long","int","int","int","int","int"],"ReadMem"],
-
     "lsc_prefetch2d_stateless" : ["void",["anyvector","char","char","char","char","char","short","short","char","long","int","int","int","int","int"],"None"],
 
-### ``llvm.genx.lsc.store2d.bti`` : lsc_store2d instruction
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-###
-### * ``llvm.genx.lsc.store2d.bti`` :
-###
-### * Exec_size ignored unless operation is transposed (DataOrder == Tranpose)
-### * arg0: {1,32}Xi1 predicate
-### * arg1: i8 Caching behavior for L1, [MBC]
-### * arg2: i8 Caching behavior for L3, [MBC]
-### * arg3: i8 The dataum size, [MBC]
-### * arg4: i8 Indicates if the data is transposed during the transfer, [MBC]
-### * arg5: i8 number of blocks, [MBC]
-### * arg6: i32 BlockHeight, [MBC]
-### * arg7: i32 BlockWidth, [MBC]
-### * arg8: i8 VNNI. This performs a VNNI transform during the access.
-### * arg9: i32 surface to use for this operation. This can be an immediate or a register.
-### * arg10: i32 Src0AddrY, the base Y position of the 2D region to load or store.
-### * arg11: i32 Src0AddrX, the base X position of the 2D region to load or store.
-### * arg12: data to write
-###
-### * Return value: void
-###
-    "lsc_store2d_bti" : ["void",["any","char","char","char","char","char","short","short","char","int","int","int","anyvector"],"None"],
 ###
 ### * ``llvm.genx.lsc.store2d.stateless`` :
 ###
@@ -1490,15 +1441,15 @@ Imported_Intrinsics = \
 ### * arg3: i8 The dataum size, [MBC]
 ### * arg4: i8 Indicates if the data is transposed during the transfer, [MBC]
 ### * arg5: i8 number of blocks, [MBC]
-### * arg6: i32 BlockHeight, [MBC]
 ### * arg7: i32 BlockWidth, [MBC]
+### * arg6: i32 BlockHeight, [MBC]
 ### * arg8: i8 VNNI. This performs a VNNI transform during the access.
-### * arg9: i32 surface base to use for this operation. This can be an immediate or a register.
-### * arg10: i32 surface width.
-### * arg11: i32 surface height.
-### * arg12: i32 surface pitch.
-### * arg13: i32 Src0AddrY, the base Y position of the 2D region to load or store.
-### * arg14: i32 Src0AddrX, the base X position of the 2D region to load or store.
+### * arg9: i64 surface base address for this operation.
+### * arg10: i32 surface width minus 1.
+### * arg11: i32 surface height minus 1.
+### * arg12: i32 surface pitch minus 1.
+### * arg13: i32 Src0AddrX, the base X position of the 2D region to load or store.
+### * arg14: i32 Src0AddrY, the base Y position of the 2D region to load or store.
 ### * arg15: data to write
 ###
 ### * Return value: void
@@ -1513,9 +1464,7 @@ Imported_Intrinsics = \
 ### * ``llvm.genx.lsc.atomic.slateless`` :
 ###
     "lsc_atomic_bti" : ["any",["any","char","char","char","short","int","char","char","char","char","int","anyvector",0,0,0],"None"],
-
     "lsc_atomic_slm" : ["any",["any","char","char","char","short","int","char","char","char","char","int","anyvector",0,0,0],"None"],
-
     "lsc_atomic_stateless" : ["any",["any","char","char","char","short","int","char","char","char","char","int","anyvector",0,0,0],"None"],
     "lsc_atomic_bindless" : ["any",["any","char","char","char","short","int","char","char","char","char","int","anyvector",0,0,0],"None"],
 ### ``llvm.genx.lsc.fence`` : lsc_fence instruction
