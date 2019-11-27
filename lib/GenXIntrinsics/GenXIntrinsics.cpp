@@ -451,6 +451,12 @@ static StringRef GenXIntrinsicMDName{ "genx_intrinsic_id" };
 #include "llvm/GenXIntrinsics/GenXIntrinsicDesctiption.gen"
 #undef GET_INTRINSIC_TARGET_DATA
 
+bool GenXIntrinsic::isOverloadedArg(unsigned IntrinID, unsigned ArgNum) {
+#define GET_INTRINSIC_OVERLOAD_ARGS_TABLE
+#include "llvm/GenXIntrinsics/GenXIntrinsicDesctiption.gen"
+#undef GET_INTRINSIC_OVERLOAD_ARGS_TABLE
+}
+
 /// Find the segment of \c IntrinsicNameTable for intrinsics with the same
 /// target as \c Name, or the generic table if \c Name is not target specific.
 ///

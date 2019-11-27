@@ -207,12 +207,7 @@ static inline FunctionType *getAnyType(LLVMContext &Context, unsigned id,
 
 /// GenXIntrinsic::isOverloadedArg(ID, ArgNum) - Return true if ArgNum
 /// in intrinsic overloaded
-static bool isOverloadedArg(unsigned IntrinID, unsigned ArgNum) {
-#define GET_INTRINSIC_OVERLOAD_ARGS_TABLE
-#include "llvm/GenXIntrinsics/GenXIntrinsicDesctiption.gen"
-#undef GET_INTRINSIC_OVERLOAD_ARGS_TABLE
-}
-
+bool isOverloadedArg(unsigned IntrinID, unsigned ArgNum);
 
 /// GenXIntrinsic::getAnyDeclaration(M, ID) - Create or insert a LLVM
 /// Function declaration for an intrinsic, and return it.
