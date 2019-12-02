@@ -135,6 +135,10 @@ FunctionType *getGenXType(LLVMContext &Context, GenXIntrinsic::ID id,
 /// the intrinsic.
 Function *getGenXDeclaration(Module *M, ID id, ArrayRef<Type *> Tys = None);
 
+void getIntrinsicInfoTableEntries(
+    GenXIntrinsic::ID id,
+    SmallVectorImpl<Intrinsic::IITDescriptor> &T);
+
 /// GenXIntrinsic::getAnyIntrinsicID(F) - Return LLVM or GenX intrinsic ID
 /// If is not intrinsic returns not_any_intrinsic
 /// Note that Function::getIntrinsicID returns ONLY LLVM intrinsics

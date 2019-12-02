@@ -41,7 +41,7 @@ static bool isOverloaded(GenXIntrinsic::ID id);
 /// getIntrinsicInfoTableEntries - Return the IIT table descriptor for the
 /// specified intrinsic into an array of IITDescriptors.
 ///
-static void
+void
 getIntrinsicInfoTableEntries(GenXIntrinsic::ID id,
                              SmallVectorImpl<Intrinsic::IITDescriptor> &T);
 
@@ -347,7 +347,7 @@ static Type *DecodeFixedType(ArrayRef<Intrinsic::IITDescriptor> &Infos,
 #include "llvm/GenXIntrinsics/GenXIntrinsicDescription.gen"
 #undef GET_INTRINSIC_GENERATOR_GLOBAL
 
-void getIntrinsicInfoTableEntries(
+void GenXIntrinsic::getIntrinsicInfoTableEntries(
     GenXIntrinsic::ID id, SmallVectorImpl<Intrinsic::IITDescriptor> &T) {
   id = static_cast<GenXIntrinsic::ID>(id - GenXIntrinsic::not_genx_intrinsic);
   // Check to see if the intrinsic's type was expressible by the table.
@@ -614,40 +614,5 @@ std::string GenXIntrinsic::getAnyName(unsigned id, ArrayRef<Type *> Tys) {
     return getGenXName((GenXIntrinsic::ID)id, Tys);
   else
     return Intrinsic::getName((Intrinsic::ID)id, Tys);
-}
-
-// static inline FunctionType *getAnyType(LLVMContext &Context, unsigned id,
-//        ArrayRef<Type *> Tys = None)
-
-// static inline Function *getAnyDeclaration(Module *M, unsigned id,
-//                                          ArrayRef<Type *> Tys = None)
-
-// todo: delete everything below
-
-/// Intrinsic::getType(ID) - Return the function type for an intrinsic.
-///
-static FunctionType *getType(LLVMContext &Context, GenXIntrinsic::ID id,
-                             ArrayRef<Type *> Tys = None);
-
-FunctionType *getType(LLVMContext &Context, GenXIntrinsic::ID id,
-                      ArrayRef<Type *> Tys) {
-  SmallVector<Intrinsic::IITDescriptor, 8> Table;
-  getIntrinsicInfoTableEntries(id, Table);
-
-  ArrayRef<Intrinsic::IITDescriptor> TableRef = Table;
-  Type *ResultTy = DecodeFixedType(TableRef, Tys, Context);
-
-  SmallVector<Type *, 8> ArgTys;
-  while (!TableRef.empty())
-    ArgTys.push_back(DecodeFixedType(TableRef, Tys, Context));
-
-  // DecodeFixedType returns Void for IITDescriptor::Void and
-  // IITDescriptor::VarArg If we see void type as the type of the last argument,
-  // it is vararg intrinsic
-  if (!ArgTys.empty() && ArgTys.back()->isVoidTy()) {
-    ArgTys.pop_back();
-    return FunctionType::get(ResultTy, ArgTys, true);
-  }
-  return FunctionType::get(ResultTy, ArgTys, false);
 }
 
