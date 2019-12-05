@@ -1501,7 +1501,7 @@ Imported_Intrinsics = \
 ###     5 -> .system (the entire system memory space)
 ###     6 -> .sysacq (the entire system memory space with system-acquire semantics)
 ###
-    "lsc_fence" : ["void",["any","char","char","char"],"None"],
+    "lsc_fence" : ["void",["anyvector","char","char","char"],"None"],
 # __INTEL_EMBARGO_END__
 
 ### subb
