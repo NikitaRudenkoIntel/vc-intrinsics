@@ -1833,6 +1833,9 @@ Function *SPIRVToLLVM::transFunction(SPIRVFunction *BF) {
                                     std::to_string(CMFloatControlMode));
     F->addAttribute(AttributeList::FunctionIndex, Attr);
   }
+  SPIRVWord CMStackCall = 0;
+  if (BF->hasDecorate(DecorationCMStackCallINTEL, 0, &CMStackCall))
+    F->addFnAttr("CMStackCall");
   // Add oclrt attribute if any.
   SPIRVWord SIMDSize = 0;
   if (BF->hasDecorate(DecorationCMOpenCLSimdSizeINTEL, 0, &SIMDSize)) {

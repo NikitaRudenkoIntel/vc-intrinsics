@@ -486,6 +486,13 @@ SPIRVFunction *LLVMToSPIRV::transFunctionDecl(Function *F) {
         .getAsInteger(0, Mode);
     BF->addDecorate(DecorationCMFloatControlINTEL, Mode);
   }
+  if (Attrs.hasFnAttribute("CMStackCall")) {
+    SPIRVWord Mode = 0;
+    Attrs.getAttribute(AttributeList::FunctionIndex, "CMStackCall")
+      .getValueAsString()
+      .getAsInteger(0, Mode);
+    BF->addDecorate(DecorationCMStackCallINTEL, Mode);
+  }
   // Add oclrt attribute if any.
   if (Attrs.hasFnAttribute("oclrt")) {
     SPIRVWord SIMDSize = 0;
