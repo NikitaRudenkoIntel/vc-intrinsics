@@ -1594,6 +1594,13 @@ Imported_Intrinsics = \
 ###
     "get_hwid" : ["int",[],"NoMem"],
 
+### ``llvm.genx.ce0`` : read channel-enable register
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+###
+### Return Value: i32 the value read
+###
+    "ce0" : ["int",[],"ReadMem"],
+
 ### ``llvm.genx.set.pause`` : set the pause register (v11.4)
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
