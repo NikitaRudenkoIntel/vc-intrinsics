@@ -29,7 +29,7 @@ namespace GenXIntrinsic {
 enum ID : unsigned {
   not_genx_intrinsic = Intrinsic::num_intrinsics,
 #define GET_INTRINSIC_ENUM_VALUES
-#include "llvm/GenXIntrinsics/GenXIntrinsicDesctiption.gen"
+#include "llvm/GenXIntrinsics/GenXIntrinsicDescription.gen"
 #undef GET_INTRINSIC_ENUM_VALUES
   num_genx_intrinsics,
   // note that Intrinsic::not_intrinsic means that it is not a LLVM intrinsic

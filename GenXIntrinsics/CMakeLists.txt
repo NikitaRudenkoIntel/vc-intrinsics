@@ -3,6 +3,8 @@ cmake_minimum_required(VERSION 3.3)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 include_directories(${CMAKE_CURRENT_BINARY_DIR}/include)
 
+set(GENX_INTRINSICS_DESCRIPTION "GenXIntrinsicDescription.gen")
+
 add_subdirectory(include/llvm)
 add_subdirectory(lib)
 
@@ -21,7 +23,7 @@ install(DIRECTORY include/llvm
 # cmake creates too many subdirectories in build directory
 # and then "install(DIRECTORY" installs them even if they are empty
 # so generated file has to be installed separetely
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/include/llvm/GenXIntrinsics/GenXIntrinsicDesctiption.gen
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/include/llvm/GenXIntrinsics/${GENX_INTRINSICS_DESCRIPTION}
   DESTINATION include/llvm/GenXIntrinsics
   COMPONENT genx-intrinsics-headers
 )
