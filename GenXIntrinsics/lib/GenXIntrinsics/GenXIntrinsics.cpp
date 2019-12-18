@@ -514,6 +514,8 @@ GenXIntrinsic::ID GenXIntrinsic::getGenXIntrinsicID(const Function *F) {
 std::string GenXIntrinsic::getGenXName(GenXIntrinsic::ID id,
                                        ArrayRef<Type *> Tys) {
   assert(isGenXIntrinsic(id) && "Invalid intrinsic ID!");
+  assert(Tys.empty() ||
+         isOverloaded(id) && "Non-overloadable intrinsic was overloaded!");
   id = static_cast<GenXIntrinsic::ID>(id - GenXIntrinsic::not_genx_intrinsic);
   std::string Result(GenXIntrinsicNameTable[id]);
   for (Type *Ty : Tys) {
@@ -535,10 +537,11 @@ GenXIntrinsic::ID GenXIntrinsic::lookupGenXIntrinsicID(StringRef Name) {
 
   // If the intrinsic is not overloaded, require an exact match. If it is
   // overloaded, require either exact or prefix match.
-  const auto MatchSize = strlen(NameTable[Idx]);
-  assert(Name.size() >= MatchSize && "Expected either exact or prefix match");
-  bool IsExactMatch = Name.size() == MatchSize;
-  return IsExactMatch || isOverloaded(ID) ? ID : GenXIntrinsic::not_genx_intrinsic;
+  assert(Name.size() >= strlen(NameTable[Idx]) &&
+         "Expected either exact or prefix match");
+  assert((Name.size() == strlen(NameTable[Idx])) ||
+         isOverloaded(ID) && "Non-overloadable intrinsic was overloaded!");
+  return ID;
 }
 
 FunctionType *GenXIntrinsic::getGenXType(LLVMContext &Context,
@@ -567,6 +570,8 @@ FunctionType *GenXIntrinsic::getGenXType(LLVMContext &Context,
 Function *GenXIntrinsic::getGenXDeclaration(Module *M, GenXIntrinsic::ID id,
                                             ArrayRef<Type *> Tys) {
   assert(isGenXNonTrivialIntrinsic(id));
+  assert(Tys.empty() ||
+      isOverloaded(id) && "Non-overloadable intrinsic was overloaded!");
   Function *F = cast<Function>(M->getOrInsertFunction(
       getGenXName(id, Tys), getGenXType(M->getContext(), id, Tys)));
 
