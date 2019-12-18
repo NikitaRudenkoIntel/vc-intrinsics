@@ -479,6 +479,7 @@ static ArrayRef<const char *> findTargetSubtable(StringRef Name) {
 
 
 GenXIntrinsic::ID GenXIntrinsic::getGenXIntrinsicID(const Function *F) {
+  assert(F);
   llvm::StringRef Name = F->getName();
   if (!Name.startswith(getGenXIntrinsicPrefix()))
     return GenXIntrinsic::not_genx_intrinsic;
@@ -496,20 +497,6 @@ GenXIntrinsic::ID GenXIntrinsic::getGenXIntrinsicID(const Function *F) {
   assert(ID != GenXIntrinsic::not_genx_intrinsic && "Intrinsic not found!");
   return ID;
 }
-
-// static inline ID getGenXIntrinsicID(const Value *V)
-
-// static inline bool isGenXIntrinsic(unsigned ID)
-
-// static inline bool isGenXIntrinsic(const Function *CF)
-
-// static inline bool isGenXIntrinsic(const Value *V)
-
-// static inline bool isGenXNonTrivialIntrinsic(unsigned ID)
-
-// static inline bool isGenXNonTrivialIntrinsic(const Function *CF)
-
-// static inline bool isGenXNonTrivialIntrinsic(const Value *V)
 
 std::string GenXIntrinsic::getGenXName(GenXIntrinsic::ID id,
                                        ArrayRef<Type *> Tys) {

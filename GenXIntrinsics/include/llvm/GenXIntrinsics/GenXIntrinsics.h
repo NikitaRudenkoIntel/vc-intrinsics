@@ -146,6 +146,7 @@ static inline unsigned getAnyIntrinsicID(const Function *F) {
   if (isGenXNonTrivialIntrinsic(F))
     return getGenXIntrinsicID(F);
   else {
+    assert(F);
     unsigned IID = F->getIntrinsicID();
     if (IID == Intrinsic::not_intrinsic)
       return GenXIntrinsic::not_any_intrinsic;
