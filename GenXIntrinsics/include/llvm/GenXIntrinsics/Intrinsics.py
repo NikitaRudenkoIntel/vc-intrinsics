@@ -493,10 +493,14 @@ def createAttributeTable():
             attribute_Array.append(intrinsic_attribute)
     f.write("  };\n\n")
 
+    f.write("  unsigned AttrIdx = id - 1 - GenXIntrinsic::not_genx_intrinsic;\n"
+            "  const size_t AttrMapNum = sizeof(IntrinsicsToAttributesMap)/sizeof(IntrinsicsToAttributesMap[0]);\n"
+            "  assert(AttrIdx < AttrMapNum && \"invalid attribute index\");\n")
+
     f.write("  AttributeList AS[1];\n" #Currently only allowed to have one attribute per instrinsic
             "  unsigned NumAttrs = 0;\n"
             "  if (id != 0) {\n"
-            "    switch(IntrinsicsToAttributesMap[id - 1 - GenXIntrinsic::not_genx_intrinsic]) {\n"
+            "    switch(IntrinsicsToAttributesMap[AttrIdx]) {\n"
             "    default: llvm_unreachable(\"Invalid attribute number\");\n")
 
     for i in range(len(attribute_Array)): #Building case statements
