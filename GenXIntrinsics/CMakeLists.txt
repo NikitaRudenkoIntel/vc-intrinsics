@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.3)
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
+set(GENX_INTRINSICS_MAIN_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
+include_directories(${GENX_INTRINSICS_MAIN_INCLUDE_DIR})
 include_directories(${CMAKE_CURRENT_BINARY_DIR}/include)
 
 set(GENX_INTRINSICS_DESCRIPTION "GenXIntrinsicDescription.gen")
