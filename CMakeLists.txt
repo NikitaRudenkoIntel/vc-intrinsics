@@ -45,5 +45,11 @@ if( NOT PYTHON_EXECUTABLE )
   endif()
 endif()
 
+set(__INTEL_EMBARGO__ ON CACHE BOOL "Build with IP sensitive code")
+if( __INTEL_EMBARGO__ )
+  message("-- Building with IP sensitive code")
+  add_definitions(-D__INTEL_EMBARGO__)
+endif()
+
 add_subdirectory(GenXIntrinsics)
 add_subdirectory(SPIRV-LLVM-Translator)
