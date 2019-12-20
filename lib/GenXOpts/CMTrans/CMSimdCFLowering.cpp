@@ -784,6 +784,7 @@ void CMSimdCFLower::determineJIPs()
         continue;
       // We have a non-fallthrough edge BB -> Succ. Thus NextBB and Succ need
       // to be in the same group.
+      assert(NextBB);
       LLVM_DEBUG(dbgs() << "joinGroups " << NextBB->getName() << " " << Succ->getName() << "\n");
       Groups.joinGroups(NextBB, Succ);
     }
