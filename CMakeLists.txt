@@ -46,3 +46,4 @@ if( NOT PYTHON_EXECUTABLE )
 endif()
 
 add_subdirectory(GenXIntrinsics)
+add_subdirectory(SPIRV-LLVM-Translator)
