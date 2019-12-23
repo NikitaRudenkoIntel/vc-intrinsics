@@ -31,18 +31,16 @@ else(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
   set(BUILD_EXTERNAL NO)
 endif(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
 
-if( NOT PYTHON_EXECUTABLE )
-  include(FindPythonInterp)
-  if( NOT PYTHONINTERP_FOUND )
-    message(FATAL_ERROR
-  "Unable to find Python interpreter, required for builds and testing.
+include(FindPythonInterp)
+if( NOT PYTHONINTERP_FOUND )
+  message(FATAL_ERROR
+"Unable to find Python interpreter, required for builds and testing.
 
-  Please install Python or specify the PYTHON_EXECUTABLE CMake variable.")
-  endif()
+Please install Python or specify the PYTHON_EXECUTABLE CMake variable.")
+endif()
 
-  if( "${PYTHON_VERSION_STRING}" VERSION_LESS 2.7 )
-    message(FATAL_ERROR "Python 2.7 or newer is required")
-  endif()
+if( "${PYTHON_VERSION_STRING}" VERSION_LESS 2.7 )
+message(FATAL_ERROR "Python 2.7 or newer is required")
 endif()
 
 set(__INTEL_EMBARGO__ ON CACHE BOOL "Build with IP sensitive code")
