@@ -9,7 +9,7 @@ Introduction
 ============
 
 The GenX backend accepts
-:doc:`LLVM intermediate representation <../LangRef>`
+`LLVM intermediate representation <https://llvm.org/docs/LangRef.html>`_
 with certain restrictions, and with additional GenX-specific intrinsics.
 
 LLVM IR representation of EU code
