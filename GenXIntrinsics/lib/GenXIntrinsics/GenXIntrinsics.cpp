@@ -606,37 +606,35 @@ Function *GenXIntrinsic::getGenXDeclaration(Module *M, GenXIntrinsic::ID id,
   assert((F->getType() == PointerType::get(FTy, 0 /* AddressSpace */)) &&
          "Type must be fixed");
 
+  resetGenXAttributes(M, F);
+  return F;
+}
+
+bool GenXIntrinsic::resetGenXAttributes(Module *M, Function *F) {
+
+  assert(M && F);
+
+  GenXIntrinsic::ID GXID = lookupGenXIntrinsicID(F->getName());
+
+  assert(GXID != GenXIntrinsic::not_genx_intrinsic);
+
   // Since Function::isIntrinsic() will return true due to llvm. prefix,
   // Module::getOrInsertFunction fails to add the attributes. explicitly adding
   // the attribute to handle this problem. This since is setup on the function
   // declaration, attribute assignment is global and hence this approach
   // suffices.
-  F->setAttributes(GenXIntrinsic::getAttributes(M->getContext(), id));
+  F->setAttributes(GenXIntrinsic::getAttributes(M->getContext(), GXID));
 
   // Cache intrinsic ID in metadata.
   if (EnableGenXIntrinsicsCache && !F->hasMetadata(GenXIntrinsicMDName)) {
     LLVMContext &Ctx = F->getContext();
     auto *Ty = IntegerType::getInt32Ty(Ctx);
-    auto *Cached = ConstantInt::get(Ty, id);
+    auto *Cached = ConstantInt::get(Ty, GXID);
     auto *MD = MDNode::get(Ctx, {ConstantAsMetadata::get(Cached)});
     F->addMetadata(GenXIntrinsicMDName, *MD);
   }
-  return F;
+  return true;
 }
-
-
-
-
-// static inline unsigned getAnyIntrinsicID(const Function *F)
-
-// static inline unsigned getAnyIntrinsicID(const Value *V)
-
-// static inline bool isAnyNonTrivialIntrinsic(unsigned id)
-
-// static inline bool isAnyNonTrivialIntrinsic(const Function *CF)
-
-// static inline bool isAnyNonTrivialIntrinsic(const Value *V)
-
 
 std::string GenXIntrinsic::getAnyName(unsigned id, ArrayRef<Type *> Tys) {
   assert(isAnyIntrinsic(id));
