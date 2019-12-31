@@ -156,6 +156,13 @@ void getIntrinsicInfoTableEntries(
     GenXIntrinsic::ID id,
     SmallVectorImpl<Intrinsic::IITDescriptor> &T);
 
+/// GenXIntrinsic::resetGenXAttributes(F) - recalculates attributes
+/// of a CM intrinsic by setting the default values (as per
+/// intrinsic definition).
+///
+/// F is required to be a GenX intrinsic function
+void resetGenXAttributes(Function* F);
+
 /// GenXIntrinsic::getAnyIntrinsicID(F) - Return LLVM or GenX intrinsic ID
 /// If is not intrinsic returns not_any_intrinsic
 /// Note that Function::getIntrinsicID returns ONLY LLVM intrinsics

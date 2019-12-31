@@ -539,7 +539,7 @@ std::string GenXIntrinsic::getGenXName(GenXIntrinsic::ID id,
                                        ArrayRef<Type *> Tys) {
   assert(isGenXIntrinsic(id) && "Invalid intrinsic ID!");
   assert(Tys.empty() ||
-         isOverloaded(id) && "Non-overloadable intrinsic was overloaded!");
+         (isOverloaded(id) && "Non-overloadable intrinsic was overloaded!"));
   id = static_cast<GenXIntrinsic::ID>(id - GenXIntrinsic::not_genx_intrinsic);
   std::string Result(GenXIntrinsicNameTable[id]);
   for (Type *Ty : Tys) {
@@ -564,7 +564,7 @@ GenXIntrinsic::ID GenXIntrinsic::lookupGenXIntrinsicID(StringRef Name) {
   assert(Name.size() >= strlen(NameTable[Idx]) &&
          "Expected either exact or prefix match");
   assert((Name.size() == strlen(NameTable[Idx])) ||
-         isOverloaded(ID) && "Non-overloadable intrinsic was overloaded!");
+         (isOverloaded(ID) && "Non-overloadable intrinsic was overloaded!"));
   return ID;
 }
 
@@ -595,7 +595,7 @@ Function *GenXIntrinsic::getGenXDeclaration(Module *M, GenXIntrinsic::ID id,
                                             ArrayRef<Type *> Tys) {
   assert(isGenXNonTrivialIntrinsic(id));
   assert(Tys.empty() ||
-      isOverloaded(id) && "Non-overloadable intrinsic was overloaded!");
+         (isOverloaded(id) && "Non-overloadable intrinsic was overloaded!"));
 
   auto GenXName = getGenXName(id, Tys);
   FunctionType *FTy = getGenXType(M->getContext(), id, Tys);
@@ -606,37 +606,34 @@ Function *GenXIntrinsic::getGenXDeclaration(Module *M, GenXIntrinsic::ID id,
   assert((F->getType() == PointerType::get(FTy, 0 /* AddressSpace */)) &&
          "Type must be fixed");
 
+  resetGenXAttributes(F);
+  return F;
+}
+
+void GenXIntrinsic::resetGenXAttributes(Function *F) {
+
+  assert(F);
+
+  GenXIntrinsic::ID GXID = getGenXIntrinsicID(F);
+
+  assert(GXID != GenXIntrinsic::not_genx_intrinsic);
+
   // Since Function::isIntrinsic() will return true due to llvm. prefix,
   // Module::getOrInsertFunction fails to add the attributes. explicitly adding
   // the attribute to handle this problem. This since is setup on the function
   // declaration, attribute assignment is global and hence this approach
   // suffices.
-  F->setAttributes(GenXIntrinsic::getAttributes(M->getContext(), id));
+  F->setAttributes(GenXIntrinsic::getAttributes(F->getContext(), GXID));
 
   // Cache intrinsic ID in metadata.
   if (EnableGenXIntrinsicsCache && !F->hasMetadata(GenXIntrinsicMDName)) {
     LLVMContext &Ctx = F->getContext();
     auto *Ty = IntegerType::getInt32Ty(Ctx);
-    auto *Cached = ConstantInt::get(Ty, id);
+    auto *Cached = ConstantInt::get(Ty, GXID);
     auto *MD = MDNode::get(Ctx, {ConstantAsMetadata::get(Cached)});
     F->addMetadata(GenXIntrinsicMDName, *MD);
   }
-  return F;
 }
-
-
-
-
-// static inline unsigned getAnyIntrinsicID(const Function *F)
-
-// static inline unsigned getAnyIntrinsicID(const Value *V)
-
-// static inline bool isAnyNonTrivialIntrinsic(unsigned id)
-
-// static inline bool isAnyNonTrivialIntrinsic(const Function *CF)
-
-// static inline bool isAnyNonTrivialIntrinsic(const Value *V)
-
 
 std::string GenXIntrinsic::getAnyName(unsigned id, ArrayRef<Type *> Tys) {
   assert(isAnyIntrinsic(id));
