@@ -780,10 +780,10 @@ SPIRVValue *LLVMToSPIRV::transValueWithoutDecoration(Value *V,
       if (GV->hasAttribute("genx_byte_offset")) {
         SPIRVWord Offset;
         GV->getAttribute("genx_byte_offset").getValueAsString().getAsInteger(0, Offset);
-        BVar->addDecorate(DecorationCMGlobalOffsetINTEL, Offset);
+        BVar->addDecorate(DecorationOffset, Offset);
       }
       if (GV->hasAttribute("genx_volatile"))
-        BVar->addDecorate(DecorationCMVolatileGlobalINTEL);
+        BVar->addDecorate(DecorationVolatile);
     }
 
     spv::BuiltIn Builtin = spv::BuiltInPosition;

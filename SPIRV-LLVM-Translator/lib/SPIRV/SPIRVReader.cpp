@@ -1292,9 +1292,9 @@ Value *SPIRVToLLVM::transValueWithoutDecoration(SPIRVValue *BV, Function *F,
     // Add volatile and offset attributes.
     if (BM->getSourceLanguage(nullptr) == SourceLanguageCM) {
       SPIRVWord Offset;
-      if (BVar->hasDecorate(DecorationCMGlobalOffsetINTEL, 0, &Offset))
+      if (BVar->hasDecorate(DecorationOffset, 0, &Offset))
         LVar->addAttribute("genx_byte_offset", utostr(Offset));
-      if (BVar->hasDecorate(DecorationCMVolatileGlobalINTEL))
+      if (BVar->hasDecorate(DecorationVolatile))
         LVar->addAttribute("genx_volatile");
     }
 
