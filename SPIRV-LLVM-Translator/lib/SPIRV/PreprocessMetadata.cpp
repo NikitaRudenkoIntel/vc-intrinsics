@@ -39,6 +39,7 @@
 #define DEBUG_TYPE "clmdtospv"
 
 #include "OCLUtil.h"
+#include "CMUtil.h"
 #include "SPIRVInternal.h"
 #include "SPIRVMDBuilder.h"
 #include "SPIRVMDWalker.h"
@@ -143,8 +144,6 @@ void PreprocessMetadata::transCMMD(Module *M) {
     Kernel->setCallingConv(CallingConv::SPIR_KERNEL);
 #endif
 
-    EM.addOp().add(Kernel).add(spv::ExecutionModeContractionOff).done();
-
     // get the slm-size info
     if (KernelMD->getNumOperands() > genx::KernelMDOp::SLMSize) {
       if (auto VM = dyn_cast<ValueAsMetadata>(KernelMD->getOperand(genx::KernelMDOp::SLMSize)))
@@ -157,6 +156,34 @@ void PreprocessMetadata::transCMMD(Module *M) {
               .done();
         }
     }
+
+#ifdef __INTEL_EMBARGO__
+    // Add CM float control execution modes
+    // RoundMode and FloatMode are always same for all types in Cm
+    // While Denorm could be different for double, float and half
+    auto Attrs = Kernel->getAttributes();
+    if (Attrs.hasFnAttribute("CMFloatControl")) {
+      SPIRVWord Mode = 0;
+      Attrs.getAttribute(AttributeList::FunctionIndex, "CMFloatControl")
+          .getValueAsString()
+          .getAsInteger(0, Mode);
+      spv::ExecutionMode ExecRoundMode =
+          CMRoundModeExecModeMap::map(CMUtil::getRoundMode(Mode));
+      spv::ExecutionMode ExecFloatMode =
+          CMFloatModeExecModeMap::map(CMUtil::getFloatMode(Mode));
+      CMFloatTypeSizeMap::foreach (
+          [&](CmFloatType FloatType, unsigned TargetWidth) {
+            EM.addOp().add(Kernel).add(ExecRoundMode).add(TargetWidth).done();
+            EM.addOp().add(Kernel).add(ExecFloatMode).add(TargetWidth).done();
+            EM.addOp()
+                .add(Kernel)
+                .add(CMDenormModeExecModeMap::map(
+                    getDenormPreserve(Mode, FloatType)))
+                .add(TargetWidth)
+                .done();
+          });
+    }
+#endif // __INTEL_EMBARGO__
   }
 }
 

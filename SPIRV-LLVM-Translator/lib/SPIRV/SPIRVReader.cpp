@@ -38,6 +38,7 @@
 //===----------------------------------------------------------------------===//
 #include "SPIRVReader.h"
 #include "OCLUtil.h"
+#include "CMUtil.h"
 #include "SPIRVBasicBlock.h"
 #include "SPIRVExtInst.h"
 #include "SPIRVFunction.h"
@@ -1826,13 +1827,6 @@ Function *SPIRVToLLVM::transFunction(SPIRVFunction *BF) {
                        [&](Attribute::AttrKind Attr) { F->addFnAttr(Attr); });
   }
 
-  // Add CM float control attribute.
-  SPIRVWord CMFloatControlMode = 0;
-  if (BF->hasDecorate(DecorationCMFloatControlINTEL, 0, &CMFloatControlMode)) {
-    Attribute Attr = Attribute::get(*Context, "CMFloatControl",
-                                    std::to_string(CMFloatControlMode));
-    F->addAttribute(AttributeList::FunctionIndex, Attr);
-  }
   SPIRVWord CMStackCall = 0;
   if (BF->hasDecorate(DecorationCMStackCallINTEL, 0, &CMStackCall))
     F->addFnAttr("CMStackCall");
@@ -2551,6 +2545,42 @@ bool SPIRVToLLVM::transKernelMetadata() {
         RegularBarrierCnt = EM->getLiterals()[9];
       KernelMD.push_back(
         ConstantAsMetadata::get(ConstantInt::get(I32Ty, RegularBarrierCnt)));
+
+      // Cm makes difference between default float control
+      // and empty float control
+      bool isCmFloatControl = false;
+      unsigned FloatControl = 0;
+      // RoundMode and FloatMode are always same for all types in Cm
+      // While Denorm could be different for double, float and half
+      CMRoundModeExecModeMap::foreach (
+          [&](CmRoundMode iCmM, ExecutionMode iEM) {
+            if (BF->getExecutionMode(iEM)) {
+              isCmFloatControl = true;
+              FloatControl |= getCMFloatControl(iCmM);
+            }
+          });
+      CMFloatModeExecModeMap::foreach (
+          [&](CmFloatMode iCmM, ExecutionMode iEM) {
+            if (BF->getExecutionMode(iEM)) {
+              isCmFloatControl = true;
+              FloatControl |= getCMFloatControl(iCmM);
+            }
+          });
+      CMDenormModeExecModeMap::foreach (
+          [&](CmDenormMode iCmM, ExecutionMode iEM) {
+            auto ExecModes = BF->getExecutionModeRange(iEM);
+            for (auto it = ExecModes.first; it != ExecModes.second; it++) {
+              isCmFloatControl = true;
+              unsigned TargetWidth = (*it).second->getLiterals()[0];
+              CmFloatType FloatType = CMFloatTypeSizeMap::rmap(TargetWidth);
+              FloatControl |= getCMFloatControl(iCmM, FloatType);
+            }
+          });
+      if (isCmFloatControl) {
+        Attribute Attr = Attribute::get(*Context, "CMFloatControl",
+                                        std::to_string(FloatControl));
+        F->addAttribute(AttributeList::FunctionIndex, Attr);
+      }
 #endif // __INTEL_EMBARGO__
 
       llvm::MDNode *Node = MDNode::get(F->getContext(), KernelMD);

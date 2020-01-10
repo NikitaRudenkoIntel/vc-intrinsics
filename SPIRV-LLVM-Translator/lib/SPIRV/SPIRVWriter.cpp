@@ -479,14 +479,6 @@ SPIRVFunction *LLVMToSPIRV::transFunctionDecl(Function *F) {
     BF->setLinkageType(transLinkageType(F));
   auto Attrs = F->getAttributes();
 
-  // Add CM float control decoration.
-  if (Attrs.hasFnAttribute("CMFloatControl")) {
-    SPIRVWord Mode = 0;
-    Attrs.getAttribute(AttributeList::FunctionIndex, "CMFloatControl")
-        .getValueAsString()
-        .getAsInteger(0, Mode);
-    BF->addDecorate(DecorationCMFloatControlINTEL, Mode);
-  }
   if (Attrs.hasFnAttribute("CMStackCall")) {
     SPIRVWord Mode = 0;
     Attrs.getAttribute(AttributeList::FunctionIndex, "CMStackCall")
@@ -1656,7 +1648,22 @@ bool LLVMToSPIRV::transExecutionMode() {
         BF->addExecutionMode(new SPIRVExecutionMode(
           BF, static_cast<ExecutionMode>(EMode), RegularBarrierCnt));
       } break;
+
+      case spv::ExecutionModeRoundingModeRTPINTEL:
+      case spv::ExecutionModeRoundingModeRTNINTEL:
+      case spv::ExecutionModeFloatALTINTEL:
+      case spv::ExecutionModeFloatIEEEINTEL:
 #endif // __INTEL_EMBARGO__
+      case spv::ExecutionModeDenormPreserve:
+      case spv::ExecutionModeDenormFlushToZero:
+      case spv::ExecutionModeSignedZeroInfNanPreserve:
+      case spv::ExecutionModeRoundingModeRTE:
+      case spv::ExecutionModeRoundingModeRTZ:{
+          unsigned TargetWidth;
+          N.get(TargetWidth);
+          BF->addExecutionMode(BM->add(new SPIRVExecutionMode(
+              BF, static_cast<ExecutionMode>(EMode), TargetWidth)));
+      } break;
       default:
         llvm_unreachable("invalid execution mode");
       }
