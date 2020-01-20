@@ -1,3 +1,15 @@
+if(BUILD_EXTERNAL)
+add_library(LLVMGenXIntrinsics GenXIntrinsics.cpp)
+add_dependencies(LLVMGenXIntrinsics GenXIntrinsicsGen)
+target_link_libraries(LLVMGenXIntrinsics LLVMCodeGen)
+target_include_directories(LLVMGenXIntrinsics PUBLIC 
+  $<BUILD_INTERFACE:${GENX_INTRINSICS_MAIN_INCLUDE_DIR}>  
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/../../include>
+  $<INSTALL_INTERFACE:include>
+)
+else()
+
+#when we are building in LLVM infra, we need to conform
 set(LLVM_LINK_COMPONENTS Core)
 
 add_llvm_library(LLVMGenXIntrinsics
@@ -13,3 +25,5 @@ add_llvm_library(LLVMGenXIntrinsics
     GenXIntrinsicsGen
     intrinsics_gen
 )
+
+endif()

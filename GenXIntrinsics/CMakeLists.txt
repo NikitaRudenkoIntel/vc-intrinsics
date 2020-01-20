@@ -1,10 +1,6 @@
 cmake_minimum_required(VERSION 3.3)
 
 set(GENX_INTRINSICS_MAIN_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
-
-include_directories(${GENX_INTRINSICS_MAIN_INCLUDE_DIR})
-include_directories(${CMAKE_CURRENT_BINARY_DIR}/include)
-
 set(GENX_INTRINSICS_DESCRIPTION "GenXIntrinsicDescription.gen")
 
 add_subdirectory(include/llvm)
@@ -29,3 +25,20 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/include/llvm/GenXIntrinsics/${GENX_INT
   DESTINATION include/llvm/GenXIntrinsics
   COMPONENT genx-intrinsics-headers
 )
+
+# for now not clear do we need to check deps on install, 
+# so config will only contain single file
+# we need to limit it to external build
+if(BUILD_EXTERNAL)
+install(TARGETS LLVMGenXIntrinsics EXPORT LLVMGenXIntrinsicsTargets
+  LIBRARY DESTINATION lib
+  ARCHIVE DESTINATION lib
+  RUNTIME DESTINATION bin
+  INCLUDES DESTINATION include
+  )
+
+install(EXPORT LLVMGenXIntrinsicsTargets
+  FILE LLVMGenXIntrinsicsConfig.cmake
+  DESTINATION lib/cmake/LLVMGenXIntrinsics
+  ) 
+endif()
