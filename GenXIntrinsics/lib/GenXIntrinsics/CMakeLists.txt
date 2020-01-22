@@ -1,5 +1,6 @@
 if(BUILD_EXTERNAL)
 add_library(LLVMGenXIntrinsics GenXIntrinsics.cpp)
+llvm_update_compile_flags(LLVMGenXIntrinsics)
 add_dependencies(LLVMGenXIntrinsics GenXIntrinsicsGen)
 target_link_libraries(LLVMGenXIntrinsics LLVMCodeGen)
 target_include_directories(LLVMGenXIntrinsics PUBLIC 
