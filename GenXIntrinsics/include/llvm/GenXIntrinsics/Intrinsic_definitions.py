@@ -1142,6 +1142,20 @@ Imported_Intrinsics = \
 ### represented by an LLVM IR Shr instruction then an llvm.genx.sstrunc.sat.
 ###
 
+### ``llvm.genx.ro*`` : rol and ror instruction
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### * ``llvm.genx.rol`` : rotate left
+### * ``llvm.genx.ror`` : rotate right
+###
+### * arg0: first input, any scalar/vector integer type (even i64)
+### * arg1: second input, same type as arg0
+###
+### * Return value: result, any scalar or vector integer type with same
+###               vector width (even i64)
+###
+    "rol" : ["anyint",["anyint",1],"NoMem"],
+    "ror" : ["anyint",["anyint",1],"NoMem"],
+
 ### ``llvm.genx.sin`` : reciprocal square root
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
