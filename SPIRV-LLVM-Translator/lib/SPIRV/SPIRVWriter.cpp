@@ -58,6 +58,7 @@
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/Analysis/ValueTracking.h"
+#include "llvm/GenXIntrinsics/GenXKernelMDOps.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/Function.h"
@@ -1720,7 +1721,7 @@ bool LLVMToSPIRV::transCMKernelMetadata() {
     MDNode *KernelMD = KernelMDs->getOperand(I);
     if (KernelMD->getNumOperands() == 0)
       continue;
-    Function *Kernel = mdconst::dyn_extract<Function>(KernelMD->getOperand(0));
+    Function *Kernel = mdconst::dyn_extract<Function>(KernelMD->getOperand(genx::KernelMDOp::FunctionRef));
 
     SPIRVFunction *BF =
         static_cast<SPIRVFunction *>(getTranslatedValue(Kernel));
@@ -1728,14 +1729,14 @@ bool LLVMToSPIRV::transCMKernelMetadata() {
     assert(Kernel && isKernel(Kernel) &&
            "Invalid kernel calling convention or metadata");
     // add kernel name decoration
-    StringRef KernelName = cast<MDString>(KernelMD->getOperand(1).get())->getString();
+    StringRef KernelName = cast<MDString>(KernelMD->getOperand(genx::KernelMDOp::Name).get())->getString();
     BF->addDecorate(new SPIRVDecorate(DecorationCMKernelNameINTEL, BF, BM->getString(KernelName)->getId()));
     // add kernel asm name decoration
-    StringRef AsmName = cast<MDString>(KernelMD->getOperand(2).get())->getString();
+    StringRef AsmName = cast<MDString>(KernelMD->getOperand(genx::KernelMDOp::AsmName).get())->getString();
     BF->addDecorate(new SPIRVDecorate(DecorationCMKernelAsmNameINTEL, BF, BM->getString(AsmName)->getId()));
     // get the ArgKind info
-    if (KernelMD->getNumOperands() >= 4) {
-      if (auto KindsNode = dyn_cast<MDNode>(KernelMD->getOperand(3))) {
+    if (KernelMD->getNumOperands() >= genx::KernelMDOp::ArgKinds + 1) {
+      if (auto KindsNode = dyn_cast<MDNode>(KernelMD->getOperand(genx::KernelMDOp::ArgKinds))) {
         for (unsigned i = 0, e = KindsNode->getNumOperands(); i != e; ++i) {
           if (auto VM = dyn_cast<ValueAsMetadata>(KindsNode->getOperand(i)))
             if (auto V = dyn_cast<ConstantInt>(VM->getValue())) {
@@ -1751,7 +1752,7 @@ bool LLVMToSPIRV::transCMKernelMetadata() {
     }
     // get the ArgTypeDescs
     if (KernelMD->getNumOperands() >= 8) {
-      if (auto Node = dyn_cast<MDNode>(KernelMD->getOperand(7))) {
+      if (auto Node = dyn_cast<MDNode>(KernelMD->getOperand(genx::KernelMDOp::ArgTypeDescs))) {
         for (unsigned i = 0, e = Node->getNumOperands(); i != e; ++i) {
           if (auto MS = dyn_cast<MDString>(Node->getOperand(i))) {
             SPIRVFunctionParameter *BA = BF->getArgument(i);

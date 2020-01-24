@@ -51,6 +51,7 @@
 #include "llvm/PassSupport.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/GenXIntrinsics/GenXKernelMDOps.h"
 
 using namespace llvm;
 using namespace SPIRV;
@@ -152,8 +153,8 @@ void PreprocessMetadata::transCMMD(Module *M) {
     EM.addOp().add(Kernel).add(spv::ExecutionModeContractionOff).done();
 
     // get the slm-size info
-    if (KernelMD->getNumOperands() >= 5) {
-      if (auto VM = dyn_cast<ValueAsMetadata>(KernelMD->getOperand(4)))
+    if (KernelMD->getNumOperands() >= genx::KernelMDOp::SLMSize + 1) {
+      if (auto VM = dyn_cast<ValueAsMetadata>(KernelMD->getOperand(genx::KernelMDOp::SLMSize)))
         if (auto V = dyn_cast<ConstantInt>(VM->getValue())) {
           auto SLMSize = V->getZExtValue();
           EM.addOp()
