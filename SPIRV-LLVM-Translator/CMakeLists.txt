@@ -3,7 +3,9 @@ cmake_minimum_required(VERSION 3.3)
 set(LLVM_SPIRV_VERSION 0.2.1.0)
 
 # check if we build inside llvm or not
-if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+# now this check fails on external build because we ARE inside vc-intrinsics root
+# so here we are checking if we are already set BUILD_EXTERNAL
+if(BUILD_EXTERNAL OR (CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR))
   set(BUILD_EXTERNAL YES)
   project(LLVM_SPIRV
     VERSION
@@ -39,9 +41,9 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
   include(AddLLVM)
 
   message(STATUS "Found LLVM: ${LLVM_VERSION}")
-else(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+else(BUILD_EXTERNAL OR (CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR))
   set(BUILD_EXTERNAL NO)
-endif(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+endif(BUILD_EXTERNAL OR (CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR))
 
 if(BUILD_EXTERNAL)
   find_program(CCACHE_EXE_FOUND ccache)
@@ -51,6 +53,16 @@ if(BUILD_EXTERNAL)
     set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK ccache)
   endif()
 endif()
+
+if(BUILD_EXTERNAL)
+  # we have additional dep from vc intrinsics (structure in GenXKernelMDOps.h)
+  # finally this shall be find_package dep
+  # this is temporary solution while those are in the same module
+  set(LLVM_INCLUDE_DIRS
+    ${LLVM_INCLUDE_DIRS}
+    ${CMAKE_CURRENT_SOURCE_DIR}/../GenXIntrinsics/include
+  )
+endif(BUILD_EXTERNAL)
 
 set(LLVM_SPIRV_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
