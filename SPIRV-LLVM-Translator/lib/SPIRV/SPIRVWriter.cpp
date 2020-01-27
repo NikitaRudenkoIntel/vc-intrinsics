@@ -1728,9 +1728,9 @@ bool LLVMToSPIRV::transCMKernelMetadata() {
     assert(BF && "Kernel function should be translated first");
     assert(Kernel && isKernel(Kernel) &&
            "Invalid kernel calling convention or metadata");
-    // add kernel name decoration
+    // add kernel name
     StringRef KernelName = cast<MDString>(KernelMD->getOperand(genx::KernelMDOp::Name).get())->getString();
-    BF->addDecorate(new SPIRVDecorate(DecorationCMKernelNameINTEL, BF, BM->getString(KernelName)->getId()));
+    BM->setName(BF, KernelName);
     // get the ArgKind info
     if (KernelMD->getNumOperands() > genx::KernelMDOp::ArgKinds) {
       if (auto KindsNode = dyn_cast<MDNode>(KernelMD->getOperand(genx::KernelMDOp::ArgKinds))) {

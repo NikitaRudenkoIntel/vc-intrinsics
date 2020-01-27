@@ -397,7 +397,6 @@ enum Decoration {
     DecorationUserSemantic = 5635,
     DecorationCMKernelArgumentTypeINTEL = 5581,
     DecorationCMKernelArgumentDescINTEL = 5582,
-    DecorationCMKernelNameINTEL = 5583,
     DecorationCMFloatControlINTEL = 5587,
     DecorationCMOpenCLSimdSizeINTEL = 5588,
     DecorationCMStackCallINTEL = 5589,

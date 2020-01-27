@@ -2496,12 +2496,7 @@ bool SPIRVToLLVM::transKernelMetadata() {
       // function pointer
       KernelMD.push_back(ValueAsMetadata::get(F));
       // kernel name
-      SPIRVWord NameId;
-      string KernelName;
-      if (BF->hasDecorate(DecorationCMKernelNameINTEL, 0, &NameId))
-        KernelName = static_cast<SPIRVString *>(BM->getEntry(NameId))->getStr();
-      else
-        llvm_unreachable("CM kernel name missing");
+      string KernelName = BM->getEntry(BF->getId())->getName();
       KernelMD.push_back(
           llvm::MDString::get(F->getContext(), KernelName.c_str()));
       // argument kind
