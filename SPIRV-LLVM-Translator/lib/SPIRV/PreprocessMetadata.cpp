@@ -143,17 +143,10 @@ void PreprocessMetadata::transCMMD(Module *M) {
     Kernel->setCallingConv(CallingConv::SPIR_KERNEL);
 #endif
 
-    MDNode *EPNode;
-    EP.addOp()
-        .add(spv::ExecutionModelKernel)
-        .add(Kernel)
-        .add(Kernel->getName())
-        .done(&EPNode);
-
     EM.addOp().add(Kernel).add(spv::ExecutionModeContractionOff).done();
 
     // get the slm-size info
-    if (KernelMD->getNumOperands() >= genx::KernelMDOp::SLMSize + 1) {
+    if (KernelMD->getNumOperands() > genx::KernelMDOp::SLMSize) {
       if (auto VM = dyn_cast<ValueAsMetadata>(KernelMD->getOperand(genx::KernelMDOp::SLMSize)))
         if (auto V = dyn_cast<ConstantInt>(VM->getValue())) {
           auto SLMSize = V->getZExtValue();

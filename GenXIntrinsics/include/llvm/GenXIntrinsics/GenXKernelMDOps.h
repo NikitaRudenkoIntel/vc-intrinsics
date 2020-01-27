@@ -18,37 +18,23 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef GENX_KERNEL_MD_H
-#define GENX_KERNEL_MD_H
+#ifndef GENX_KERNEL_MDOPS_H
+#define GENX_KERNEL_MDOPS_H
 
 namespace llvm {
 namespace genx {
-    /*
-    * The metadata node has the following operands:
-    *  0: reference to Function
-    *  1: kernel name
-    *  2: asm name
-    *  3: reference to metadata node containing kernel arg kinds
-    *  4: slm-size in bytes
-    *  5: kernel argument offsets
-    *  6: reference to metadata node containing kernel argument input/output kinds
-    *  7: kernel argument type descriptors
-    *  8: named barrier count
-    *  9: barrier count
-    */
-    enum KernelMDOp
-    {
-        FunctionRef,
-        Name,
-        AsmName,
-        ArgKinds,
-        SLMSize,
-        ArgOffsets,
-        ArgIOKinds,
-        ArgTypeDescs,
-        NBarrierCnt,
-        BarrierCnt
-    };
+enum KernelMDOp {
+  FunctionRef,  // Reference to Function
+  Name,         // Kernel name
+  ArgKinds,     // Reference to metadata node containing kernel arg kinds
+  SLMSize,      // SLM-size in bytes
+  ArgOffsets,   // Kernel argument offsets
+  ArgIOKinds,   // Reference to metadata node containing kernel argument
+                // input/output kinds
+  ArgTypeDescs, // Kernel argument type descriptors
+  NBarrierCnt,  // Named barrier count
+  BarrierCnt    // Barrier count
+};
 } // namespace genx
 } // namespace llvm
 

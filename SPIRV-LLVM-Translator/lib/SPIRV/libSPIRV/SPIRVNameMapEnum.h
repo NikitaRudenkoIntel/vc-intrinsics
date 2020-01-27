@@ -340,7 +340,6 @@ template <> inline void SPIRVMap<Decoration, std::string>::init() {
   add(DecorationCMKernelArgumentTypeINTEL, "CMKernelArgumentTypeINTEL");
   add(DecorationCMKernelArgumentDescINTEL, "CMKernelArgumentDescINTEL");
   add(DecorationCMKernelNameINTEL, "CMKernelNameINTEL");
-  add(DecorationCMKernelAsmNameINTEL, "CMKernelAsmNameINTEL");
   add(DecorationCMFloatControlINTEL, "CMFloatControlINTEL");
 }
 SPIRV_DEF_NAMEMAP(Decoration, SPIRVDecorationNameMap)

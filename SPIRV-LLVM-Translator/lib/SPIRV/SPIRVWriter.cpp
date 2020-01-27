@@ -1731,11 +1731,8 @@ bool LLVMToSPIRV::transCMKernelMetadata() {
     // add kernel name decoration
     StringRef KernelName = cast<MDString>(KernelMD->getOperand(genx::KernelMDOp::Name).get())->getString();
     BF->addDecorate(new SPIRVDecorate(DecorationCMKernelNameINTEL, BF, BM->getString(KernelName)->getId()));
-    // add kernel asm name decoration
-    StringRef AsmName = cast<MDString>(KernelMD->getOperand(genx::KernelMDOp::AsmName).get())->getString();
-    BF->addDecorate(new SPIRVDecorate(DecorationCMKernelAsmNameINTEL, BF, BM->getString(AsmName)->getId()));
     // get the ArgKind info
-    if (KernelMD->getNumOperands() >= genx::KernelMDOp::ArgKinds + 1) {
+    if (KernelMD->getNumOperands() > genx::KernelMDOp::ArgKinds) {
       if (auto KindsNode = dyn_cast<MDNode>(KernelMD->getOperand(genx::KernelMDOp::ArgKinds))) {
         for (unsigned i = 0, e = KindsNode->getNumOperands(); i != e; ++i) {
           if (auto VM = dyn_cast<ValueAsMetadata>(KindsNode->getOperand(i)))

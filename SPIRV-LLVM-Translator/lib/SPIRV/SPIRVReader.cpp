@@ -2504,14 +2504,6 @@ bool SPIRVToLLVM::transKernelMetadata() {
         llvm_unreachable("CM kernel name missing");
       KernelMD.push_back(
           llvm::MDString::get(F->getContext(), KernelName.c_str()));
-      // asm name
-      string AsmName;
-      if (BF->hasDecorate(DecorationCMKernelAsmNameINTEL, 0, &NameId))
-        AsmName = static_cast<SPIRVString *>(BM->getEntry(NameId))->getStr();
-      else
-        llvm_unreachable("CM kernel asm name missing");
-      KernelMD.push_back(
-          llvm::MDString::get(F->getContext(), AsmName.c_str()));
       // argument kind
       // slm-size
       // argument-offset
