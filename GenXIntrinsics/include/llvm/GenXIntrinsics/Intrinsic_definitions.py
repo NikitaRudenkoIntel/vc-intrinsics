@@ -58,15 +58,6 @@ Imported_Intrinsics = \
 ###
     "alloca" : ["int",["any"],"None"],
 
-### ``llvm.genx.gather.dealloca`` : CMC internal, no VISA
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-###
-### Indicates memory deallocation in thread-private memory
-###
-### * arg0: type to deallocate in thread-private memory
-###
-    "dealloca" : ["void",["any"],"None"],
-
 ## --------------------------------
 ### Region/element access intrinsics
 ### --------------------------------
