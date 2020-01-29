@@ -186,6 +186,8 @@
 #include <algorithm>
 #include <set>
 
+#include "llvmWrapper/IR/InstrTypes.h"
+
 using namespace llvm;
 
 namespace llvm {
@@ -721,7 +723,8 @@ void CMSimdCFLower::findAndSplitJoinPoints()
     Jumps.push_back(Br);
   }
   for (auto sji = Jumps.begin(), sje = Jumps.end(); sji != sje; ++sji) {
-    auto Br = *sji;
+    assert((*sji)->isTerminator() && "Expected terminator inst");
+    auto Br = cast<IGCLLVM::TerminatorInst>(*sji);
     unsigned SimdWidth = SimdBranches[Br->getParent()];
     LLVM_DEBUG(dbgs() << *Br << "\n");
     auto JP = Br->getSuccessor(0);
@@ -777,7 +780,7 @@ void CMSimdCFLower::determineJIPs()
   for (auto NextBB = &F->front(), EndBB = &F->back(); NextBB;) {
     auto BB = NextBB;
     NextBB = BB == EndBB ? nullptr : BB->getNextNode();
-    auto Term = BB->getTerminator();
+    auto Term = cast<IGCLLVM::TerminatorInst>(BB->getTerminator());
     for (unsigned si = 0, se = Term->getNumSuccessors(); si != se; ++si) {
       BasicBlock *Succ = Term->getSuccessor(si);
       if (Succ == NextBB)
@@ -886,7 +889,7 @@ void CMSimdCFLower::determineJIP(BasicBlock *BB,
     if (NeedNextJoin && JoinPoints.count(JP))
       break; // found join point
     // See if JP finishes with a branch to BB or before.
-    auto Term = JP->getTerminator();
+    auto Term = cast<IGCLLVM::TerminatorInst>(JP->getTerminator());
     for (unsigned si = 0, se = Term->getNumSuccessors(); si != se; ++si) {
       auto Succ = Term->getSuccessor(si);
       if ((*Numbers)[Succ] <= BBNum) {
