@@ -1975,6 +1975,37 @@ Imported_Intrinsics = \
 ###
     "gather_scaled" : ["anyvector",["anyvector","int","short","int","int","anyint",0],"ReadMem"],
 
+### ``llvm.genx.gather.scaled2`` : vISA GATHER_SCALED instruction
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+###
+### This intrinsic doesn't have redundant predicate and old value that can be inferred
+### from resulting wrregion.
+###
+### * (Exec_size inferred from element offset type)
+###       (block size MBZ, means 1 byte)
+### * arg0: i32 log2 num blocks, constant (0/1/2 for num blocks 1/2/4)
+### * arg1: i16 scale, constant
+### * arg2: i32 surface index
+### * arg3: i32 global offset in bytes
+### * arg4: vXi32 element offset in bytes (X = 8 or 16)
+###
+### * Return value: the data read
+###
+### The vector width of the element offset arg is the number of elements to
+### read, which must be 8 or 16.
+###
+### The block size must be 1 byte.
+###
+### Only T0 (SLM) and T5 (stateless) are supported.
+###
+### For 1 and 2 byte (1 x num blocks) reads the upper bytes have
+### undefined values in the returned value.
+###
+### This instruction is available for SKL+ in general and it works for pre-SKL
+### only when scale is 0.
+###
+    "gather_scaled2" : ["anyvector",["int","short","int","int","anyint"],"ReadMem"],
+
 ### ``llvm.genx.gather4.orig.<return type>.<vector type>.<any int>`` : vISA GATHER4 instruction
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
@@ -2028,6 +2059,34 @@ Imported_Intrinsics = \
 ### The element type of the return value must be i32 or float.
 ###
     "gather4_scaled" : ["anyvector",["anyvector","int","short","int","int","anyint",0],"ReadMem"],
+
+### ``llvm.genx.gather4.scaled2`` : vISA GATHER4_SCALED instruction
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+###
+### This intrinsic doesn't have redundant predicate and old value that can be inferred
+### from resulting wrregion.
+###
+### * (Exec_size inferred from element offset type)
+### * arg0: i32 channel mask, constant
+### * arg1: i16 scale, constant
+### * arg2: i32 surface index
+### * arg3: i32 global offset in bytes
+### * arg4: vXi32 element offset in bytes
+###
+### * Return value: the data read
+###
+### The vector width of the element offset arg is the number of elements to
+### read, which must be 8 or 16.
+### The predicate arg must have the same vector width.
+### The instruction reads up to 4 channels per element, with the lowest 4
+### bits of the channel mask arg giving the mask of channels _not_ to read.
+### The number of 0 bits in that lower 4 bits of the channel mask arg is the
+### number of channels to read per element.
+### The vector width of the return value must be the number of elements
+### times the number of channels to read per element.
+### The element type of the return value must be i32 or float.
+###
+    "gather4_scaled2" : ["anyvector",["int","short","int","int","anyint"],"ReadMem"],
 
 ### ``llvm.genx.gather4.typed.<return type>.<vector type>.<vector type>`` : vISA GATHER4_TYPED instruction
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
