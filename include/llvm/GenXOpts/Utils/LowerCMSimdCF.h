@@ -96,7 +96,7 @@ private:
 
   void lowerSimdCF();
   void lowerUnmaskOps();
-  Instruction *loadExecutionMask(Instruction *InsertBefore, unsigned SimdWidth);
+  Instruction *loadExecutionMask(Instruction *InsertBefore, unsigned SimdWidth, unsigned NumChannels = 1);
   Value *getRMAddr(BasicBlock *JP, unsigned SimdWidth);
 };
 

@@ -996,6 +996,13 @@ void CMSimdCFLower::predicateInst(Instruction *Inst, unsigned SimdWidth) {
       case Intrinsic::lifetime_start:
       case Intrinsic::lifetime_end:
         return; // ignore these intrinsics
+
+      // These intrinsics can be predicated but they do not have
+      // explicit predicate operand: they use predicate of wrregion.
+      case GenXIntrinsic::genx_gather_scaled2:
+      case GenXIntrinsic::genx_gather4_scaled2:
+        return;
+
       case GenXIntrinsic::genx_simdcf_predicate:
         rewritePredication(CI, SimdWidth);
         return;
@@ -1209,7 +1216,23 @@ void CMSimdCFLower::predicateStore(Instruction *SI, unsigned SimdWidth)
       WrRegionToPredicate->eraseFromParent();
     return;
   }
-  if (StoreVT->getNumElements() != SimdWidth) {
+  // Instructions like gather4 have more output than execution size.
+  // In this case, subsequent store will be wider. Handle this case here.
+  unsigned NumChannels = 1;
+  if (auto *I = dyn_cast<CallInst>(SI->getOperand(0))) {
+    unsigned IID = GenXIntrinsic::getGenXIntrinsicID(I);
+    switch (IID) {
+    case GenXIntrinsic::genx_gather4_scaled2: {
+      unsigned AddrElems = I->getArgOperand(4)->getType()->getVectorNumElements();
+      unsigned ResultElems = I->getType()->getVectorNumElements();
+      NumChannels = ResultElems / AddrElems;
+      break;
+    }
+    default:
+      break;
+    }
+  }
+  if (StoreVT->getNumElements() != SimdWidth * NumChannels) {
     DiagnosticInfoSimdCF::emit(SI, "mismatching SIMD width inside SIMD control flow");
     return;
   }
@@ -1228,7 +1251,7 @@ void CMSimdCFLower::predicateStore(Instruction *SI, unsigned SimdWidth)
     Load = CallInst::Create(Fn, Addr, ".simdcfpred.vload", SI);
   }
   Load->setDebugLoc(SI->getDebugLoc());
-  auto EM = loadExecutionMask(SI, SimdWidth);
+  auto EM = loadExecutionMask(SI, SimdWidth, NumChannels);
   auto Select = SelectInst::Create(EM, SI->getOperand(0), Load,
       SI->getOperand(0)->getName() + ".simdcfpred", SI);
   SI->setOperand(0, Select);
@@ -1616,21 +1639,32 @@ CallInst *CMSimdCFLower::isSimdCFAny(Value *V)
  * loadExecutionMask : create instruction to load EM
  */
 Instruction *CMSimdCFLower::loadExecutionMask(Instruction *InsertBefore,
-    unsigned SimdWidth)
+    unsigned SimdWidth, unsigned NumChannels)
 {
   Instruction *EM = new LoadInst(EMVar, EMVar->getName(), InsertBefore);
   EM->setDebugLoc(InsertBefore->getDebugLoc());
   // If the simd width is not MAX_SIMD_CF_WIDTH, extract the part of EM we want.
-  if (SimdWidth == MAX_SIMD_CF_WIDTH)
+  if (NumChannels == 1 && SimdWidth == MAX_SIMD_CF_WIDTH)
     return EM;
   if (ShuffleMask.empty()) {
     auto I32Ty = Type::getInt32Ty(F->getContext());
     for (unsigned i = 0; i != 32; ++i)
       ShuffleMask.push_back(ConstantInt::get(I32Ty, i));
   }
-  EM = new ShuffleVectorInst(EM, UndefValue::get(EM->getType()),
-      ConstantVector::get(ArrayRef<Constant *>(ShuffleMask).slice(0, SimdWidth)),
-      Twine("EM") + Twine(SimdWidth), InsertBefore);
+  if (NumChannels == 1) {
+    ArrayRef<Constant *> Mask = ShuffleMask;
+    EM = new ShuffleVectorInst(EM, UndefValue::get(EM->getType()),
+                               ConstantVector::get(Mask.take_front(SimdWidth)),
+                               Twine("EM") + Twine(SimdWidth), InsertBefore);
+  } else {
+    SmallVector<Constant *, 128> ChannelMask{SimdWidth * NumChannels};
+    for (unsigned i = 0; i < NumChannels; ++i)
+      std::copy(ShuffleMask.begin(), ShuffleMask.begin() + SimdWidth,
+                ChannelMask.begin() + SimdWidth * i);
+    EM = new ShuffleVectorInst(
+        EM, UndefValue::get(EM->getType()), ConstantVector::get(ChannelMask),
+        Twine("ChannelEM") + Twine(SimdWidth), InsertBefore);
+  }
   EM->setDebugLoc(InsertBefore->getDebugLoc());
   return EM;
 }
