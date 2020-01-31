@@ -117,6 +117,40 @@ Load and store instructions are allowed only to load/store from/to a static
 alloca, i.e. ones that are removed by a mem2reg pass.
 
 
+LLVM IR mangling rules
+----------------------
+
+Overloaded intrinsics will have the names of its overloaded argument types encoded into its function name, each preceded by a period. Only those types which are overloaded result in a name suffix. Arguments whose type is matched against another type do not.
+
+@llvm.genx.name.OverloadedType1.OverloadedType2(...)
+
+Overloading attributes:
+
+    "p" - pointer, after that numbet of addrspace
+
+    "v" - vector, after that amount of elements
+
+    "a" - array, after that amounts of elements
+
+    "s" - struct, after what's structure consists of
+
+    "f" - floating type, after that size of type in bits
+
+    "i" - integer type, after that size of type in bits
+
+Example:
+
+    call void @llvm.genx.vstore.v16i8.p0v16i8(<16 x i8> %conv2, <16 x i8>* %ir)
+
+    v16i8 - vector of 16 8-bit ints, first overloaded argument
+
+    p0v16i8 - pointer to  vector of 16 8-bit ints, second overloaded argument
+
+
+
+More info about names of intrinsics https://llvm.org/docs/LangRef.html#intrinsic-functions
+
+
 Vector regions
 ==============
 

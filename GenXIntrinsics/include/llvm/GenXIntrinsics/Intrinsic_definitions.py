@@ -170,7 +170,8 @@ Imported_Intrinsics = \
 ### and it stops llvm optimizations from optimizing away accesses to the
 ### pass-by-reference arguments.
 ###
-### * arg0: the memory to be accessed
+### * arg0: the vector to read from
+### * arg1: the memory to be accessed
 ###
     "vstore" : ["void",["anyvector","anyptr"],"None"],
 
