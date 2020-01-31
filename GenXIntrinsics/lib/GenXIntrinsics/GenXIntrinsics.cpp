@@ -559,8 +559,15 @@ Function *GenXIntrinsic::getGenXDeclaration(Module *M, GenXIntrinsic::ID id,
   assert(isGenXNonTrivialIntrinsic(id));
   assert(Tys.empty() ||
       isOverloaded(id) && "Non-overloadable intrinsic was overloaded!");
-  Function *F = cast<Function>(M->getOrInsertFunction(
-      getGenXName(id, Tys), getGenXType(M->getContext(), id, Tys)));
+
+  auto GenXName = getGenXName(id, Tys);
+  FunctionType *FTy = getGenXType(M->getContext(), id, Tys);
+  Function *F = M->getFunction(GenXName);
+  if (!F)
+    F = Function::Create(FTy, GlobalVariable::ExternalLinkage, GenXName, M);
+
+  assert((F->getType() == PointerType::get(FTy, 0 /* AddressSpace */)) &&
+         "Type must be fixed");
 
   // Since Function::isIntrinsic() will return true due to llvm. prefix,
   // Module::getOrInsertFunction fails to add the attributes. explicitly adding
