@@ -52,7 +52,7 @@ set(__INTEL_EMBARGO__ ON CACHE BOOL "Build with IP sensitive code")
 if( __INTEL_EMBARGO__ )
   message("-- Building with IP sensitive code")
   add_definitions(-D__INTEL_EMBARGO__)
-endif()
+endif(__INTEL_EMBARGO__)
 
 if(NOT IGNORE_VC_INTRINSICS)
 add_subdirectory(GenXIntrinsics)
