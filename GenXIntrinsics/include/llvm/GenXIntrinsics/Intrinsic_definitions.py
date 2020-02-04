@@ -48,7 +48,7 @@ Imported_Intrinsics = \
     "zzzzend" : ["anyvector",[],"None"],
 
 ### ``llvm.genx.gather.alloca.<any type>`` : CMC internal, no VISA
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### Indicates memory allocation in thread-private memory
 ###
@@ -63,7 +63,7 @@ Imported_Intrinsics = \
 ### --------------------------------
 ###
 ### ``llvm.genx.rdregion*.<return type>.<vector type>.<any int>`` : read a region, direct or single-indirect
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ### * ``llvm.genx.rdregioni`` : integer element type (not i1)
 ### * ``llvm.genx.rdregionf`` : fp element type
 ###
@@ -163,7 +163,7 @@ Imported_Intrinsics = \
     "wrregionf" : ["anyvector",[0,"anyfloat","int","int","int","anyint","int","anyint"],"NoMem"],
 
 ### ``llvm.genx.vstore.<vector type>.<ptr type>`` : store a vector value into memory
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### This intrinsic has the exact semantics of an llvm store instruction.
 ### It is designed for reading and writing a pass-by-reference argument
@@ -176,7 +176,7 @@ Imported_Intrinsics = \
     "vstore" : ["void",["anyvector","anyptr"],"None"],
 
 ### ``llvm.genx.vload.<return type>.<ptr type>`` : load a vector value from memory
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### This intrinsic has the exact semantics of an llvm load instruction.
 ### It is designed for reading and writing a pass-by-reference argument
@@ -193,7 +193,7 @@ Imported_Intrinsics = \
 ### ------------------------------
 
 ### ``llvm.genx.fptosi.sat.<return type>.<any float>`` : convert floating point to signed integer with saturate
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0: value to saturate, any scalar or vector floating point type (overloaded)
 ###
@@ -203,7 +203,7 @@ Imported_Intrinsics = \
     "fptosi_sat" : ["anyint",["anyfloat"],"NoMem"],
 
 ### ``llvm.genx.fptoui.sat.<return type>.<any float>`` : convert floating point to unsigned integer with saturate
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0: value to saturate, any scalar or vector floating point type (overloaded)
 ###
@@ -213,7 +213,7 @@ Imported_Intrinsics = \
     "fptoui_sat" : ["anyint",["anyfloat"],"NoMem"],
 
 ### ``llvm.genx.sat.<return type>.<return type>`` : floating point saturate
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0: value to saturate, any scalar or vector floating point type
 ###
@@ -231,7 +231,7 @@ Imported_Intrinsics = \
     "sat" : ["anyfloat",[0],"NoMem"],
 
 ### ``llvm.genx.*trunc.sat.<return type>.<any int>`` : integer truncation with saturation
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ### * ``llvm.genx.sstrunc.sat`` : signed result, signed operand
 ### * ``llvm.genx.sutrunc.sat`` : signed result, unsigned operand
 ### * ``llvm.genx.ustrunc.sat`` : unsigned result, signed operand
@@ -255,7 +255,7 @@ Imported_Intrinsics = \
 ### by an intrinsic; neg(x) uses 0-x, and not(x) uses x^-1.
 ###
 ### ``llvm.genx.abs*.<return type>`` : take absolute value
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ### * ``llvm.genx.absf`` : abs modifier for fp
 ### * ``llvm.genx.absi`` : abs modifier for integer
 ###
@@ -271,7 +271,7 @@ Imported_Intrinsics = \
 ### ----------------------------
 
 ### ``llvm.genx.all.<any int>`` : true if all input elements are true
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0: input value: v*i1 (overloaded)
 ###
@@ -280,7 +280,7 @@ Imported_Intrinsics = \
     "all" : ["bool",["anyint"],"NoMem"],
 
 ### ``llvm.genx.any.<any int>`` : true if any input element is true
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0: input value: v*i1 (overloaded)
 ###
@@ -417,7 +417,7 @@ Imported_Intrinsics = \
 ### GenXSimdCFConformance pass.
 ### 
 ### ``llvm.genx.simdcf.goto.<return type>.<vector type>.<vector type>`` : goto instruction
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0: OldEM (old execution mask): v32i1 (overloaded)
 ### * arg1: OldRM (old resume mask): vector of i1 (overloaded)
@@ -469,7 +469,7 @@ Imported_Intrinsics = \
     "simdcf_goto" : [["anyvector","anyvector","bool"],[0,1,1],"NoMem"],
 
 ### ``llvm.genx.simdcf.join.<return type>.<vector type>`` : join instruction
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0: OldEM (old execution mask): v32i1 (overloaded)
 ### * arg1: RM (resume mask): vector of i1
@@ -512,14 +512,14 @@ Imported_Intrinsics = \
     "simdcf_join" : [["anyvector","bool"],[0,"anyvector"],"None"],
 
 ### ``llvm.genx.simdcf.savemask.<any vector>`` :
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0: OldEM (old execution mask): v32i1 (overloaded)
 ### * ret:  temp i32 for saving the oldEM 
     "simdcf_savemask" : ["int",["anyvector"],"WriteMem,SideEffects"],
 
 ### ``llvm.genx.simdcf.unmask.<return type>`` :
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0: temp i32 from savemask 
 ### * arg1: i32 constant, should be all-one
@@ -527,7 +527,7 @@ Imported_Intrinsics = \
     "simdcf_unmask" : ["anyvector",["int","int"],"WriteMem,SideEffects"],
 
 ### ``llvm.genx.simdcf.remask.<return type>`` :
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0: OldEM (old execution mask): v32i1
 ### * arg1: temp i32 for restoring the EM
@@ -548,7 +548,7 @@ Imported_Intrinsics = \
 ###
 
 ### ``llvm.genx.*add.sat.<return type>.<any int>`` : add instruction with saturation
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ### * ``llvm.genx.ssadd.sat`` : result signed, operands signed
 ### * ``llvm.genx.suadd.sat`` : result signed, operands unsigned
 ### * ``llvm.genx.usadd.sat`` : result unsigned, operands signed
@@ -581,7 +581,7 @@ Imported_Intrinsics = \
 ###
 
 ### ``llvm.genx.*avg.<return type>.<any int>`` : integer averaging, no saturation
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ### * ``llvm.genx.ssavg`` : result signed, operands signed
 ### * ``llvm.genx.suavg`` : result signed, operands unsigned
 ### * ``llvm.genx.usavg`` : result unsigned, operands signed
@@ -599,7 +599,7 @@ Imported_Intrinsics = \
     "uuavg" : ["anyint",["anyint",1],"NoMem"],
 
 ### ``llvm.genx.*avg.sat.<return type>.<any int>`` : integer averaging with saturation
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ### * ``llvm.genx.ssavg.sat`` : result signed, operands signed
 ### * ``llvm.genx.suavg.sat`` : result signed, operands unsigned
 ### * ``llvm.genx.usavg.sat`` : result unsigned, operands signed
@@ -617,7 +617,7 @@ Imported_Intrinsics = \
     "uuavg_sat" : ["anyint",["anyint",1],"NoMem"],
 
 ### ``llvm.genx.*bfe.<return type>`` : bitfield extract
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ### * ``llvm.genx.sbfe`` : bitfield extract, signed result
 ### * ``llvm.genx.ubfe`` : bitfield extract, unsigned result
 ###
@@ -631,7 +631,7 @@ Imported_Intrinsics = \
     "ubfe" : ["anyint",[0,0,0],"NoMem"],
 
 ### ``llvm.genx.bfi.<return type>`` : bitfield insert
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0: first input, any scalar/vector i32 type
 ### * arg1: second input, same type as arg0
@@ -643,7 +643,7 @@ Imported_Intrinsics = \
     "bfi" : ["anyint",[0,0,0,0],"NoMem"],
 
 ### ``llvm.genx.bfrev.<return type>`` : reverse bits
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0: first input, any scalar/vector i32 type
 ###
@@ -652,7 +652,7 @@ Imported_Intrinsics = \
     "bfrev" : ["anyint",[0],"NoMem"],
 
 ### ``llvm.genx.cbit.<return type>.<any int>`` : count set bits
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0: first input, any scalar/vector integer type (overloaded)
 ###
@@ -667,7 +667,7 @@ Imported_Intrinsics = \
 ###
 
 ### ``llvm.genx.cos.<return type>`` : cos instruction
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0: input value, any scalar/vector half/float type
 ###
@@ -682,7 +682,7 @@ Imported_Intrinsics = \
 ###
 
 ### ``llvm.genx.ieee.div.<return type>`` : Divide, IEEE variant
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0: first input, any scalar/vector float/double type
 ### * arg1: second input, same type
@@ -692,7 +692,7 @@ Imported_Intrinsics = \
     "ieee_div" : ["anyfloat",[0,0],"NoMem"],
 
 ### ``llvm.genx.dp2.<return type>`` : dp2 instruction (dot product on groups of 4 elements)
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0: first input value, any vector float with a multiple of 4 elements
 ### * arg1: second input value, same type as arg0
@@ -702,7 +702,7 @@ Imported_Intrinsics = \
     "dp2" : ["anyfloat",[0,0],"NoMem"],
 
 ### ``llvm.genx.dp3.<return type>`` : dp3 instruction (dot product on groups of 3 elements)
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0: first input value, any vector float with a multiple of 4 elements
 ### * arg1: second input value, same type as arg0
@@ -712,7 +712,7 @@ Imported_Intrinsics = \
     "dp3" : ["anyfloat",[0,0],"NoMem"],
 
 ### ``llvm.genx.dp4.<return type>`` : dp4 instruction (dot product on groups of 4 elements)
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0: first input value, any vector float with a multiple of 4 elements
 ### * arg1: second input value, same type as arg0
@@ -722,7 +722,7 @@ Imported_Intrinsics = \
     "dp4" : ["anyfloat",[0,0],"NoMem"],
 
 ### ``llvm.genx.dph.<return type>`` : dph instruction (dot product homogenous)
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0: first input value, any vector float with a multiple of 4 elements
 ### * arg1: second input value, same type as arg0
@@ -732,7 +732,7 @@ Imported_Intrinsics = \
     "dph" : ["anyfloat",[0,0],"NoMem"],
 
 ### ``llvm.genx.exp.<return type>`` : base 2 exponent
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0: input value, any scalar/vector half/float type
 ###
@@ -741,7 +741,7 @@ Imported_Intrinsics = \
     "exp" : ["anyfloat",[0],"NoMem"],
 
 ### ``llvm.genx.*fbh.<return type>`` : find bit high
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ### * ``llvm.genx.sfbh`` : find bit high, signed operand
 ### * ``llvm.genx.ufbh`` : find bit high, unsigned operand
 ###
@@ -753,7 +753,7 @@ Imported_Intrinsics = \
     "ufbh" : ["anyint",[0],"NoMem"],
 
 ### ``llvm.genx.fbl.<return type>`` : find bit low
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0: input value, any scalar/vector i32 type
 ###
@@ -762,7 +762,7 @@ Imported_Intrinsics = \
     "fbl" : ["anyint",[0],"NoMem"],
 
 ### ``llvm.genx.frc.<return type>`` : fractional part
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0: input value, any scalar/vector float type
 ###
@@ -771,7 +771,7 @@ Imported_Intrinsics = \
     "frc" : ["anyfloat",[0],"NoMem"],
 
 ### ``llvm.genx.inv.<return type>`` : reciprocal
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0: input value, any scalar/vector half/float type
 ###
@@ -780,7 +780,7 @@ Imported_Intrinsics = \
     "inv" : ["anyfloat",[0],"NoMem"],
 
 ### ``llvm.genx.line.<return type>`` : linear equation
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0: first input value, vector float with exactly 4 elements
 ### * arg1: second input value, vector float with a multiple of 4 elements
@@ -790,7 +790,7 @@ Imported_Intrinsics = \
     "line" : ["anyfloat",["float4",0],"NoMem"],
 
 ### ``llvm.genx.log.<return type>`` : base 2 logarithm
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0: input value, any scalar/vector half/float type
 ###
@@ -799,7 +799,7 @@ Imported_Intrinsics = \
     "log" : ["anyfloat",[0],"NoMem"],
 
 ### ``llvm.genx.lrp.<return type>`` : linear interpolation
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0: first input value, any vector float with a multiple of 4 elements
 ### * arg1: second input value, same type as arg0
@@ -810,7 +810,7 @@ Imported_Intrinsics = \
     "lrp" : ["anyfloat",[0,0,0],"NoMem"],
 
 ### ``llvm.genx.lzd.<return type>`` : leading zero detection
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0: input value, any scalar/vector i32 type
 ###
@@ -819,7 +819,7 @@ Imported_Intrinsics = \
     "lzd" : ["anyint",[0],"NoMem"],
 
 ### ``llvm.genx.*mad.<return type>.<any int>`` : mad instruction, no saturation
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ### * ``llvm.genx.ssmad`` : result signed, operands signed
 ### * ``llvm.genx.sumad`` : result signed, operands unsigned
 ### * ``llvm.genx.usmad`` : result unsigned, operands signed
@@ -840,7 +840,7 @@ Imported_Intrinsics = \
     "uumad" : ["anyint",["anyint",1,0],"NoMem"],
 
 ### ``llvm.genx.*mad.sat.<return type>.<any int>`` : mad instruction with saturation
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ### * ``llvm.genx.ssmad.sat`` : result signed, operands signed
 ### * ``llvm.genx.sumad.sat`` : result signed, operands unsigned
 ### * ``llvm.genx.usmad.sat`` : result unsigned, operands signed
@@ -861,7 +861,7 @@ Imported_Intrinsics = \
     "uumad_sat" : ["anyint",["anyint",1,0],"NoMem"],
 
 ### ``llvm.genx.*max.<return type>.<any int>`` : max instruction
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ### * ``llvm.genx.smax`` : result and operands signed
 ### * ``llvm.genx.umax`` : result and operands unsigned
 ### * ``llvm.genx.fmax`` : result and operands float
@@ -882,7 +882,7 @@ Imported_Intrinsics = \
     "fmax" : ["anyfloat",["anyfloat",1],"NoMem"],
 
 ### ``llvm.genx.*min.<return type>`` : min instruction
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ### * ``llvm.genx.smin.<any int>`` : result and operands signed
 ### * ``llvm.genx.umin.<any int>`` : result and operands unsigned
 ### * ``llvm.genx.fmin.<any float>`` : result and operands float
@@ -914,7 +914,7 @@ Imported_Intrinsics = \
 ### cannot fully remove the trunc/zext/sext on each operand.
 ###
 ### ``llvm.genx.*mul.<return type>.<any int>`` : mul instruction, no saturation
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ### * ``llvm.genx.ssmul`` : result signed, operands signed, signed
 ### * ``llvm.genx.sumul`` : result signed, operands signed, unsigned
 ### * ``llvm.genx.usmul`` : result signed, operands unsigned, signed
@@ -934,7 +934,7 @@ Imported_Intrinsics = \
     "uumul" : ["anyint",["anyint",1],"NoMem"],
 
 ### ``llvm.genx.*mul.sat.<return type>.<any int>`` : mul instruction with saturation
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ### * ``llvm.genx.ssmul.sat`` : result signed, operands signed
 ### * ``llvm.genx.sumul.sat`` : result signed, operands unsigned
 ### * ``llvm.genx.usmul.sat`` : result unsigned, operands signed
@@ -955,7 +955,7 @@ Imported_Intrinsics = \
     "uumul_sat" : ["anyint",["anyint",1],"NoMem"],
 
 ### ``llvm.genx.*mulh.<return type>.<any int>`` : mulh instruction, no saturation
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ### * ``llvm.genx.smulh`` : signed
 ### * ``llvm.genx.umulh`` : unsigned
 ###
@@ -978,7 +978,7 @@ Imported_Intrinsics = \
 ###
 
 ### ``llvm.genx.pln.<return type>.<any float>`` : plane equation
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0: first input value, vector float with exactly 4 elements
 ### * arg1: second input value, vector float with a multiple of 16 elements (overloaded)
@@ -988,7 +988,7 @@ Imported_Intrinsics = \
     "pln" : ["anyfloat",["float4","anyfloat"],"NoMem"],
 
 ### ``llvm.genx.pow.<return type>`` : power
-### ^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0: first input, any scalar/vector half/float type
 ### * arg1: second input, same type
@@ -998,7 +998,7 @@ Imported_Intrinsics = \
     "pow" : ["anyfloat",[0,0],"NoMem"],
 
 ### ``llvm.genx.rndd.<return type>`` : round down
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0: input value, any scalar/vector float type
 ###
@@ -1007,7 +1007,7 @@ Imported_Intrinsics = \
     "rndd" : ["anyfloat",[0],"NoMem"],
 
 ### ``llvm.genx.rnde.<return type>`` : round to even
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0: input value, any scalar/vector float type
 ###
@@ -1016,7 +1016,7 @@ Imported_Intrinsics = \
     "rnde" : ["anyfloat",[0],"NoMem"],
 
 ### ``llvm.genx.rndu.<return type>`` : round up
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0: input value, any scalar/vector float type
 ###
@@ -1025,7 +1025,7 @@ Imported_Intrinsics = \
     "rndu" : ["anyfloat",[0],"NoMem"],
 
 ### ``llvm.genx.rndz.<return type>`` : round to zero
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0: input value, any scalar/vector float type
 ###
@@ -1034,7 +1034,7 @@ Imported_Intrinsics = \
     "rndz" : ["anyfloat",[0],"NoMem"],
 
 ### ``llvm.genx.rsqrt.<return type>`` : reciprocal square root
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0: input value, any scalar/vector half/float type
 ###
@@ -1043,7 +1043,7 @@ Imported_Intrinsics = \
     "rsqrt" : ["anyfloat",[0],"NoMem"],
 
 ### ``llvm.genx.*sad2.<return type>.<any int>`` : two-wide sum of absolute differences
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ### * ``llvm.genx.ssad2`` : signed argument and result
 ### * ``llvm.genx.usad2`` : unsigned argument and result
 ###
@@ -1056,7 +1056,7 @@ Imported_Intrinsics = \
     "usad2" : ["anyint",["anyint",1],"NoMem"],
 
 ### ``llvm.genx.*sad2add.<return type>.<any int>`` : two-wide sum of absolute differences and add
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ### * ``llvm.genx.sssad2add`` : signed result and args 
 ### * ``llvm.genx.uusad2add`` : unsigned result and args 
 ### * ``llvm.genx.ussad2add`` : unsigned result and signed args 
@@ -1074,7 +1074,7 @@ Imported_Intrinsics = \
     "susad2add" : ["anyint",["anyint",1,0],"NoMem"],
 
 ### ``llvm.genx.*sad2add.sat.<return type>.<any int>`` : two-wide sum of absolute differences and add, saturated
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ### * ``llvm.genx.sssad2add.sat`` : signed result and args 
 ### * ``llvm.genx.uusad2add.sat`` : unsigned result and args 
 ### * ``llvm.genx.ussad2add.sat`` : unsigned result and signed args 
@@ -1092,7 +1092,7 @@ Imported_Intrinsics = \
     "susad2add_sat" : ["anyint",["anyint",1,0],"NoMem"],
 
 ### ``llvm.genx.*shl.<return type>.<any int>`` : shl instruction, no saturation
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ### * ``llvm.genx.ssshl`` : result signed, operands signed
 ### * ``llvm.genx.sushl`` : result signed, operands unsigned
 ### * ``llvm.genx.usshl`` : result unsigned, operands signed
@@ -1110,7 +1110,7 @@ Imported_Intrinsics = \
     "uushl" : ["anyint",["anyint",1],"NoMem"],
 
 ### ``llvm.genx.*shl.sat.<return type>.<any int>`` : shl instruction with saturation
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ### * ``llvm.genx.ssshl.sat`` : result signed, operands signed
 ### * ``llvm.genx.sushl.sat`` : result signed, operands unsigned
 ### * ``llvm.genx.usshl.sat`` : result unsigned, operands signed
@@ -1135,7 +1135,7 @@ Imported_Intrinsics = \
 ###
 
 ### ``llvm.genx.ro*.<return type>.<any int>`` : rol and ror instruction
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ### * ``llvm.genx.rol`` : rotate left
 ### * ``llvm.genx.ror`` : rotate right
 ###
@@ -1149,7 +1149,7 @@ Imported_Intrinsics = \
     "ror" : ["anyint",["anyint",1],"NoMem"],
 
 ### ``llvm.genx.sin.<return type>`` : reciprocal square root
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0: input value, any scalar/vector half/float type
 ###
@@ -1158,7 +1158,7 @@ Imported_Intrinsics = \
     "sin" : ["anyfloat",[0],"NoMem"],
 
 ### ``llvm.genx.sqrt.<return type>`` : reciprocal square root
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0: input value, any scalar/vector half/float type
 ###
@@ -1167,7 +1167,7 @@ Imported_Intrinsics = \
     "sqrt" : ["anyfloat",[0],"NoMem"],
 
 ### ``llvm.genx.ieee.sqrt.<return type>`` : reciprocal square root, IEEE variant
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0: input value, any scalar/vector float/double type
 ###
@@ -1177,7 +1177,7 @@ Imported_Intrinsics = \
 
 # __INTEL_EMBARGO_BEGIN__
 ### ``llvm.genx.dpas.<return type>.<vector type>.<vector type>`` : dpas instruction (Dot Product Accumulate Systolic)
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0: first input value, vector integer/float type
 ### * arg1: second input value, vector integer/float type (overloaded)
@@ -1189,7 +1189,7 @@ Imported_Intrinsics = \
     "dpas" : ["anyvector",[0,"anyvector","anyvector","int"],"NoMem"],
 
 ### ``llvm.genx.dpas.nosrc0.<return type>.<vector type>.<vector type>`` : dpas instruction (Dot Product Accumulate Systolic) with no src0
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0: second input value, vector integer/float type (overloaded)
 ### * arg1: third input value, vector integer/float type (overloaded)
@@ -1200,7 +1200,7 @@ Imported_Intrinsics = \
     "dpas_nosrc0" : ["anyvector",["anyvector","anyvector","int"],"NoMem"],
 
 ### ``llvm.genx.dpasw.<return type>.<vector type>.<vector type>`` : dpasw instruction (Dot Product Accumulate Systolic)
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0: first input value, vector integer/float type
 ### * arg1: second input value, vector integer/float type (overloaded)
@@ -1212,7 +1212,7 @@ Imported_Intrinsics = \
     "dpasw" : ["anyvector",[0,"anyvector","anyvector","int"],"NoMem"],
 
 ### ``llvm.genx.dpasw.nosrc0.<return type>.<vector type>.<vector type>`` : dpasw instruction (Dot Product Accumulate Systolic) with no src0
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0: second input value, vector integer/float type (overloaded)
 ### * arg1: third input value, vector integer/float type (overloaded)
@@ -1224,7 +1224,7 @@ Imported_Intrinsics = \
 # __INTEL_EMBARGO_END__
 
 ### ``llvm.genx.dp4a.<return type>.<vector type>.<vector type>.<vector type>`` : dp4a instruction (Dot Product 4 Accumulate)
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0: first input value, vector integer type (overloaded)
 ### * arg1: second input value, vector integer type (overloaded)
@@ -1238,7 +1238,7 @@ Imported_Intrinsics = \
 ### ^^^^
 ###
 ### ``llvm.genx.*add3.<return type>.<any int>`` : add3 instruction without saturation
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ### * ``llvm.genx.add3`` :
 ###
 ### * arg0: first input, any scalar/vector integer type, i16/i32 (overloaded)
@@ -1247,7 +1247,7 @@ Imported_Intrinsics = \
     "add3" : ["anyint",["anyint",1,1],"NoMem"],
 
 ### ``llvm.genx.*add3.sat.<return type>.<any int>`` : add3 instruction with saturation
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ### * ``llvm.genx.ssadd3.sat`` : result signed, operands signed
 ### * ``llvm.genx.suadd3.sat`` : result signed, operands unsigned
 ### * ``llvm.genx.usadd3.sat`` : result unsigned, operands signed
@@ -1269,7 +1269,7 @@ Imported_Intrinsics = \
 ### ^^^
 ###
 ### ``llvm.genx.bfn.<return type>.<any int>`` : bfn instruction
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ### * ``llvm.genx.bfn`` :
 ###
 ### * arg0: first input, any scalar/vector integer type, i16/i32 (overloaded)
@@ -1283,7 +1283,7 @@ Imported_Intrinsics = \
 ### ^^^^^^
 ###
 ### ``llvm.genx.bf.cvt.<return type>.<any float>`` : bf_cvt instruction
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ### * ``llvm.genx.bf.cvt`` :
 ###
 ### * arg0: first input, any scalar/vector bf/float type (overloaded)
@@ -1296,7 +1296,7 @@ Imported_Intrinsics = \
 ### ^^^^^^
 ###
 ### ``llvm.genx.qf.cvt.<return type>.<vector type>`` : qf_cvt instruction
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ### * ``llvm.genx.qf.cvt`` :
 ###
 ### * arg0: first input, any scalar/vector i8/half type (overloaded)
@@ -1306,7 +1306,7 @@ Imported_Intrinsics = \
     "qf_cvt" : ["anyvector",["anyvector"],"NoMem"],
 
 ### ``llvm.genx.lsc.load.*.<return type if not void>.<any type>.<any type>`` : lsc_load instructions
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * ``llvm.genx.lsc.load.slm`` :
 ### * ``llvm.genx.lsc.load.bti`` :
@@ -1383,7 +1383,7 @@ Imported_Intrinsics = \
     "lsc_prefetch_bindless" : ["void",["any","char","char","char","short","int","char","char","char","char","any","int"],"None"],
 
 ### ``llvm.genx.lsc.store.*.<any type>.<any type>.<any vector>`` : lsc_store instructions
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * ``llvm.genx.lsc.store.slm`` :
 ### * ``llvm.genx.lsc.store.bti`` :
@@ -1463,7 +1463,7 @@ Imported_Intrinsics = \
     "lsc_store2d_stateless" : ["void",["anyvector","char","char","char","char","char","short","short","char","long","int","int","int","int","int","anyvector"],"None"],
 
 ### ``llvm.genx.lsc.atomic.*.<return type>.<any type>.<any vector>`` : lsc_atomic instructions
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * ``llvm.genx.lsc.atomic.bti`` :
 ### * ``llvm.genx.lsc.atomic.slm`` :
@@ -1474,7 +1474,7 @@ Imported_Intrinsics = \
     "lsc_atomic_stateless" : ["any",["any","char","char","char","short","int","char","char","char","char","int","anyvector",0,0,0],"None"],
     "lsc_atomic_bindless" : ["any",["any","char","char","char","short","int","char","char","char","char","int","anyvector",0,0,0],"None"],
 ### ``llvm.genx.lsc.fence.<vector type>`` : lsc_fence instruction
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * ``llvm.genx.lsc.fence`` :
 ###
@@ -1547,7 +1547,7 @@ Imported_Intrinsics = \
     "group_id_z" : ["int",[],"NoMem"],
 
 ### ``llvm.genx.timestamp.<return type>`` : read vISA v11 (%timestamp)
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * Return value:  vxi32 the value read
 ###
@@ -1556,7 +1556,7 @@ Imported_Intrinsics = \
     "timestamp" : ["anyint",[],"None"],
 
 ### ``llvm.genx.r0.<return type>`` : read vISA v12 (%r0)
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * Return value:  vxi32 or i32 the value read
 ###
@@ -1565,7 +1565,7 @@ Imported_Intrinsics = \
     "r0" : ["anyint",[],"ReadMem"],
 
 ### ``llvm.genx.sr0.<return type>`` : read vISA v13 (%sr0)
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * Return value:  vxi32 the value read
 ###
@@ -1608,7 +1608,7 @@ Imported_Intrinsics = \
     "ce0" : ["int",[],"ReadMem"],
 
 ### ``llvm.genx.set.pause`` : set the pause register (v11.4)
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### arg0: length of pause 10 bits (0-4 must be 0)
 ###
@@ -1623,7 +1623,7 @@ Imported_Intrinsics = \
     "set_pause" : ["void",["short"],"None"],
 
 ### ``llvm.genx.dummy.mov`` : insert a dummy mov to v0
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### arg0: a value that we want to mov to v0 (usually to trigger a scoreboard dependency)
 ###
@@ -1647,7 +1647,7 @@ Imported_Intrinsics = \
 ###
 
 ### ``llvm.genx.dword.atomic.*.<return type>.<vector type.<any int>`` : dword atomic with binary operator
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ### * ``llvm.genx.dword.atomic.add`` : vISA DWORD_ATOMIC ADD instruction
 ### * ``llvm.genx.dword.atomic.sub`` : vISA DWORD_ATOMIC SUB instruction
 ### * ``llvm.genx.dword.atomic.min`` : vISA DWORD_ATOMIC MIN instruction
@@ -1683,7 +1683,7 @@ Imported_Intrinsics = \
     "dword_atomic_imax" : ["anyvector",["anyvector","int","anyint",0,0],"None"],
 
 ### ``llvm.genx.dword.atomic.*.<return type>.<vector type>.<any int>`` : dword atomic with fmin/fmax operation
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ### * ``llvm.genx.dword.atomic.fmin`` : vISA DWORD_ATOMIC FMIN instruction
 ### * ``llvm.genx.dword.atomic.fmax`` : vISA DWORD_ATOMIC FMAX instruction
 ###
@@ -1707,7 +1707,7 @@ Imported_Intrinsics = \
 # __INTEL_EMBARGO_END__
 
 ### ``llvm.genx.dword.atomic.*.<return type>.<any vector>`` : dword atomic with inc/dec operation
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ### * ``llvm.genx.dword.atomic.inc`` : vISA DWORD_ATOMIC INC instruction
 ### * ``llvm.genx.dword.atomic.dec`` : vISA DWORD_ATOMIC DEC instruction
 ###
@@ -1726,7 +1726,7 @@ Imported_Intrinsics = \
     "dword_atomic_dec" : ["anyvector",["anyvector","int",0,0],"None"],
 
 ### ``llvm.genx.dword.atomic.cmpxchg.<return type>.<vector type>`` : vISA DWORD_ATOMIC CMPXCHG instruction
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * (Exec_size inferred from element offset type)
 ### * arg0: vXi1 predicate (overloaded)
@@ -1744,7 +1744,7 @@ Imported_Intrinsics = \
     "dword_atomic_cmpxchg" : ["anyvector",["anyvector","int",0,0,0,0],"None"],
 
 ### ``llvm.genx.dword.atomic.fcmpwr.<return type>.<vector type>.<any int>`` : vISA DWORD_ATOMIC FCMPWR instruction
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * (Exec_size inferred from element offset type)
 ### * arg0: vXi1 predicate (overloaded)
@@ -1762,7 +1762,7 @@ Imported_Intrinsics = \
     "dword_atomic_fcmpwr" : ["anyvector",["anyvector","int","anyint",0,0,0],"None"],
 
 ### ``llvm.genx.typed.atomic.*.<return type>.<vector type>.<any int>`` : atomic typed with binary operator
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ### * ``llvm.genx.typed.atomic.add`` : vISA TYPED_ATOMIC ADD instruction
 ### * ``llvm.genx.typed.atomic.sub`` : vISA TYPED_ATOMIC SUB instruction
 ### * ``llvm.genx.typed.atomic.min`` : vISA TYPED_ATOMIC MIN instruction
@@ -1800,7 +1800,7 @@ Imported_Intrinsics = \
     "typed_atomic_imax" : ["anyvector",["anyvector","int",0,"anyint",2,2,2],"None"],
 
 ### ``llvm.genx.typed.atomic.*.<return type>.<vector type>.<any int>`` : atomic typed with fmin/fmax operation
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ### * ``llvm.genx.typed.atomic.fmin`` : vISA TYPED_ATOMIC FMIN instruction
 ### * ``llvm.genx.typed.atomic.fmax`` : vISA TYPED_ATOMIC FMAX instruction
 ###
@@ -1826,7 +1826,7 @@ Imported_Intrinsics = \
 # __INTEL_EMBARGO_END__
 
 ### ``llvm.genx.typed.atomic.*.<return type>.<vector type>.<any int>`` : atomic typed with inc/dec operation
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ### * ``llvm.genx.typed.atomic.inc`` : vISA TYPED_ATOMIC INC instruction
 ### * ``llvm.genx.typed.atomic.dec`` : vISA TYPED_ATOMIC DEC instruction
 ###
@@ -1847,7 +1847,7 @@ Imported_Intrinsics = \
     "typed_atomic_dec" : ["anyvector",["anyvector","int","anyint",2,2,2],"None"],
 
 ### ``llvm.genx.typed.atomic.cmpxchg.<return type>.<vector type>.<any int>`` : vISA TYPED_ATOMIC CMPXCHG instruction
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * (Exec_size inferred from element offset type)
 ### * arg0: vXi1 predicate (overloaded)
@@ -1867,7 +1867,7 @@ Imported_Intrinsics = \
     "typed_atomic_cmpxchg" : ["anyvector",["anyvector","int",0,0,"anyint",2,2,2],"None"],
 
 ### ``llvm.genx.typed.atomic.fcmpwr.<return type>.<vector type>.<any int>`` : vISA TYPED_ATOMIC FCMPWR instruction
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * (Exec_size inferred from element offset type)
 ### * arg0: vXi1 predicate (overloaded)
@@ -1887,7 +1887,7 @@ Imported_Intrinsics = \
     "typed_atomic_fcmpwr" : ["anyvector",["anyvector","int",0,0,"anyint",2,2,2],"None"],
 
 ### ``llvm.genx.gather.orig.<return type>.<vector type>.<any int>`` : vISA GATHER instruction
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0: Elt_size inferred from argument type (overloaded)
 ### * arg1: i32 is_modified, constant
@@ -1908,7 +1908,7 @@ Imported_Intrinsics = \
     "gather_orig" : ["anyvector",["anyvector","int","int","int","anyint",0],"ReadMem"],
 
 ### ``llvm.genx.gather.private.<return type>.<vector type>.<any int>`` : CMC internal, no VISA 
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0: v-by-i1 predicate (overloaded)
 ### * (Num_elts inferred from data type)
@@ -1926,7 +1926,7 @@ Imported_Intrinsics = \
     "gather_private" : ["anyvector",["anyvector","anyptr","anyint",0],"ReadMem"],
 
 ### ``llvm.genx.gather.scaled.<return type>.<vector type>.<any int>`` : vISA GATHER_SCALED instruction
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * (Exec_size inferred from element offset type)
 ### * arg0: vXi1 predicate (overloaded)
@@ -1959,7 +1959,7 @@ Imported_Intrinsics = \
     "gather_scaled" : ["anyvector",["anyvector","int","short","int","int","anyint",0],"ReadMem"],
 
 ### ``llvm.genx.gather4.orig.<return type>.<vector type>.<any int>`` : vISA GATHER4 instruction
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0: i32 channel mask, constant
 ### * arg1: i32 is_modified, constant
@@ -1986,7 +1986,7 @@ Imported_Intrinsics = \
     "gather4_orig" : ["anyvector",["int","int","anyvector","int","int","anyint",0],"ReadMem"],
 
 ### ``llvm.genx.gather4.scaled.<return type>.<vector type>.<any int>`` : vISA GATHER4_SCALED instruction
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * (Exec_size inferred from element offset type)
 ### * arg0: vXi1 predicate (overloaded) (overloaded)
@@ -2013,7 +2013,7 @@ Imported_Intrinsics = \
     "gather4_scaled" : ["anyvector",["anyvector","int","short","int","int","anyint",0],"ReadMem"],
 
 ### ``llvm.genx.gather4.typed.<return type>.<vector type>.<vector type>`` : vISA GATHER4_TYPED instruction
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0: i32 channel mask, constant
 ### * arg1: vXi1 predicate (Num_elts inferred from element offset type) (overloaded)
@@ -2040,7 +2040,7 @@ Imported_Intrinsics = \
     "gather4_typed" : ["anyvector",["int","anyvector","int","anyvector",2,2,0],"ReadMem"],
 
 ### ``llvm.genx.media.ld.<return type>`` : vISA MEDIA_LD instruction
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0: i32 modifiers, constant
 ### * arg1: i32 surface index
@@ -2063,7 +2063,7 @@ Imported_Intrinsics = \
     "media_ld" : ["anyvector",["int","int","int","int","int","int"],"ReadMem"],
 
 ### ``llvm.genx.media.st.<vector type>`` : vISA MEDIA_ST instruction
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0: i32 modifiers, constant
 ### * arg1: i32 surface index
@@ -2085,7 +2085,7 @@ Imported_Intrinsics = \
     "media_st" : ["void",["int","int","int","int","int","int","anyvector"],"None"],
 
 ### ``llvm.genx.oword.ld*.<return type>`` : oword load instruction
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ### * ``llvm.genx.oword.ld`` : vISA OWORD_LD instruction
 ### * ``llvm.genx.oword.ld.unaligned`` : vISA OWORD_LD_UNALIGNED instruction
 ###
@@ -2102,7 +2102,7 @@ Imported_Intrinsics = \
     "oword_ld_unaligned" : ["anyvector",["int","int","int"],"ReadMem"],
 
 ### ``llvm.genx.oword.st.<vector type>`` : vISA OWORD_ST instruction
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * (log2 number of owords inferred from return type)
 ### * arg0: i32 surface index
@@ -2114,7 +2114,7 @@ Imported_Intrinsics = \
     "oword_st" : ["void",["int","int","anyvector"],"None"],
 
 ### ``llvm.genx.scatter.orig.<vector type>.<any int>.<vector type>`` : vISA SCATTER instruction
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0: Elt_size from argument element type (overloaded)
 ### * arg1: i32 surface index
@@ -2133,7 +2133,7 @@ Imported_Intrinsics = \
     "scatter_orig" : ["void",["anyvector","int","int","anyint","anyvector"],"None"],
 
 ### ``llvm.genx.scatter.private.<vector type>.<ptr type>.<any int>.<vector type>`` : CM internal, no VISA 
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0: v-by-i1 predicate (overloaded)
 ### * arg1: base pointer (overloaded)
@@ -2147,7 +2147,7 @@ Imported_Intrinsics = \
     "scatter_private" : ["void",["anyvector","anyptr","anyint","anyvector"],"None"],
 
 ### ``llvm.genx.scatter.scaled.<vector type>.<any int>.<vector type>`` : vISA SCATTER_SCALED instruction
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * (Exec_size inferred from element offset type)
 ### * arg0: vXi1 predicate (overloaded)
@@ -2177,7 +2177,7 @@ Imported_Intrinsics = \
     "scatter_scaled" : ["void",["anyvector","int","short","int","int","anyint","anyvector"],"None"],
 
 ### ``llvm.genx.scatter4.orig.<vector type>.<any int>.<vector type>`` : vISA SCATTER4 instruction
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0: i32 channel mask, constant
 ### * arg1: vXi1 predicate (Num_elts inferred from element offset type) (overloaded)
@@ -2202,7 +2202,7 @@ Imported_Intrinsics = \
     "scatter4_orig" : ["void",["int","anyvector","int","int","anyint","anyvector"],"None"],
 
 ### ``llvm.genx.scatter4.scaled.<vector type>.<any int>.<vector type>`` : vISA SCATTER4_SCALED instruction
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * (Exec_size inferred from element offset type)
 ### * arg0: vXi1 predicate (overloaded)
@@ -2228,7 +2228,7 @@ Imported_Intrinsics = \
     "scatter4_scaled" : ["void",["anyvector","int","short","int","int","anyint","anyvector"],"None"],
 
 ### ``llvm.genx.scatter4.typed.<vector type>.<vector type>.<vector type>`` : vISA SCATTER4_TYPED instruction
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0: i32 channel mask, constant
 ### * arg1: vXi1 predicate (Num_elts inferred from U pixel address type) (overloaded)
@@ -2253,7 +2253,7 @@ Imported_Intrinsics = \
     "scatter4_typed" : ["void",["int","anyvector","int","anyvector",1,1,"anyvector"],"None"],
 
 ### ``llvm.genx.transpose.ld.<return type>`` : vISA TRANSPOSE_LD instruction
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0: i32 surface index
 ### * arg1: i32 log2 block width in i32s, constant (0-3)
@@ -2271,7 +2271,7 @@ Imported_Intrinsics = \
     "transpose_ld" : ["anyvector",["int","int","int","int"],"ReadMem"],
 
 ### ``llvm.genx.untyped.atomic.*.<return type>.<vector type>`` : vISA UNTYPED_ATOMIC with binary operator
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ### * ``llvm.genx.untyped.atomic.add`` : vISA UNTYPED_ATOMIC ADD instruction
 ### * ``llvm.genx.untyped.atomic.sub`` : vISA UNTYPED_ATOMIC SUB instruction
 ### * ``llvm.genx.untyped.atomic.min`` : vISA UNTYPED_ATOMIC MIN instruction
@@ -2307,7 +2307,7 @@ Imported_Intrinsics = \
     "untyped_atomic_imax" : ["anyvector",["anyvector","int","int",0,0,0],"None"],
 
 ### ``llvm.genx.untyped.atomic.*.<return type>.<vector type>`` : vISA UNTYPED_ATOMIC with inc/dec
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ### * ``llvm.genx.untyped.atomic.inc`` : vISA UNTYPED_ATOMIC INC instruction
 ### * ``llvm.genx.untyped.atomic.dec`` : vISA UNTYPED_ATOMIC DEC instruction
 ###
@@ -2326,7 +2326,7 @@ Imported_Intrinsics = \
     "untyped_atomic_dec" : ["anyvector",["anyvector","int","int",0,0],"None"],
 
 ### ``llvm.genx.untyped.atomic.cmpxchg.<return type>.<vector type>`` : vISA UNTYPED_ATOMIC CMPXCHG instruction
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0: vXi1 predicate (Num_elts inferred from element offset type) (overloaded)
 ### * arg1: i32 surface index
@@ -2344,7 +2344,7 @@ Imported_Intrinsics = \
     "untyped_atomic_cmpxchg" : ["anyvector",["anyvector","int","int",0,0,0,0],"None"],
 
 ### ``llvm.genx.svm.block.ld*.<return type>`` : vISA SVM BLOCK_LD instruction
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ### * ``llvm.genx.svm.block.ld`` : vISA SVM BLOCK_LD instruction with oword alignment
 ### * ``llvm.genx.svm.block.ld.unaligned`` : vISA SVM BLOCK_LD instruction with
 ###   dword alignment
@@ -2361,7 +2361,7 @@ Imported_Intrinsics = \
     "svm_block_ld_unaligned" : ["anyvector",["long"],"ReadMem"],
 
 ### ``llvm.genx.svm.block.st.<vector type>`` : vISA SVM BLOCK_ST instruction
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * (log2 number of oword inferred from data type)
 ### * arg0: i64 address
@@ -2373,7 +2373,7 @@ Imported_Intrinsics = \
     "svm_block_st" : ["void",["long","anyvector"],"None"],
 
 ### ``llvm.genx.svm.gather.<return type>.<vector type>.<any int>`` : vISA SVM GATHER instruction
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * (exec size inferred from address vector width)
 ### * arg0: vXi1 predicate (Num_elts inferred from this arg) (overloaded)
@@ -2392,7 +2392,7 @@ Imported_Intrinsics = \
     "svm_gather" : ["anyvector",["anyvector","int","anyint",0],"ReadMem"],
 
 ### ``llvm.genx.svm.gather4.scaled.<return type>.<vector type>.<any int>`` : vISA SVM GATHER4_SCALED instruction
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * (exec_size inferred from element offset type)
 ### * arg0: vXi1 predicate (overloaded)
@@ -2419,7 +2419,7 @@ Imported_Intrinsics = \
     "svm_gather4_scaled" : ["anyvector",["anyvector","int","short","long","anyint",0],"ReadMem"],
 
 ### ``llvm.genx.svm.scatter.<vector type>.<any int>.<vector type>`` : vISA SVM SCATTER instruction
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * (exec size inferred from address vector width) 
 ### * arg0: vXi1 predicate (Num_elts inferred from element offset type) (overloaded)
@@ -2436,7 +2436,7 @@ Imported_Intrinsics = \
     "svm_scatter" : ["void",["anyvector","int","anyint","anyvector"],"None"],
 
 ### ``llvm.genx.svm.scatter4.scaled.<vector type>.<any int>.<vector type>`` : vISA SVM SCATTER4_SCALED instruction
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * (exec_size inferred from element offset type)
 ### * arg0: vXi1 predicate (overloaded)
@@ -2461,7 +2461,7 @@ Imported_Intrinsics = \
     "svm_scatter4_scaled" : ["void",["anyvector","int","short","long","anyint","anyvector"],"None"],
 
 ### ``llvm.genx.svm.atomic.*.<return type>.<vector type>.<any int>`` : vISA SVM_ATOMIC with binary operator
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ### * ``llvm.genx.svm.atomic.add`` : vISA SVM_ATOMIC ADD instruction
 ### * ``llvm.genx.svm.atomic.sub`` : vISA SVM_ATOMIC SUB instruction
 ### * ``llvm.genx.svm.atomic.min`` : vISA SVM_ATOMIC MIN instruction
@@ -2495,7 +2495,7 @@ Imported_Intrinsics = \
     "svm_atomic_imax" : ["anyvector",["anyvector","anyint",0,0],"None"],
 
 ### ``llvm.genx.svm.atomic.*.<return type>.<vector type>.<any int>`` : vISA SVM_ATOMIC with inc/dec
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ### * ``llvm.genx.svm.atomic.inc`` : vISA SVM_ATOMIC INC instruction
 ### * ``llvm.genx.svm.atomic.dec`` : vISA SVM_ATOMIC DEC instruction
 ###
@@ -2512,7 +2512,7 @@ Imported_Intrinsics = \
     "svm_atomic_dec" : ["anyvector",["anyvector","anyint",0],"None"],
 
 ### ``llvm.genx.svm.atomic.cmpxchg.<return type>.<vector type>.<any int>`` : vISA SVM_ATOMIC CMPXCHG instruction
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0: vXi1 predicate (Num_elts inferred from element offset type) (overloaded)
 ### * arg1: vXi64 element addresses in bytes (overloaded)
@@ -2528,7 +2528,7 @@ Imported_Intrinsics = \
     "svm_atomic_cmpxchg" : ["anyvector",["anyvector","anyint",0,0,0],"None"],
 
 ### ``llvm.genx.svm.atomic.*.<return type>.<vector type>.<any int>`` : vISA SVM_ATOMIC with binary operator
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ### * ``llvm.genx.svm.atomic.fmin`` : vISA SVM_ATOMIC FMIN instruction
 ### * ``llvm.genx.svm.atomic.fmax`` : vISA SVM_ATOMIC FMAX instruction
 ###
@@ -2546,7 +2546,7 @@ Imported_Intrinsics = \
     "svm_atomic_fmax" : ["anyvector",["anyvector","anyint",0,0],"None"],
 
 ### ``llvm.genx.svm.atomic.fcmpwr.<return type>.<vector type>.<any int>`` : vISA SVM_ATOMIC FCMPWR instruction
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0: vXi1 predicate (Num_elts inferred from element offset type) (overloaded)
 ### * arg1: vXi64 element addresses in bytes (overloaded)
@@ -2562,7 +2562,7 @@ Imported_Intrinsics = \
     "svm_atomic_fcmpwr" : ["anyvector",["anyvector","anyint",0,0,0],"None"],
 
 ### ``llvm.genx.load.<return type>.<any int>`` : vISA LOAD (sampler load) instruction
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0: i32 channel mask, constant (simd_mode inferred from pixel address operands)
 ### * arg1: i32 surface index
@@ -2589,7 +2589,7 @@ Imported_Intrinsics = \
     "load" : ["anyvector",["int","int","anyint",1,1],"ReadMem"],
 
 ### ``llvm.genx.sample.<return type>.<any float>`` : vISA SAMPLE instruction
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0: i32 channel mask, constant (simd_mode inferred from pixel address operands)
 ### * arg1: i32 sampler index
@@ -2617,7 +2617,7 @@ Imported_Intrinsics = \
     "sample" : ["anyvector",["int","int","int","anyfloat",1,1],"ReadMem"],
 
 ### ``llvm.genx.sample.<return type>.unorm`` : vISA SAMPLE_UNORM instruction
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0: i32 channel mask, constant
 ### * arg1: i32 sampler index
@@ -2637,7 +2637,7 @@ Imported_Intrinsics = \
     "sample_unorm" : ["anyvector",["int","int","int","float","float","float","float"],"ReadMem"],
 
 ### ``llvm.genx.3d.sample.<return type>.<vector type>....`` : vISA 3D_SAMPLE instruction
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0: i32 opcode, constant
 ### * arg1: vXi1 predicate mask, used to determine execution size (overloaded)
@@ -2652,7 +2652,7 @@ Imported_Intrinsics = \
     "3d_sample" : ["anyvector",["int","anyvector","int","short","int","int","anyvector","anyvector","anyvector","anyvector","anyvector","anyvector","anyvector","anyvector","anyvector","anyvector","anyvector","anyvector","anyvector","anyvector","anyvector"],"ReadMem"],
 
 ### ``llvm.genx.3d.load.<return type>.<vector type>....`` : vISA 3D_LOAD instruction
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0: i32 opcode, constant
 ### * arg1: vXi1 predicate mask, used to determine execution size(overloaded)
@@ -2666,7 +2666,7 @@ Imported_Intrinsics = \
     "3d_load" : ["anyvector",["int","anyvector","int","short","int","anyvector","anyvector","anyvector","anyvector","anyvector","anyvector","anyvector","anyvector","anyvector","anyvector","anyvector","anyvector","anyvector","anyvector","anyvector"],"ReadMem"],
 
 ### ``llvm.genx.avs.<return type>`` : vISA AVS instruction
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0: i32 channel mask, constant
 ### * arg1: i32 sampler index
@@ -2741,7 +2741,7 @@ Imported_Intrinsics = \
     "yield" : ["void",[],"None"],
 
 ### ``llvm.genx.raw.send.<return type>.<any int>.<vector type>`` : vISA RAW_SEND instruction
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0  i32 modifier whether it is send or sendc, constant
 ### * (exec_size inferred from predicate vector width, defaulting to 16
@@ -2774,7 +2774,7 @@ Imported_Intrinsics = \
     "raw_send" : ["anyvector",["int","anyint","int","int","anyvector",0],"None"],
 
 ### ``llvm.genx.raw.send.noresult.<any int>.<vector type>`` : vISA RAW_SEND instruction with no result
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0  i32 modifier whether it is send or sendc, constant
 ### * (exec_size inferred from predicate vector width, defaulting to 16
@@ -2796,7 +2796,7 @@ Imported_Intrinsics = \
     "raw_send_noresult" : ["void",["int","anyint","int","int","anyvector"],"None"],
 
 ### ``llvm.genx.raw.sends.<return type>.<any int>.<vector type>.<vector type>`` : vISA RAW_SENDS instruction
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0  i32 modifier whether it is send or sendc, constant
 ### * (exec_size inferred from predicate vector width, defaulting to 16
@@ -2832,7 +2832,7 @@ Imported_Intrinsics = \
     "raw_sends" : ["anyvector",["int","anyint","char","int","int","anyvector","anyvector",0],"None"],
 
 ### ``llvm.genx.raw.sends.noresult.<any int>.<vector type>.<vector type>`` : vISA RAW_SENDS instruction with no result
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0  i32 modifier whether it is send or sendc, constant
 ### * (exec_size inferred from predicate vector width, defaulting to 16
@@ -2858,7 +2858,7 @@ Imported_Intrinsics = \
     "raw_sends_noresult" : ["void",["int","anyint","char","int","int","anyvector","anyvector"],"None"],
 
 ### ``llvm.genx.raw.send2.<return type>.<vector type>.<vector type>`` : vISA RAW_SEND instruction
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ### * arg0  i8 modifier, bit-0 represents sendc, bit-1 repersents EOT
 ### * arg1  i8 exec_size
 ### * arg2: i1/vXi1 predicate  (overloaded)
@@ -2879,7 +2879,7 @@ Imported_Intrinsics = \
     "raw_send2" : ["anyvector",["char","char","anyvector","char","char","char","int","int","anyvector",0],"None"],
 
 ### ``llvm.genx.raw.send2.noresult.<vector type>.<vector type>`` : vISA RAW_SEND instruction with no result
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0  i8 modifier, bit-0 represents sendc, bit-1 repersents EOT
 ### * arg1  i8 exec_size
@@ -2898,7 +2898,7 @@ Imported_Intrinsics = \
     "raw_send2_noresult" : ["void",["char","char","anyvector","char","char","int","int","anyvector"],"None"],
 
 ### ``llvm.genx.raw.sends2.<return type>.<vector type>.<vector type>.<vector type>`` : vISA RAW_SENDS instruction
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0  i8 modifier, bit-0 represents sendc, bit-1 repersents EOT
 ### * arg1  i8 exec_size
@@ -2920,7 +2920,7 @@ Imported_Intrinsics = \
     "raw_sends2" : ["anyvector",["char","char","anyvector","char","char","char","char","int","int","anyvector","anyvector",0],"None"],
 
 ### ``llvm.genx.raw.sends2.noresult.<vector type>.<vector type>.<vector type>`` : vISA RAW_SENDS instruction with no result
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0  i8 modifier, bit-0 represents sendc, bit-1 repersents EOT
 ### * arg1  i8 exec_size
@@ -2943,7 +2943,7 @@ Imported_Intrinsics = \
 ### ---------------------------
 ###
 ### ``llvm.genx.va.convolve2d.<return type>`` vISA VA 2d Convolve instruction
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0: i32 sampler index
 ### * arg1: i32 surface index
@@ -2970,7 +2970,7 @@ Imported_Intrinsics = \
     "va_hdc_convolve2d" : ["void",["int","int","float","float","int","int","short","short"],"None"],
 
 ### ``llvm.genx.va.erode.<return type>`` vISA VA Erode instruction
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0: i32 sampler index
 ### * arg1: i32 surface index
@@ -2996,7 +2996,7 @@ Imported_Intrinsics = \
     "va_hdc_erode" : ["void",["int","int","float","float","int","short","short"],"None"],
 
 ### ``llvm.genx.va.dilate.<return type>`` vISA VA Dilate instruction
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0: i32 sampler index
 ### * arg1: i32 surface index
@@ -3022,7 +3022,7 @@ Imported_Intrinsics = \
     "va_hdc_dilate" : ["void",["int","int","float","float","int","short","short"],"None"],
 
 ### ``llvm.genx.va.minmax.<return type>`` vISA MinMax instruction
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0: i32 surface index
 ### * arg1: float normalized x-coordinate
@@ -3034,7 +3034,7 @@ Imported_Intrinsics = \
     "va_minmax" : ["anyint",["int","float","float","int"],"ReadMem"],
 
 ### ``llvm.genx.va.minmax.filter.<return type>`` vISA MinMax Filter instruction
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0: i32 sampler index
 ### * arg1: i32 surface index
@@ -3064,7 +3064,7 @@ Imported_Intrinsics = \
     "va_hdc_minmax_filter" : ["void",["int","int","float","float","int","int","int","short","short"],"None"],
 
 ### ``llvm.genx.va.bool.centroid.<return type>`` vISA Boolean Centroid instruction
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0: i32 sampler index
 ### * arg1: float normalized x-coordinate
@@ -3077,7 +3077,7 @@ Imported_Intrinsics = \
     "va_bool_centroid" : ["anyint",["int","float","float","char","char"],"ReadMem"],
 
 ### ``llvm.genx.va.centroid.<return type>`` vISA Centroid instruction
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0: i32 sampler index
 ### * arg1: float normalized x-coordinate
@@ -3089,7 +3089,7 @@ Imported_Intrinsics = \
     "va_centroid" : ["anyint",["int","float","float","char"],"ReadMem"],
 
 ### ``llvm.genx.va.1d.convolve.horizontal.<return type>`` vISA 1d convolve horizontal instruction
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0: i32 sampler index
 ### * arg1: i32 surface index
@@ -3116,7 +3116,7 @@ Imported_Intrinsics = \
     "va_hdc_1d_convolve_horizontal" : ["void",["int","int","float","float","int","int","short","short"],"None"],
 
 ### ``llvm.genx.va.1d.convolve.vertical.<return type>`` vISA 1d convolve vertical instruction
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0: i32 sampler index
 ### * arg1: i32 surface index
@@ -3143,7 +3143,7 @@ Imported_Intrinsics = \
     "va_hdc_1d_convolve_vertical" : ["void",["int","int","float","float","int","int","short","short"],"None"],
 
 ### ``llvm.genx.va.1pixel.convolve.<return type>.<any int>`` vISA 1 Pixel Convolve instruction
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0: i32 sampler index
 ### * arg1: i32 surface index
@@ -3172,7 +3172,7 @@ Imported_Intrinsics = \
     "va_hdc_1pixel_convolve" : ["void",["int","int","float","float","int","anyint","int","short","short"],"None"],
 
 ### ``llvm.genx.va.1pixel.convolve.1x1mode.<return type>`` vISA 1 Pixel Convolve (1x1 mode) instruction
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0: i32 sampler index
 ### * arg1: i32 surface index
@@ -3184,7 +3184,7 @@ Imported_Intrinsics = \
     "va_1pixel_convolve_1x1mode" : ["anyint",["int","int","float","float"],"ReadMem"],
 
 ### ``llvm.genx.va.lbp.creation.<return type>`` vISA LBP Creation instruction
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0: i32 surface index
 ### * arg1: float normalized x-coordinate
@@ -3209,7 +3209,7 @@ Imported_Intrinsics = \
     "va_hdc_lbp_creation" : ["void",["int","float","float","int","int","short","short"],"None"],
 
 ### ``llvm.genx.va.lbp.correlation.<return type>`` vISA LBP Correlation instruction
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0: i32 surface index
 ### * arg1: float normalized x-coordinate
@@ -3234,7 +3234,7 @@ Imported_Intrinsics = \
     "va_hdc_lbp_correlation" : ["void",["int","float","float","short","int","short","short"],"None"],
 
 ### ``llvm.genx.va.correlation.search.<return type>`` vISA Correlation Search instruction
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0: i32 surface index
 ### * arg1: float normalized x-coordinate
@@ -3251,7 +3251,7 @@ Imported_Intrinsics = \
     "va_correlation_search" : ["anyint",["int","float","float","float","float","char","char","char","char"],"ReadMem"],
 
 ### ``llvm.genx.va.flood.fill.<return type>.<any int>`` vISA Flood Fill instruction
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0: i8 Is8Connect, constant (valid values 0 or 1).
 ### * arg1: v10i16 pixel mask horizontal direction (overloaded)
@@ -3265,7 +3265,7 @@ Imported_Intrinsics = \
 
 ##--------------------------------------------------------------------
 ### CM codegen internal intrinsics
-### ----------------------------
+### ------------------------------S
 
 ### ``llvm.genx.simdcf.predicate.<return type>`` : simd cf predication marker intrinsic.
 ###
@@ -3318,7 +3318,7 @@ Imported_Intrinsics = \
     "unmask_end" : ["void",["int"],"WriteMem,SideEffects"],
 
 ### ``llvm.genx.lane.id`` : implicit lane-id in the simd-fork statement
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ### * ``llvm.genx.lane.id`` : read implicit lane_id
 ###
 ### * Return value:  i32
@@ -3326,7 +3326,7 @@ Imported_Intrinsics = \
     "lane_id" : ["int",[],"NoMem"],
 
 ### ``llvm.genx.local.*.<return type>`` : read local ID register
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ### * ``llvm.genx.local.id`` : read implicit arg local_id
 ### * ``llvm.genx.local.id16`` : read implicit arg local_id16
 ### * ``llvm.genx.local.size`` : read implicit arg local_size
@@ -3358,8 +3358,7 @@ Imported_Intrinsics = \
 ### * ``llvm.genx.local.id.y`` : read implicit arg local id y
 ### * ``llvm.genx.local.id.z`` : read implicit arg local id z
 ###
-### * Return value:  v8i16 - SIMD8 dispatch but only the first component
-### is used.
+### * Return value:  v8i16 - SIMD8 dispatch but only the first componentis used.
 ###
 ### This is generated by CMImpParam. This is to match OpenCL thread
 ### payload layout.
@@ -3369,7 +3368,7 @@ Imported_Intrinsics = \
     "local_id_z" : ["short8",[],"NoMem"],
 
 ### ``llvm.genx.group.count.<return type>`` : read group count register
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ### ``llvm.genx.group.count`` : read vISA v9 (%group_count_x)
 ###
 ### * Return value:  3xi32 the value read (allows for x, y and z components)
@@ -3388,7 +3387,7 @@ Imported_Intrinsics = \
     "get_scoreboard_bti" : ["int",[],"NoMem"],
 
 ### ``llvm.genx.get.scoreboard.deltas`` : get scoreboard deltas
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### Return Value: vector of 16 i8 values (8 x and 8 y)
 ###
@@ -3416,7 +3415,7 @@ Imported_Intrinsics = \
 
 ##--------------------------------------------------------------------
 ### GenX backend internal intrinsics
-### ----------------------------
+### --------------------------------
 
 
 ### llvm.genx.constanti.<return type> : copy constant to register
@@ -3544,7 +3543,7 @@ Imported_Intrinsics = \
     "wrpredpredregion" : ["anyint",[0,"anyint","int",0],"NoMem"],
 
 ### ``llvm.genx.wrconstregion.<return type>.<vector type>.<any int>.<any int>`` : write a constant region
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0: vector to write region in to
 ### * arg1: subvector to write into the region, constant  (overloaded)
