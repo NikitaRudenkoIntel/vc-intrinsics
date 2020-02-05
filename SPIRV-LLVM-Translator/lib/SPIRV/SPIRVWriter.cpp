@@ -486,14 +486,6 @@ SPIRVFunction *LLVMToSPIRV::transFunctionDecl(Function *F) {
       .getAsInteger(0, Mode);
     BF->addDecorate(DecorationCMStackCallINTEL, Mode);
   }
-  // Add oclrt attribute if any.
-  if (Attrs.hasFnAttribute("oclrt")) {
-    SPIRVWord SIMDSize = 0;
-    Attrs.getAttribute(AttributeList::FunctionIndex, "oclrt")
-        .getValueAsString()
-        .getAsInteger(0, SIMDSize);
-    BF->addDecorate(DecorationCMOpenCLSimdSizeINTEL, SIMDSize);
-  }
 
   for (Function::arg_iterator I = F->arg_begin(), E = F->arg_end(); I != E;
        ++I) {
@@ -1628,13 +1620,13 @@ bool LLVMToSPIRV::transExecutionMode() {
         BF->addExecutionMode(BM->add(
             new SPIRVExecutionMode(BF, static_cast<ExecutionMode>(EMode), X)));
       } break;
+#ifdef __INTEL_EMBARGO__
       case spv::ExecutionModeCMKernelSharedLocalMemorySizeINTEL: {
         unsigned SLMSize;
         N.get(SLMSize);
         BF->addExecutionMode(new SPIRVExecutionMode(
             BF, static_cast<ExecutionMode>(EMode), SLMSize));
       } break;
-#ifdef __INTEL_EMBARGO__
       case spv::ExecutionModeCMKernelNamedBarrierCountINTEL: {
         unsigned NBarrierCnt;
         N.get(NBarrierCnt);
@@ -1755,7 +1747,7 @@ bool LLVMToSPIRV::transCMKernelMetadata() {
       }
     }
     // get the ArgTypeDescs
-    if (KernelMD->getNumOperands() >= 8) {
+    if (KernelMD->getNumOperands() > genx::KernelMDOp::ArgTypeDescs) {
       if (auto Node = dyn_cast<MDNode>(KernelMD->getOperand(genx::KernelMDOp::ArgTypeDescs))) {
         for (unsigned i = 0, e = Node->getNumOperands(); i != e; ++i) {
           if (auto MS = dyn_cast<MDString>(Node->getOperand(i))) {

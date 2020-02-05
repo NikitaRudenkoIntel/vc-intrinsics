@@ -473,8 +473,8 @@ void SPIRVExecutionMode::decode(std::istream &I) {
   case ExecutionModeSignedZeroInfNanPreserve:
   case ExecutionModeRoundingModeRTE:
   case ExecutionModeRoundingModeRTZ:
-  case ExecutionModeCMKernelSharedLocalMemorySizeINTEL:
 #ifdef __INTEL_EMBARGO__
+  case ExecutionModeCMKernelSharedLocalMemorySizeINTEL:
   case ExecutionModeCMKernelNamedBarrierCountINTEL:
   case ExecutionModeCMKernelRegularBarrierCountINTEL:
   case ExecutionModeRoundingModeRTPINTEL:

@@ -39,10 +39,12 @@
 #define DEBUG_TYPE "clmdtospv"
 
 #include "OCLUtil.h"
-#include "CMUtil.h"
 #include "SPIRVInternal.h"
 #include "SPIRVMDBuilder.h"
 #include "SPIRVMDWalker.h"
+#ifdef __INTEL_EMBARGO__
+#include "CMUtil.h"
+#endif // __INTEL_EMBARGO__
 
 #include "llvm/ADT/Triple.h"
 #include "llvm/IR/IRBuilder.h"
@@ -71,7 +73,9 @@ public:
 
   bool runOnModule(Module &M) override;
   void visit(Module *M);
+#ifdef __INTEL_EMBARGO__
   void transCMMD(Module *M);
+#endif // __INTEL_EMBARGO__
 
   static char ID;
 
@@ -86,6 +90,7 @@ bool PreprocessMetadata::runOnModule(Module &Module) {
   M = &Module;
   Ctx = &M->getContext();
 
+#ifdef __INTEL_EMBARGO__
   bool SourceCM = StringRef(M->getTargetTriple()).startswith("genx");
 
   if (SourceCM) {
@@ -97,6 +102,11 @@ bool PreprocessMetadata::runOnModule(Module &Module) {
     visit(M);
     LLVM_DEBUG(dbgs() << "After PreprocessMetadata:\n" << *M);
   }
+#else
+  LLVM_DEBUG(dbgs() << "Enter PreprocessMetadata:\n");
+  visit(M);
+  LLVM_DEBUG(dbgs() << "After PreprocessMetadata:\n" << *M);
+#endif // __INTEL_EMBARGO__
 
   std::string Err;
   raw_string_ostream ErrorOS(Err);
@@ -106,6 +116,7 @@ bool PreprocessMetadata::runOnModule(Module &Module) {
   return true;
 }
 
+#ifdef __INTEL_EMBARGO__
 void PreprocessMetadata::transCMMD(Module *M) {
   SPIRVMDBuilder B(*M);
   SPIRVMDWalker W(*M);
@@ -157,7 +168,6 @@ void PreprocessMetadata::transCMMD(Module *M) {
         }
     }
 
-#ifdef __INTEL_EMBARGO__
     // Add CM float control execution modes
     // RoundMode and FloatMode are always same for all types in Cm
     // While Denorm could be different for double, float and half
@@ -183,9 +193,22 @@ void PreprocessMetadata::transCMMD(Module *M) {
                 .done();
           });
     }
-#endif // __INTEL_EMBARGO__
+
+    // Add oclrt attribute if any.
+    if (Attrs.hasFnAttribute("oclrt")) {
+      SPIRVWord SIMDSize = 0;
+      Attrs.getAttribute(AttributeList::FunctionIndex, "oclrt")
+          .getValueAsString()
+          .getAsInteger(0, SIMDSize);
+      EM.addOp()
+          .add(Kernel)
+          .add(spv::ExecutionModeSubgroupSize)
+          .add(SIMDSize)
+          .done();
+    }
   }
 }
+#endif // __INTEL_EMBARGO__
 
 void PreprocessMetadata::visit(Module *M) {
   SPIRVMDBuilder B(*M);
