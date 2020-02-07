@@ -29,9 +29,9 @@ TEST(GenXIntrinsics, OverloadedTypes) {
   EXPECT_EQ(GenXIntrinsic::isOverloadedArg(GenXIntrinsic::genx_simdcf_any, 0),
             true);
 #ifdef __INTEL_EMBARGO__
-  EXPECT_EQ(GenXIntrinsic::isOverloadedArg(GenXIntrinsic::genx_dp4a, 0), true);
-  EXPECT_EQ(GenXIntrinsic::isOverloadedArg(GenXIntrinsic::genx_dp4a, 1), true);
-  EXPECT_EQ(GenXIntrinsic::isOverloadedArg(GenXIntrinsic::genx_dp4a, 2), true);
+  EXPECT_EQ(GenXIntrinsic::isOverloadedArg(GenXIntrinsic::genx_ssdp4a, 0), true);
+  EXPECT_EQ(GenXIntrinsic::isOverloadedArg(GenXIntrinsic::genx_ssdp4a, 1), true);
+  EXPECT_EQ(GenXIntrinsic::isOverloadedArg(GenXIntrinsic::genx_ssdp4a, 2), true);
   EXPECT_EQ(GenXIntrinsic::isOverloadedArg(GenXIntrinsic::genx_dpasw_nosrc0, 2),
             false);
   EXPECT_EQ(

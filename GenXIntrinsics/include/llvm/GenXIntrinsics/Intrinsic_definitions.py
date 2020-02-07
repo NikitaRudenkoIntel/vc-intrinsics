@@ -1223,8 +1223,17 @@ Imported_Intrinsics = \
     "dpasw_nosrc0" : ["anyvector",["anyvector","anyvector","int"],"NoMem"],
 # __INTEL_EMBARGO_END__
 
-### ``llvm.genx.dp4a.<return type>.<vector type>.<vector type>.<vector type>`` : dp4a instruction (Dot Product 4 Accumulate)
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ``llvm.genx.*dp4a*.<return type>.<vector type>.<vector type>.<vector type>`` : dp4a instruction (Dot Product 4 Accumulate)
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### * ``llvm.genx.ssdp4a`` : result signed, operands signed
+### * ``llvm.genx.sudp4a`` : result signed, operands unsigned
+### * ``llvm.genx.usdp4a`` : result unsigned, operands signed
+### * ``llvm.genx.uudp4a`` : result unsigned, operands unsigned
+### * ``llvm.genx.ssdp4a_sat`` : result signed saturated, operands signed
+### * ``llvm.genx.sudp4a_sat`` : result signed satruated, operands unsigned
+### * ``llvm.genx.usdp4a_sat`` : result unsigned saturated, operands signed
+### * ``llvm.genx.uudp4a_sat`` : result unsigned saturated, operands unsigned
+###
 ###
 ### * arg0: first input value, vector integer type (overloaded)
 ### * arg1: second input value, vector integer type (overloaded)
@@ -1232,7 +1241,15 @@ Imported_Intrinsics = \
 ###
 ### * Return value: result, vector integer type
 ###
-    "dp4a" : ["anyvector",["anyvector","anyvector","anyvector"],"NoMem"],
+    "ssdp4a" : ["anyvector",["anyvector","anyvector","anyvector"],"NoMem"],
+    "sudp4a" : ["anyvector",["anyvector","anyvector","anyvector"],"NoMem"],
+    "usdp4a" : ["anyvector",["anyvector","anyvector","anyvector"],"NoMem"],
+    "uudp4a" : ["anyvector",["anyvector","anyvector","anyvector"],"NoMem"],
+    "ssdp4a_sat" : ["anyvector",["anyvector","anyvector","anyvector"],"NoMem"],
+    "sudp4a_sat" : ["anyvector",["anyvector","anyvector","anyvector"],"NoMem"],
+    "usdp4a_sat" : ["anyvector",["anyvector","anyvector","anyvector"],"NoMem"],
+    "uudp4a_sat" : ["anyvector",["anyvector","anyvector","anyvector"],"NoMem"],
+
 
 ### add3
 ### ^^^^
