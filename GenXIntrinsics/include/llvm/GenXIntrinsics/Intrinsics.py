@@ -317,6 +317,30 @@ def createOverloadTable():
     f.write("#endif\n\n")
     f.close()
 
+def createOverloadRetTable():
+    f = open(outputFile,"a")
+    f.write("// Is ret overloaded\n"
+            "#ifdef GET_INTRINSIC_OVERLOAD_RET_TABLE\n"
+            "switch(IntrinID) {\n"
+            "default:\n"
+            "  return false;\n")
+    for i in range(len(ID_array)):
+        genISA_Intrinsic = Intrinsics[ID_array[i]]
+        isOverloadable = False
+        if "any" in genISA_Intrinsic[0]:
+            isOverloadable = True
+        elif isinstance(genISA_Intrinsic[0], list):
+            for j in range(len(genISA_Intrinsic[0])):
+                if "any" in genISA_Intrinsic[0][j]:
+                    isOverloadable = True
+        if isOverloadable:
+            f.write("case GenXIntrinsic::genx_" + ID_array[i] + ":\n")
+        isOverloadable = False
+    f.write("  return true;\n")
+    f.write("}\n")
+    f.write("#endif\n\n")
+    f.close()
+
 def createOverloadArgsTable():
     f = open(outputFile,"a")
     f.write("// Is arg overloaded\n"
@@ -534,6 +558,7 @@ generateEnums()
 generateIDArray()
 createOverloadTable()
 createOverloadArgsTable()
+createOverloadRetTable()
 sortedIntrinsicsOnLenth()
 createTypeTable()
 createAttributeTable()

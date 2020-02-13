@@ -214,6 +214,10 @@ static inline FunctionType *getAnyType(LLVMContext &Context, unsigned id,
 /// in intrinsic overloaded
 bool isOverloadedArg(unsigned IntrinID, unsigned ArgNum);
 
+/// GenXIntrinsic::isOverloadedRet(ID) - Return true if return type
+/// in intrinsic is overloaded
+bool isOverloadedRet(unsigned IntrinID);
+
 /// GenXIntrinsic::getAnyDeclaration(M, ID) - Create or insert a LLVM
 /// Function declaration for an intrinsic, and return it.
 ///

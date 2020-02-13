@@ -457,6 +457,12 @@ bool GenXIntrinsic::isOverloadedArg(unsigned IntrinID, unsigned ArgNum) {
 #undef GET_INTRINSIC_OVERLOAD_ARGS_TABLE
 }
 
+bool GenXIntrinsic::isOverloadedRet(unsigned IntrinID) {
+#define GET_INTRINSIC_OVERLOAD_RET_TABLE
+#include "llvm/GenXIntrinsics/GenXIntrinsicDescription.gen"
+#undef GET_INTRINSIC_OVERLOAD_RET_TABLE
+}
+
 /// Find the segment of \c IntrinsicNameTable for intrinsics with the same
 /// target as \c Name, or the generic table if \c Name is not target specific.
 ///
