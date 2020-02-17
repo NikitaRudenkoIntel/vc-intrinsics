@@ -134,8 +134,8 @@ template <> inline void SPIRVMap<ExecutionMode, std::string>::init() {
   add(ExecutionModeCMKernelRegularBarrierCountINTEL, "CMKernelRegularBarrierCountINTEL");
   add(ExecutionModeRoundingModeRTPINTEL, "RoundingModeRTPINTEL");
   add(ExecutionModeRoundingModeRTNINTEL, "RoundingModeRTNINTEL");
-  add(ExecutionModeFloatALTINTEL, "FloatALTINTEL");
-  add(ExecutionModeFloatIEEEINTEL, "FloatIEEEINTEL");
+  add(ExecutionModeFloatingPointModeALTINTEL, "FloatALTINTEL");
+  add(ExecutionModeFloatingPointModeIEEEINTEL, "FloatIEEEINTEL");
 #endif // __INTEL_EMBARGO__
 }
 SPIRV_DEF_NAMEMAP(ExecutionMode, SPIRVExecutionModeNameMap)
@@ -351,8 +351,11 @@ template <> inline void SPIRVMap<Decoration, std::string>::init() {
   add(DecorationNoUnsignedWrap, "NoUnsignedWrap");
   add(DecorationSideEffectsINTEL, "SideEffectsINTEL");
   add(DecorationUserSemantic, "UserSemantic");
+#ifdef __INTEL_EMBARGO__
   add(DecorationCMKernelArgumentTypeINTEL, "CMKernelArgumentTypeINTEL");
   add(DecorationCMKernelArgumentDescINTEL, "CMKernelArgumentDescINTEL");
+  add(DecorationCMStackCallINTEL, "DecorationCMStackCallINTEL");
+#endif // __INTEL_EMBARGO__
 }
 SPIRV_DEF_NAMEMAP(Decoration, SPIRVDecorationNameMap)
 
@@ -442,7 +445,6 @@ template <> inline void SPIRVMap<Capability, std::string>::init() {
   add(CapabilityImageReadWrite, "ImageReadWrite");
   add(CapabilityImageMipmap, "ImageMipmap");
   add(CapabilityPipes, "Pipes");
-  add(CapabilityPipeStorage, "PipeStorage");
   add(CapabilityGroups, "Groups");
   add(CapabilityDeviceEnqueue, "DeviceEnqueue");
   add(CapabilityLiteralSampler, "LiteralSampler");
@@ -487,12 +489,48 @@ template <> inline void SPIRVMap<Capability, std::string>::init() {
   add(CapabilityStorageImageWriteWithoutFormat,
       "StorageImageWriteWithoutFormat");
   add(CapabilityMultiViewport, "MultiViewport");
+  add(CapabilitySubgroupDispatch, "SubgroupDispatch");
+  add(CapabilityNamedBarrier, "NamedBarrier");
+  add(CapabilityPipeStorage, "PipeStorage");
+  add(CapabilitySubgroupBallotKHR, "SubgroupBallotKHR");
+  add(CapabilityDrawParameters, "DrawParameters");
+  add(CapabilitySubgroupVoteKHR, "SubgroupVoteKHR");
+  add(CapabilityStorageBuffer16BitAccess, "StorageBuffer16BitAccess");
+  add(CapabilityStorageUniformBufferBlock16,
+      "StorageUniformBufferBlock16");
+  add(CapabilityStorageUniform16, "StorageUniform16");
+  add(CapabilityUniformAndStorageBuffer16BitAccess,
+      "UniformAndStorageBuffer16BitAccess");
+  add(CapabilityStoragePushConstant16, "StoragePushConstant16");
+  add(CapabilityStorageInputOutput16, "StorageInputOutput16");
+  add(CapabilityDeviceGroup, "DeviceGroup");
+  add(CapabilityMultiView, "MultiView");
+  add(CapabilityVariablePointersStorageBuffer,
+      "VariablePointersStorageBuffer");
+  add(CapabilityVariablePointers, "VariablePointers");
+  add(CapabilityDenormPreserve, "DenormPreserve");
+  add(CapabilityDenormFlushToZero, "DenormFlushToZero");
+  add(CapabilitySignedZeroInfNanPreserve, "SignedZeroInfNanPreserve");
+  add(CapabilityRoundingModeRTE, "RoundingModeRTE");
+  add(CapabilityRoundingModeRTZ, "RoundingModeRTZ");
+  add(CapabilitySampleMaskOverrideCoverageNV,
+      "SampleMaskOverrideCoverageNV");
+  add(CapabilityGeometryShaderPassthroughNV,
+      "GeometryShaderPassthroughNV");
+  add(CapabilityShaderViewportIndexLayerNV,
+      "ShaderViewportIndexLayerNV");
+  add(CapabilityShaderViewportMaskNV, "ShaderViewportMaskNV");
+  add(CapabilityShaderStereoViewNV, "ShaderStereoViewNV");
+  add(CapabilityPerViewAttributesNV, "PerViewAttributesNV");
   add(CapabilitySubgroupShuffleINTEL, "SubgroupShuffleINTEL");
   add(CapabilitySubgroupBufferBlockIOINTEL, "SubgroupBufferBlockIOINTEL");
   add(CapabilitySubgroupImageBlockIOINTEL, "SubgroupImageBlockIOINTEL");
   add(CapabilitySubgroupImageMediaBlockIOINTEL,
       "SubgroupImageMediaBlockIOINTEL");
   add(CapabilityAsmINTEL, "AsmINTEL");
+#ifdef __INTEL_EMBARGO__
+  add(CapabilityCMKernelINTEL, "CMKernelINTEL");
+#endif // __INTEL_EMBARGO__
   add(CapabilitySubgroupAvcMotionEstimationINTEL,
       "SubgroupAvcMotionEstimationINTEL");
   add(CapabilitySubgroupAvcMotionEstimationIntraINTEL,

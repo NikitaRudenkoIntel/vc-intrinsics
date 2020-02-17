@@ -138,8 +138,8 @@ enum ExecutionMode {
     ExecutionModeCMKernelRegularBarrierCountINTEL = 5626,
     ExecutionModeRoundingModeRTPINTEL = 5620,
     ExecutionModeRoundingModeRTNINTEL = 5621,
-    ExecutionModeFloatALTINTEL = 5622,
-    ExecutionModeFloatIEEEINTEL = 5623,
+    ExecutionModeFloatingPointModeALTINTEL = 5622,
+    ExecutionModeFloatingPointModeIEEEINTEL = 5623,
 #endif // __INTEL_EMBARGO__
     ExecutionModeMax = 0x7fffffff,
 };
@@ -405,9 +405,11 @@ enum Decoration {
     DecorationSecondaryViewportRelativeNV = 5256,
     DecorationSideEffectsINTEL = 5608,
     DecorationUserSemantic = 5635,
+#ifdef __INTEL_EMBARGO__
     DecorationCMKernelArgumentTypeINTEL = 5624,
     DecorationCMKernelArgumentDescINTEL = 5625,
     DecorationCMStackCallINTEL = 5627,
+#endif // __INTEL_EMBARGO__
     DecorationMax = 0x7fffffff,
 };
 

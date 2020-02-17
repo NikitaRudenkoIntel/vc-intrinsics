@@ -62,9 +62,11 @@ unsigned getCMFloatControl(CmFloatMode FloatMode) noexcept;
 unsigned getCMFloatControl(CmDenormMode DenormMode,
                            CmFloatType FloatType) noexcept;
 
+#ifdef __INTEL_EMBARGO__
 typedef SPIRVMap<CmRoundMode, spv::ExecutionMode> CMRoundModeExecModeMap;
 typedef SPIRVMap<CmFloatMode, spv::ExecutionMode> CMFloatModeExecModeMap;
 typedef SPIRVMap<CmDenormMode, spv::ExecutionMode> CMDenormModeExecModeMap;
+#endif // __INTEL_EMBARGO__
 typedef SPIRVMap<CmFloatType, unsigned> CMFloatTypeSizeMap;
 
 } // namespace CMUtil
@@ -77,6 +79,7 @@ typedef SPIRVMap<CmFloatType, unsigned> CMFloatTypeSizeMap;
 
 using namespace CMUtil;
 namespace SPIRV {
+#ifdef __INTEL_EMBARGO__
 template <> inline void SPIRVMap<CmRoundMode, spv::ExecutionMode>::init() {
   add(RTE, ExecutionModeRoundingModeRTE);
   add(RTZ, ExecutionModeRoundingModeRTZ);
@@ -88,9 +91,10 @@ template <> inline void SPIRVMap<CmDenormMode, spv::ExecutionMode>::init() {
   add(Preserve, ExecutionModeDenormPreserve);
 }
 template <> inline void SPIRVMap<CmFloatMode, spv::ExecutionMode>::init() {
-  add(IEEE, ExecutionModeFloatIEEEINTEL);
-  add(ALT, ExecutionModeFloatALTINTEL);
+  add(IEEE, ExecutionModeFloatingPointModeIEEEINTEL);
+  add(ALT, ExecutionModeFloatingPointModeALTINTEL);
 }
+#endif // __INTEL_EMBARGO__
 template <> inline void SPIRVMap<CmFloatType, unsigned>::init() {
   add(Double, 64);
   add(Float, 32);

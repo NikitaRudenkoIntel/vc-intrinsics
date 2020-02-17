@@ -111,6 +111,7 @@ typedef std::vector<SPIRVCapabilityKind> SPIRVCapVec;
 enum SPIRVExtensionKind {
   SPV_INTEL_device_side_avc_motion_estimation,
   SPV_KHR_no_integer_wrap_decoration,
+  SPV_INTEL_cm,
   SPV_INTEL_inline_assembly
 };
 
@@ -120,6 +121,7 @@ template <> inline void SPIRVMap<SPIRVExtensionKind, std::string>::init() {
   add(SPV_INTEL_device_side_avc_motion_estimation,
       "SPV_INTEL_device_side_avc_motion_estimation");
   add(SPV_KHR_no_integer_wrap_decoration, "SPV_KHR_no_integer_wrap_decoration");
+  add(SPV_INTEL_cm, "SPV_INTEL_cm");
   add(SPV_INTEL_inline_assembly, "SPV_INTEL_inline_assembly");
 };
 
@@ -253,8 +255,8 @@ template <> inline void SPIRVMap<SPIRVExecutionModeKind, SPIRVCapVec>::init() {
   ADD_VEC_INIT(ExecutionModeCMKernelRegularBarrierCountINTEL, {CapabilityCMKernelINTEL});
   ADD_VEC_INIT(ExecutionModeRoundingModeRTPINTEL, {CapabilityCMKernelINTEL});
   ADD_VEC_INIT(ExecutionModeRoundingModeRTNINTEL, {CapabilityCMKernelINTEL});
-  ADD_VEC_INIT(ExecutionModeFloatALTINTEL, {CapabilityCMKernelINTEL});
-  ADD_VEC_INIT(ExecutionModeFloatIEEEINTEL, {CapabilityCMKernelINTEL});
+  ADD_VEC_INIT(ExecutionModeFloatingPointModeALTINTEL, {CapabilityCMKernelINTEL});
+  ADD_VEC_INIT(ExecutionModeFloatingPointModeIEEEINTEL, {CapabilityCMKernelINTEL});
 #endif // __INTEL_EMBARGO__
 }
 

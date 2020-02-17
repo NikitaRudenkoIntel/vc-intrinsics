@@ -38,6 +38,7 @@
 //===----------------------------------------------------------------------===//
 #include "SPIRVReader.h"
 #include "OCLUtil.h"
+#include "CMUtil.h"
 #include "SPIRVAsm.h"
 #include "SPIRVBasicBlock.h"
 #include "SPIRVExtInst.h"
@@ -50,9 +51,6 @@
 #include "SPIRVType.h"
 #include "SPIRVUtil.h"
 #include "SPIRVValue.h"
-#ifdef __INTEL_EMBARGO__
-#include "CMUtil.h"
-#endif // __INTEL_EMBARGO__
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/BinaryFormat/Dwarf.h"

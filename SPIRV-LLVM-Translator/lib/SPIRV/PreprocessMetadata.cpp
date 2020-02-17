@@ -39,12 +39,10 @@
 #define DEBUG_TYPE "clmdtospv"
 
 #include "OCLUtil.h"
+#include "CMUtil.h"
 #include "SPIRVInternal.h"
 #include "SPIRVMDBuilder.h"
 #include "SPIRVMDWalker.h"
-#ifdef __INTEL_EMBARGO__
-#include "CMUtil.h"
-#endif // __INTEL_EMBARGO__
 
 #include "llvm/ADT/Triple.h"
 #include "llvm/IR/IRBuilder.h"

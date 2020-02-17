@@ -1,13 +1,11 @@
 # __INTEL_EMBARGO_BEGIN__
 #   CMExport.h
 #   CMExport.cpp
-#   CMUtil.cpp
-#   CMUtil.h
 # __INTEL_EMBARGO_END__
 
 SET(SPIRV_SOURCES
-#__INTEL_EMBARGO_BEGIN__
   CMUtil.cpp
+#__INTEL_EMBARGO_BEGIN__
   CMExport.cpp
 #__INTEL_EMBARGO_END__
   LLVMToSPIRVDbgTran.cpp

@@ -1585,10 +1585,14 @@ bool LLVMToSPIRV::translate() {
       BM->getSourceLanguage(&Ver) == SourceLanguageOpenCL_CPP) {
     if (!transOCLKernelMetadata())
       return false;
-  } else if (BM->getSourceLanguage(&Ver) == SourceLanguageCM) {
+  }
+#ifdef __INTEL_EMBARGO__
+  else if (BM->getSourceLanguage(&Ver) == SourceLanguageCM) {
     if (!transCMKernelMetadata())
       return false;
+    BM->addExtension(SPIRVExtensionKind::SPV_INTEL_cm);
   }
+#endif // __INTEL_EMBARGO__
   if (!transExecutionMode())
     return false;
 
@@ -1690,8 +1694,8 @@ bool LLVMToSPIRV::transExecutionMode() {
 
       case spv::ExecutionModeRoundingModeRTPINTEL:
       case spv::ExecutionModeRoundingModeRTNINTEL:
-      case spv::ExecutionModeFloatALTINTEL:
-      case spv::ExecutionModeFloatIEEEINTEL:
+      case spv::ExecutionModeFloatingPointModeALTINTEL:
+      case spv::ExecutionModeFloatingPointModeIEEEINTEL:
 #endif // __INTEL_EMBARGO__
       case spv::ExecutionModeDenormPreserve:
       case spv::ExecutionModeDenormFlushToZero:
@@ -1757,6 +1761,7 @@ bool LLVMToSPIRV::transOCLKernelMetadata() {
   return true;
 }
 
+#ifdef __INTEL_EMBARGO__
 bool LLVMToSPIRV::transCMKernelMetadata() {
   NamedMDNode *KernelMDs = M->getNamedMetadata(SPIR_MD_CM_KERNELS);
   std::vector<std::string> ArgAccessQual;
@@ -1811,6 +1816,7 @@ bool LLVMToSPIRV::transCMKernelMetadata() {
   }
   return true;
 }
+#endif // __INTEL_EMBARGO__
 
 bool LLVMToSPIRV::transSourceLanguage() {
   auto Src = getSPIRVSource(M);

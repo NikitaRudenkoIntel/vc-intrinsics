@@ -159,8 +159,8 @@ private:
                                SmallVectorImpl<std::string> *Dec = nullptr);
   bool isKernel(Function *F);
   bool transOCLKernelMetadata();
-  bool transCMKernelMetadata();
 #ifdef __INTEL_EMBARGO__
+  bool transCMKernelMetadata();
   bool transCMMemoryModel();
 #endif // __INTEL_EMBARGO__
   SPIRVInstruction *transBuiltinToInst(const std::string &DemangledName,
