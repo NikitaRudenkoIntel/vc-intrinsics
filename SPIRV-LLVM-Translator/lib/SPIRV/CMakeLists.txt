@@ -3,7 +3,7 @@
 #   CMUtil.h
 # __INTEL_EMBARGO_END__
 
-add_llvm_library(LLVMSPIRVLib
+SET(SPIRV_SOURCES
 #__INTEL_EMBARGO_BEGIN__
   CMUtil.cpp
 #__INTEL_EMBARGO_END__
@@ -41,6 +41,22 @@ add_llvm_library(LLVMSPIRVLib
   libSPIRV/SPIRVStream.cpp
   libSPIRV/SPIRVType.cpp
   libSPIRV/SPIRVValue.cpp
+)
+
+add_llvm_library(LLVMSPIRVLib 
+  ${SPIRV_SOURCES}
+  LINK_COMPONENTS
+    Analysis
+    BitWriter
+    Core
+    Support
+    TransformUtils
+  DEPENDS
+    intrinsics_gen
+)
+
+add_llvm_library(SPIRVDLL SHARED
+  ${SPIRV_SOURCES}
   LINK_COMPONENTS
     Analysis
     BitWriter
@@ -52,6 +68,15 @@ add_llvm_library(LLVMSPIRVLib
 )
 
 target_include_directories(LLVMSPIRVLib
+  PRIVATE
+    ${LLVM_INCLUDE_DIRS}
+    ${LLVM_SPIRV_INCLUDE_DIRS}
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/libSPIRV
+    ${CMAKE_CURRENT_SOURCE_DIR}/Mangler
+)
+
+target_include_directories(SPIRVDLL
   PRIVATE
     ${LLVM_INCLUDE_DIRS}
     ${LLVM_SPIRV_INCLUDE_DIRS}
