@@ -21,6 +21,7 @@
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Type.h"
+#include "llvm/Support/CommandLine.h"
 #include <llvm/ADT/StringExtras.h>
 #include <llvm/ADT/StringMap.h>
 #include <llvm/CodeGen/ValueTypes.h>
