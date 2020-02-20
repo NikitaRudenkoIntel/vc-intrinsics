@@ -30,11 +30,11 @@ import os
 import sys
 import re
 import importlib
+import functools
 
 # Compatibility with Python 3.X
 if sys.version_info[0] >= 3:
     global reduce
-    import functools
     reduce = functools.reduce
 
 
@@ -126,7 +126,7 @@ def ik_compare(ikl, ikr):
   else:
     return 0
 # NOTE: the ordering does matter here as lookupLLVMIntrinsicByName depend on it
-ID_array = sorted(Intrinsics, cmp = ik_compare)
+ID_array = sorted(Intrinsics, key = functools.cmp_to_key(ik_compare))
 
 def emitPrefix():
     f = open(outputFile,"w")
