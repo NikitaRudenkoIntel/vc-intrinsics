@@ -6,6 +6,7 @@
 SET(SPIRV_SOURCES
 #__INTEL_EMBARGO_BEGIN__
   CMUtil.cpp
+  CMExport.cpp
 #__INTEL_EMBARGO_END__
   LLVMToSPIRVDbgTran.cpp
   Mangler/FunctionDescriptor.cpp
