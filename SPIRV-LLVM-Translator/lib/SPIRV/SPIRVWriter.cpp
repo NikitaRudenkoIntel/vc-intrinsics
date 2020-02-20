@@ -1316,6 +1316,20 @@ SPIRVValue *LLVMToSPIRV::transCallInst(CallInst *CI, SPIRVBasicBlock *BB) {
       BB);
 }
 
+#ifdef __INTEL_EMBARGO__
+bool LLVMToSPIRV::transCMAddressingMode() {
+    StringRef TripleStr(M->getTargetTriple());
+    assert(TripleStr.startswith("genx") && "Invalid triple");
+    if (TripleStr.startswith("genx32"))
+        BM->setAddressingModel(AddressingModelPhysical32);
+    else
+        BM->setAddressingModel(AddressingModelPhysical64);
+    // Physical addressing model requires Addresses capability
+    BM->addCapability(CapabilityAddresses);
+    return true;
+}
+#endif // __INTEL_EMBARGO__
+
 bool LLVMToSPIRV::transAddressingMode() {
   Triple TargetTriple(M->getTargetTriple());
 
@@ -1502,6 +1516,12 @@ bool LLVMToSPIRV::translate() {
     return false;
   if (!transBuiltinSet())
     return false;
+#ifdef __INTEL_EMBARGO__
+  if (BM->getSourceLanguage(nullptr) == SourceLanguageCM) {
+    if (!transCMAddressingMode())
+      return false;
+  } else
+#endif // __INTEL_EMBARGO__
   if (!transAddressingMode())
     return false;
   if (!transGlobalVariables())

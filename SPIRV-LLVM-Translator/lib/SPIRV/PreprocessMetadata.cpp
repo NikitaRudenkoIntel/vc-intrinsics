@@ -126,15 +126,6 @@ void PreprocessMetadata::transCMMD(Module *M) {
       .add(36) // version
       .done();
 
-  StringRef TripleStr(M->getTargetTriple());
-  assert(TripleStr.startswith("genx") && "Invalid triple");
-  B.addNamedMD(kSPIRVMD::MemoryModel)
-      .addOp()
-      .add(TripleStr.startswith("genx32") ? spv::AddressingModelPhysical32
-                                          : spv::AddressingModelPhysical64)
-      .add(spv::MemoryModelSimple)
-      .done();
-
   // Add entry points
   auto EP = B.addNamedMD(kSPIRVMD::EntryPoint);
   auto EM = B.addNamedMD(kSPIRVMD::ExecutionMode);
