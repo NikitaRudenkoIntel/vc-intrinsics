@@ -445,10 +445,19 @@ void CMSimdCFLowering::calculateVisitOrder(Module *M,
     for (auto ui = F->use_begin(), ue = F->use_end(); ui != ue; ++ui) {
       if (auto CI = dyn_cast<CallInst>(ui->getUser())) {
         Function *Caller = CI->getParent()->getParent();
-        CGNode *CallerNode = &CallGraph[Caller];
-        CallerNode->F = Caller;
-        CGN->UnvisitedCallers.insert(CallerNode);
-        CallerNode->Callees.insert(CGN);
+        // do not add a recursive call edge to the UnvisitedCallers
+        if (Caller == F) {
+          if (F->hasFnAttribute("CMStackCall"))
+            DiagnosticInfoSimdCF::emit(CI, "SIMD recursive call", DS_Warning);
+          else
+            DiagnosticInfoSimdCF::emit(
+                CI, "Recursive function doesn't have CMStackCall attribute");
+        } else {
+          CGNode *CallerNode = &CallGraph[Caller];
+          CallerNode->F = Caller;
+          CGN->UnvisitedCallers.insert(CallerNode);
+          CallerNode->Callees.insert(CGN);
+        }
       }
     }
   }
@@ -457,8 +466,8 @@ void CMSimdCFLowering::calculateVisitOrder(Module *M,
   // the end of the visit order.
   for (unsigned i = 0; i != VisitOrder->size(); ++i) {
     CGNode *CGN = &CallGraph[(*VisitOrder)[i]];
-    for (auto ci = CGN->Callees.begin(), ce = CGN->Callees.end();
-        ci != ce; ++ci) {
+    for (auto ci = CGN->Callees.begin(), ce = CGN->Callees.end(); ci != ce;
+         ++ci) {
       CGNode *Callee = *ci;
       Callee->UnvisitedCallers.erase(CGN);
       if (Callee->UnvisitedCallers.empty())
@@ -1402,6 +1411,11 @@ void CMSimdCFLower::predicateCall(CallInst *CI, unsigned SimdWidth)
   Function *F = CI->getCalledFunction();
   assert(F);
   auto PSEntry = &PredicatedSubroutines[F];
+
+  // Skip predicating recursive function
+  if (CI->getFunction() == F)
+    return;
+
   if (!*PSEntry)
     *PSEntry = SimdWidth;
   else if (*PSEntry != SimdWidth)
