@@ -250,6 +250,7 @@ public:
   static bool classof(const DiagnosticInfo *DI) {
     return DI->getKind() == getKindID();
   }
+  void print(DiagnosticPrinter &DP) const override { DP << "CMSimdCFLowering: " << RemarkName; }
 };
 int DiagnosticInfoSimdCF::KindID = 0;
 
