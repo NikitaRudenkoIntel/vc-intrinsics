@@ -1,4 +1,6 @@
 # __INTEL_EMBARGO_BEGIN__
+#   CMExport.h
+#   CMExport.cpp
 #   CMUtil.cpp
 #   CMUtil.h
 # __INTEL_EMBARGO_END__
