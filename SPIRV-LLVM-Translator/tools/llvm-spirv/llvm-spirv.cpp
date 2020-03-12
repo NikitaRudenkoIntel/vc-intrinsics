@@ -99,7 +99,9 @@ static cl::opt<VersionNumber> MaxSPIRVVersion(
     "spirv-max-version",
     cl::desc("Choose maximum SPIR-V version which can be emitted"),
     cl::values(clEnumValN(VersionNumber::SPIRV_1_0, "1.0", "SPIR-V 1.0"),
-               clEnumValN(VersionNumber::SPIRV_1_1, "1.1", "SPIR-V 1.1")),
+               clEnumValN(VersionNumber::SPIRV_1_1, "1.1", "SPIR-V 1.1"),
+               clEnumValN(VersionNumber::SPIRV_1_2, "1.2", "SPIR-V 1.2"),
+               clEnumValN(VersionNumber::SPIRV_1_3, "1.3", "SPIR-V 1.3")),
     cl::init(VersionNumber::MaximumVersion));
 static cl::opt<bool> SPIRVGenKernelArgNameMD(
     "spirv-gen-kernel-arg-name-md", cl::init(false),
@@ -135,6 +137,11 @@ static cl::opt<bool> ToBinary(
 static cl::opt<bool>
     SPIRVMemToReg("spirv-mem2reg", cl::init(false),
                   cl::desc("LLVM/SPIR-V translation enable mem2reg"));
+
+cl::opt<bool> SPIRVAllowUnknownIntrinsics(
+    "spirv-allow-unknown-intrinsics", cl::init(false),
+    cl::desc("Unknown LLVM intrinsics will be translated as external function "
+             "calls in SPIR-V"));
 
 static std::string removeExt(const std::string &FileName) {
   size_t Pos = FileName.find_last_of(".");
@@ -308,6 +315,16 @@ int main(int Ac, char **Av) {
     Opts.setMemToRegEnabled(SPIRVMemToReg);
   if (SPIRVGenKernelArgNameMD)
     Opts.setGenKernelArgNameMDEnabled(SPIRVGenKernelArgNameMD);
+
+  if (SPIRVAllowUnknownIntrinsics.getNumOccurrences() != 0) {
+    if (IsReverse) {
+      errs()
+          << "Note: --spirv-allow-unknown-intrinsics option ignored as it only "
+             "affects translation from LLVM IR to SPIR-V";
+    } else {
+      Opts.setSPIRVAllowUnknownIntrinsicsEnabled(SPIRVAllowUnknownIntrinsics);
+    }
+  }
 
 #ifdef _SPIRV_SUPPORT_TEXT_FMT
   if (ToText && (ToBinary || IsReverse || IsRegularization)) {
