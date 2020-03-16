@@ -21,6 +21,7 @@ else()
 
     LINK_LIBS
       LLVMCodeGen
+      LLVMSupport
 
     DEPENDS
       GenXIntrinsicsGen
