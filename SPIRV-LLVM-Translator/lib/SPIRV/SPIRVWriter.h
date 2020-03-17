@@ -161,7 +161,7 @@ private:
   bool transOCLKernelMetadata();
   bool transCMKernelMetadata();
 #ifdef __INTEL_EMBARGO__
-  bool transCMAddressingMode();
+  bool transCMMemoryModel();
 #endif // __INTEL_EMBARGO__
   SPIRVInstruction *transBuiltinToInst(const std::string &DemangledName,
                                        const std::string &MangledName,
