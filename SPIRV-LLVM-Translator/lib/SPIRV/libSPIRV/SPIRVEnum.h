@@ -110,7 +110,8 @@ typedef std::vector<SPIRVCapabilityKind> SPIRVCapVec;
 
 enum SPIRVExtensionKind {
   SPV_INTEL_device_side_avc_motion_estimation,
-  SPV_KHR_no_integer_wrap_decoration
+  SPV_KHR_no_integer_wrap_decoration,
+  SPV_INTEL_inline_assembly
 };
 
 typedef std::set<SPIRVExtensionKind> SPIRVExtSet;
@@ -119,6 +120,7 @@ template <> inline void SPIRVMap<SPIRVExtensionKind, std::string>::init() {
   add(SPV_INTEL_device_side_avc_motion_estimation,
       "SPV_INTEL_device_side_avc_motion_estimation");
   add(SPV_KHR_no_integer_wrap_decoration, "SPV_KHR_no_integer_wrap_decoration");
+  add(SPV_INTEL_inline_assembly, "SPV_INTEL_inline_assembly");
 };
 
 template <> inline void SPIRVMap<SPIRVExtInstSetKind, std::string>::init() {
@@ -368,6 +370,7 @@ template <> inline void SPIRVMap<Decoration, SPIRVCapVec>::init() {
   ADD_VEC_INIT(DecorationCMKernelArgumentTypeINTEL, {CapabilityCMKernelINTEL});
   ADD_VEC_INIT(DecorationCMKernelArgumentDescINTEL, {CapabilityCMKernelINTEL});
 #endif // __INTEL_EMBARGO__
+  ADD_VEC_INIT(DecorationSideEffectsINTEL, {CapabilityAsmINTEL});
 }
 
 template <> inline void SPIRVMap<BuiltIn, SPIRVCapVec>::init() {
