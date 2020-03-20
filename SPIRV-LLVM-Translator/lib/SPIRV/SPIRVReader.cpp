@@ -2491,12 +2491,10 @@ bool SPIRVToLLVM::transCMKernelMetadata() {
         llvm::MDString::get(F->getContext(), KernelName.c_str()));
     // argument kind
     // slm-size
-    // argument-offset
     // argument-inout
     llvm::Type *I32Ty = llvm::Type::getInt32Ty(*Context);
     llvm::SmallVector<llvm::Metadata *, 8> ArgKinds;
     llvm::SmallVector<llvm::Metadata *, 8> ArgInOutKinds;
-    llvm::SmallVector<llvm::Metadata *, 8> ArgOffsets;
     llvm::SmallVector<llvm::Metadata *, 8> ArgDescs;
     for (size_t I = 0, E = BF->getNumArguments(); I != E; ++I) {
       auto BA = BF->getArgument(I);
@@ -2505,8 +2503,6 @@ bool SPIRVToLLVM::transCMKernelMetadata() {
       ArgKinds.push_back(
           llvm::ValueAsMetadata::get(llvm::ConstantInt::get(I32Ty, Kind)));
       ArgInOutKinds.push_back(
-          llvm::ValueAsMetadata::get(llvm::ConstantInt::get(I32Ty, 0)));
-      ArgOffsets.push_back(
           llvm::ValueAsMetadata::get(llvm::ConstantInt::get(I32Ty, 0)));
 
       string ArgDesc;
@@ -2523,8 +2519,9 @@ bool SPIRVToLLVM::transCMKernelMetadata() {
       SLMSize = EM->getLiterals()[0];
     KernelMD.push_back(
         ConstantAsMetadata::get(ConstantInt::get(I32Ty, SLMSize)));
-    // placeholder for IOKInd, ArgOffset and ArgDescs.
-    KernelMD.push_back(llvm::MDNode::get(*Context, ArgOffsets));
+    // placeholder for ArgOffset, IOKInd and ArgDescs.
+    KernelMD.push_back(
+        llvm::ValueAsMetadata::get(llvm::ConstantInt::get(I32Ty, 0)));
     KernelMD.push_back(llvm::MDNode::get(*Context, ArgInOutKinds));
     KernelMD.push_back(llvm::MDNode::get(*Context, ArgDescs));
     unsigned int NBarrierCnt = 0;
