@@ -1640,13 +1640,13 @@ bool LLVMToSPIRV::transExecutionMode() {
         BF->addExecutionMode(BM->add(
             new SPIRVExecutionMode(BF, static_cast<ExecutionMode>(EMode), X)));
       } break;
-#ifdef __INTEL_EMBARGO__
       case spv::ExecutionModeCMKernelSharedLocalMemorySizeINTEL: {
         unsigned SLMSize;
         N.get(SLMSize);
         BF->addExecutionMode(new SPIRVExecutionMode(
             BF, static_cast<ExecutionMode>(EMode), SLMSize));
       } break;
+#ifdef __INTEL_EMBARGO__
       case spv::ExecutionModeCMKernelNamedBarrierCountINTEL: {
         unsigned NBarrierCnt;
         N.get(NBarrierCnt);
