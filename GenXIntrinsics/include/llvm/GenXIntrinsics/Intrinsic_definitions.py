@@ -536,6 +536,24 @@ Imported_Intrinsics = \
 ###
     "simdcf_remask" : ["anyvector",[0,"int"],"WriteMem,SideEffects"],
 
+### ``llvm.genx.simdcf.get.em`` :
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+###
+### * arg0: EM (execution mask): v32i1
+###
+### * Return value: temp v32i1 to store EM
+###
+### This intrinsic prevents manipulations on EM usage
+### and allows CM to create explicit value from EM.
+### No masks are modified by this intrinsic.
+###
+### The WriteMem and SideEffects markers are used to
+### prevent this instruction from being moved: in fact,
+### EM is different in different locations even when the
+### dominance of DF is not corrupted.
+###
+    "simdcf_get_em" : ["anyvector",[0],"WriteMem,SideEffects"],
+
 ### --------------
 ### ALU intrinsics
 ### --------------
