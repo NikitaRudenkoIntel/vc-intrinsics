@@ -407,7 +407,7 @@ enum Decoration {
     DecorationUserSemantic = 5635,
     DecorationCMKernelArgumentTypeINTEL = 5624,
     DecorationCMKernelArgumentDescINTEL = 5625,
-    DecorationCMStackCallINTEL = 5589,
+    DecorationCMStackCallINTEL = 5627,
     DecorationMax = 0x7fffffff,
 };
 

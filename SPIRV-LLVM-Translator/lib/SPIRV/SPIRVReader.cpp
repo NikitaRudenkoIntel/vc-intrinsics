@@ -1842,8 +1842,7 @@ Function *SPIRVToLLVM::transFunction(SPIRVFunction *BF) {
                        [&](Attribute::AttrKind Attr) { F->addFnAttr(Attr); });
   }
 
-  SPIRVWord CMStackCall = 0;
-  if (BF->hasDecorate(DecorationCMStackCallINTEL, 0, &CMStackCall))
+  if (BF->hasDecorate(DecorationCMStackCallINTEL))
     F->addFnAttr("CMStackCall");
 
   for (Function::arg_iterator I = F->arg_begin(), E = F->arg_end(); I != E;

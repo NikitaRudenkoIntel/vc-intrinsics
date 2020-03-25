@@ -481,13 +481,8 @@ SPIRVFunction *LLVMToSPIRV::transFunctionDecl(Function *F) {
     BF->setLinkageType(transLinkageType(F));
   auto Attrs = F->getAttributes();
 
-  if (Attrs.hasFnAttribute("CMStackCall")) {
-    SPIRVWord Mode = 0;
-    Attrs.getAttribute(AttributeList::FunctionIndex, "CMStackCall")
-      .getValueAsString()
-      .getAsInteger(0, Mode);
-    BF->addDecorate(DecorationCMStackCallINTEL, Mode);
-  }
+  if (Attrs.hasFnAttribute("CMStackCall"))
+    BF->addDecorate(DecorationCMStackCallINTEL);
 
   for (Function::arg_iterator I = F->arg_begin(), E = F->arg_end(); I != E;
        ++I) {
