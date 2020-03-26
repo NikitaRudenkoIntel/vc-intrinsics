@@ -17,7 +17,8 @@ if(NOT BUILD_EXTERNAL)
   add_subdirectory(unittests)
 endif()
 
-if(NOT INSTALL_REQUIRED)
+# this option is to switch on install when we are building not inside IGC
+if(INSTALL_REQUIRED)
   install(DIRECTORY include/llvm
     DESTINATION include
     COMPONENT genx-intrinsics-headers
