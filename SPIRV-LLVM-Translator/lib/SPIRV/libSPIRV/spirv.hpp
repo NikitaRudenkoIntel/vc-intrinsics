@@ -405,11 +405,9 @@ enum Decoration {
     DecorationSecondaryViewportRelativeNV = 5256,
     DecorationSideEffectsINTEL = 5608,
     DecorationUserSemantic = 5635,
-#ifdef __INTEL_EMBARGO__
     DecorationCMKernelArgumentTypeINTEL = 5624,
     DecorationCMKernelArgumentDescINTEL = 5625,
     DecorationCMStackCallINTEL = 5627,
-#endif // __INTEL_EMBARGO__
     DecorationMax = 0x7fffffff,
 };
 

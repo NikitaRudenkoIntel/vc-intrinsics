@@ -1586,13 +1586,11 @@ bool LLVMToSPIRV::translate() {
     if (!transOCLKernelMetadata())
       return false;
   }
-#ifdef __INTEL_EMBARGO__
   else if (BM->getSourceLanguage(&Ver) == SourceLanguageCM) {
     if (!transCMKernelMetadata())
       return false;
     BM->addExtension(SPIRVExtensionKind::SPV_INTEL_cm);
   }
-#endif // __INTEL_EMBARGO__
   if (!transExecutionMode())
     return false;
 
@@ -1761,7 +1759,6 @@ bool LLVMToSPIRV::transOCLKernelMetadata() {
   return true;
 }
 
-#ifdef __INTEL_EMBARGO__
 bool LLVMToSPIRV::transCMKernelMetadata() {
   NamedMDNode *KernelMDs = M->getNamedMetadata(SPIR_MD_CM_KERNELS);
   std::vector<std::string> ArgAccessQual;
@@ -1816,7 +1813,6 @@ bool LLVMToSPIRV::transCMKernelMetadata() {
   }
   return true;
 }
-#endif // __INTEL_EMBARGO__
 
 bool LLVMToSPIRV::transSourceLanguage() {
   auto Src = getSPIRVSource(M);
