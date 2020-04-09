@@ -78,8 +78,6 @@ cl::opt<bool, true> EnableDbgOutput("spirv-debug",
 #endif
 
 bool isSupportedTriple(Triple T) {
-  if (T.getArchName().startswith("genx"))
-    return true;
   Triple::ArchType Arch = T.getArch();
   return Arch == Triple::spir || Arch == Triple::spir64;
 }

@@ -53,13 +53,13 @@
 #include "SPIRVType.h"
 #include "SPIRVUtil.h"
 #include "SPIRVValue.h"
+#include "CMUtil.h"
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/Analysis/ValueTracking.h"
-#include "llvm/GenXIntrinsics/GenXKernelMDOps.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/Function.h"
@@ -481,7 +481,7 @@ SPIRVFunction *LLVMToSPIRV::transFunctionDecl(Function *F) {
     BF->setLinkageType(transLinkageType(F));
   auto Attrs = F->getAttributes();
 
-  if (Attrs.hasFnAttribute("CMStackCall"))
+  if (Attrs.hasFnAttribute(kCMMetadata::CMStackCall))
     BF->addDecorate(DecorationCMStackCallINTEL);
 
   for (Function::arg_iterator I = F->arg_begin(), E = F->arg_end(); I != E;
@@ -755,12 +755,14 @@ SPIRVValue *LLVMToSPIRV::transValueWithoutDecoration(Value *V,
 
     // Add volatile decorations.
     if (SrcLang == SourceLanguageCM) {
-      if (GV->hasAttribute("genx_byte_offset")) {
+      if (GV->hasAttribute(kCMMetadata::GenXByteOffset)) {
         SPIRVWord Offset;
-        GV->getAttribute("genx_byte_offset").getValueAsString().getAsInteger(0, Offset);
+        GV->getAttribute(kCMMetadata::GenXByteOffset)
+            .getValueAsString()
+            .getAsInteger(0, Offset);
         BVar->addDecorate(DecorationOffset, Offset);
       }
-      if (GV->hasAttribute("genx_volatile"))
+      if (GV->hasAttribute(kCMMetadata::GenXVolatile))
         BVar->addDecorate(DecorationVolatile);
     }
 
@@ -1316,21 +1318,6 @@ SPIRVValue *LLVMToSPIRV::transCallInst(CallInst *CI, SPIRVBasicBlock *BB) {
       BB);
 }
 
-#ifdef __INTEL_EMBARGO__
-bool LLVMToSPIRV::transCMMemoryModel() {
-    StringRef TripleStr(M->getTargetTriple());
-    assert(TripleStr.startswith("genx") && "Invalid triple");
-    if (TripleStr.startswith("genx32"))
-        BM->setAddressingModel(AddressingModelPhysical32);
-    else
-        BM->setAddressingModel(AddressingModelPhysical64);
-    // Physical addressing model requires Addresses capability
-    BM->addCapability(CapabilityAddresses);
-    BM->setMemoryModel(MemoryModelSimple);
-    return true;
-}
-#endif // __INTEL_EMBARGO__
-
 SPIRVValue *LLVMToSPIRV::transAsmINTEL(InlineAsm *IA) {
   assert(IA);
 
@@ -1366,6 +1353,7 @@ bool LLVMToSPIRV::transAddressingMode() {
     BM->setAddressingModel(AddressingModelPhysical64);
   // Physical addressing model requires Addresses capability
   BM->addCapability(CapabilityAddresses);
+  BM->setMemoryModel(MemoryModelSimple);
   return true;
 }
 std::vector<SPIRVValue *>
@@ -1543,12 +1531,6 @@ bool LLVMToSPIRV::translate() {
     return false;
   if (!transBuiltinSet())
     return false;
-#ifdef __INTEL_EMBARGO__
-  if (BM->getSourceLanguage(nullptr) == SourceLanguageCM) {
-    if (!transCMMemoryModel())
-      return false;
-  } else
-#endif // __INTEL_EMBARGO__
   if (!transAddressingMode())
     return false;
   if (!transGlobalVariables())
@@ -1669,32 +1651,32 @@ bool LLVMToSPIRV::transExecutionMode() {
         BF->addExecutionMode(BM->add(
             new SPIRVExecutionMode(BF, static_cast<ExecutionMode>(EMode), X)));
       } break;
-      case spv::ExecutionModeCMKernelSharedLocalMemorySizeINTEL: {
+      case spv::ExecutionModeSharedLocalMemorySizeINTEL: {
         unsigned SLMSize;
         N.get(SLMSize);
         BF->addExecutionMode(new SPIRVExecutionMode(
             BF, static_cast<ExecutionMode>(EMode), SLMSize));
       } break;
 #ifdef __INTEL_EMBARGO__
-      case spv::ExecutionModeCMKernelNamedBarrierCountINTEL: {
+      case spv::ExecutionModeNamedBarrierCountINTEL: {
         unsigned NBarrierCnt;
         N.get(NBarrierCnt);
         BF->addExecutionMode(new SPIRVExecutionMode(
             BF, static_cast<ExecutionMode>(EMode), NBarrierCnt));
       } break;
 
-      case spv::ExecutionModeCMKernelRegularBarrierCountINTEL: {
+      case spv::ExecutionModeRegularBarrierCountINTEL: {
         unsigned RegularBarrierCnt;
         N.get(RegularBarrierCnt);
         BF->addExecutionMode(new SPIRVExecutionMode(
           BF, static_cast<ExecutionMode>(EMode), RegularBarrierCnt));
       } break;
+#endif // __INTEL_EMBARGO__
 
       case spv::ExecutionModeRoundingModeRTPINTEL:
       case spv::ExecutionModeRoundingModeRTNINTEL:
       case spv::ExecutionModeFloatingPointModeALTINTEL:
       case spv::ExecutionModeFloatingPointModeIEEEINTEL:
-#endif // __INTEL_EMBARGO__
       case spv::ExecutionModeDenormPreserve:
       case spv::ExecutionModeDenormFlushToZero:
       case spv::ExecutionModeSignedZeroInfNanPreserve:
@@ -1760,7 +1742,7 @@ bool LLVMToSPIRV::transOCLKernelMetadata() {
 }
 
 bool LLVMToSPIRV::transCMKernelMetadata() {
-  NamedMDNode *KernelMDs = M->getNamedMetadata(SPIR_MD_CM_KERNELS);
+  NamedMDNode *KernelMDs = M->getNamedMetadata(kCMMetadata::GenXKernels);
   std::vector<std::string> ArgAccessQual;
   if (!KernelMDs)
     return true;
@@ -1769,7 +1751,8 @@ bool LLVMToSPIRV::transCMKernelMetadata() {
     MDNode *KernelMD = KernelMDs->getOperand(I);
     if (KernelMD->getNumOperands() == 0)
       continue;
-    Function *Kernel = mdconst::dyn_extract<Function>(KernelMD->getOperand(genx::KernelMDOp::FunctionRef));
+    Function *Kernel = mdconst::dyn_extract<Function>(
+        KernelMD->getOperand(CMUtil::KernelMDOp::FunctionRef));
 
     SPIRVFunction *BF =
         static_cast<SPIRVFunction *>(getTranslatedValue(Kernel));
@@ -1777,11 +1760,14 @@ bool LLVMToSPIRV::transCMKernelMetadata() {
     assert(Kernel && isKernel(Kernel) &&
            "Invalid kernel calling convention or metadata");
     // add kernel name
-    StringRef KernelName = cast<MDString>(KernelMD->getOperand(genx::KernelMDOp::Name).get())->getString();
+    StringRef KernelName =
+        cast<MDString>(KernelMD->getOperand(CMUtil::KernelMDOp::Name).get())
+            ->getString();
     BM->setName(BF, KernelName);
     // get the ArgKind info
-    if (KernelMD->getNumOperands() > genx::KernelMDOp::ArgKinds) {
-      if (auto KindsNode = dyn_cast<MDNode>(KernelMD->getOperand(genx::KernelMDOp::ArgKinds))) {
+    if (KernelMD->getNumOperands() > CMUtil::KernelMDOp::ArgKinds) {
+      if (auto KindsNode = dyn_cast<MDNode>(
+              KernelMD->getOperand(CMUtil::KernelMDOp::ArgKinds))) {
         for (unsigned i = 0, e = KindsNode->getNumOperands(); i != e; ++i) {
           if (auto VM = dyn_cast<ValueAsMetadata>(KindsNode->getOperand(i)))
             if (auto V = dyn_cast<ConstantInt>(VM->getValue())) {
@@ -1789,22 +1775,23 @@ bool LLVMToSPIRV::transCMKernelMetadata() {
               SPIRVFunctionParameter *BA = BF->getArgument(i);
               if (BA) {
                 BA->addDecorate(
-                    new SPIRVDecorate(DecorationCMKernelArgumentTypeINTEL, BA, ArgKind));
+                    new SPIRVDecorate(DecorationArgumentTypeINTEL, BA, ArgKind));
               }
             }
         }
       }
     }
     // get the ArgTypeDescs
-    if (KernelMD->getNumOperands() > genx::KernelMDOp::ArgTypeDescs) {
-      if (auto Node = dyn_cast<MDNode>(KernelMD->getOperand(genx::KernelMDOp::ArgTypeDescs))) {
+    if (KernelMD->getNumOperands() > CMUtil::KernelMDOp::ArgTypeDescs) {
+      if (auto Node = dyn_cast<MDNode>(
+              KernelMD->getOperand(CMUtil::KernelMDOp::ArgTypeDescs))) {
         for (unsigned i = 0, e = Node->getNumOperands(); i != e; ++i) {
           if (auto MS = dyn_cast<MDString>(Node->getOperand(i))) {
             SPIRVFunctionParameter *BA = BF->getArgument(i);
             if (BA) {
               SPIRVString *SS = BM->getString(MS->getString().str());
               BA->addDecorate(new SPIRVDecorate(
-                  DecorationCMKernelArgumentDescINTEL, BA, SS->getId()));
+                  DecorationArgumentDescINTEL, BA, SS->getId()));
             }
           }
         }
@@ -2024,8 +2011,8 @@ bool llvm::writeSpirv(Module *M, const SPIRV::TranslatorOpts &Opts,
     return false;
 
   legacy::PassManager PassMgr;
-  bool SourceCM = StringRef(M->getTargetTriple()).startswith("genx");
-  addPassesForSPIRV(PassMgr, !SourceCM);
+  bool IsOpenCLSource = OCLUtil::getOCLVersion(M);
+  addPassesForSPIRV(PassMgr, IsOpenCLSource);
   if (hasLoopUnrollMetadata(M))
     PassMgr.add(createLoopSimplifyPass());
   PassMgr.add(createLLVMToSPIRV(BM.get()));
@@ -2043,8 +2030,8 @@ bool llvm::regularizeLlvmForSpirv(Module *M, std::string &ErrMsg) {
     return false;
 
   legacy::PassManager PassMgr;
-  bool SourceCM = StringRef(M->getTargetTriple()).startswith("genx");
-  addPassesForSPIRV(PassMgr, !SourceCM);
+  bool IsOpenCLSource = OCLUtil::getOCLVersion(M);
+  addPassesForSPIRV(PassMgr, IsOpenCLSource);
   PassMgr.run(*M);
   return true;
 }

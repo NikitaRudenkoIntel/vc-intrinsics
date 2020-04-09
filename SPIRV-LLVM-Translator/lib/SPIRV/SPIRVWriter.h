@@ -160,9 +160,6 @@ private:
   bool isKernel(Function *F);
   bool transOCLKernelMetadata();
   bool transCMKernelMetadata();
-#ifdef __INTEL_EMBARGO__
-  bool transCMMemoryModel();
-#endif // __INTEL_EMBARGO__
   SPIRVInstruction *transBuiltinToInst(const std::string &DemangledName,
                                        const std::string &MangledName,
                                        CallInst *CI, SPIRVBasicBlock *BB);

@@ -128,15 +128,13 @@ template <> inline void SPIRVMap<ExecutionMode, std::string>::init() {
   add(ExecutionModeSignedZeroInfNanPreserve, "SignedZeroInfNanPreserve");
   add(ExecutionModeRoundingModeRTE, "RoundingModeRTE");
   add(ExecutionModeRoundingModeRTZ, "RoundingModeRTZ");
-  add(ExecutionModeCMKernelSharedLocalMemorySizeINTEL, "CMKernelSharedLocalMemorySizeINTEL");
-#ifdef __INTEL_EMBARGO__
-  add(ExecutionModeCMKernelNamedBarrierCountINTEL, "CMKernelNamedBarrierCountINTEL");
-  add(ExecutionModeCMKernelRegularBarrierCountINTEL, "CMKernelRegularBarrierCountINTEL");
+  add(ExecutionModeSharedLocalMemorySizeINTEL, "SharedLocalMemorySizeINTEL");
+  add(ExecutionModeNamedBarrierCountINTEL, "NamedBarrierCountINTEL");
+  add(ExecutionModeRegularBarrierCountINTEL, "RegularBarrierCountINTEL");
   add(ExecutionModeRoundingModeRTPINTEL, "RoundingModeRTPINTEL");
   add(ExecutionModeRoundingModeRTNINTEL, "RoundingModeRTNINTEL");
   add(ExecutionModeFloatingPointModeALTINTEL, "FloatALTINTEL");
   add(ExecutionModeFloatingPointModeIEEEINTEL, "FloatIEEEINTEL");
-#endif // __INTEL_EMBARGO__
 }
 SPIRV_DEF_NAMEMAP(ExecutionMode, SPIRVExecutionModeNameMap)
 
@@ -351,8 +349,8 @@ template <> inline void SPIRVMap<Decoration, std::string>::init() {
   add(DecorationNoUnsignedWrap, "NoUnsignedWrap");
   add(DecorationSideEffectsINTEL, "SideEffectsINTEL");
   add(DecorationUserSemantic, "UserSemantic");
-  add(DecorationCMKernelArgumentTypeINTEL, "CMKernelArgumentTypeINTEL");
-  add(DecorationCMKernelArgumentDescINTEL, "CMKernelArgumentDescINTEL");
+  add(DecorationArgumentTypeINTEL, "ArgumentTypeINTEL");
+  add(DecorationArgumentDescINTEL, "ArgumentDescINTEL");
   add(DecorationCMStackCallINTEL, "DecorationCMStackCallINTEL");
 }
 SPIRV_DEF_NAMEMAP(Decoration, SPIRVDecorationNameMap)
@@ -526,9 +524,7 @@ template <> inline void SPIRVMap<Capability, std::string>::init() {
   add(CapabilitySubgroupImageMediaBlockIOINTEL,
       "SubgroupImageMediaBlockIOINTEL");
   add(CapabilityAsmINTEL, "AsmINTEL");
-#ifdef __INTEL_EMBARGO__
   add(CapabilityCMKernelINTEL, "CMKernelINTEL");
-#endif // __INTEL_EMBARGO__
   add(CapabilitySubgroupAvcMotionEstimationINTEL,
       "SubgroupAvcMotionEstimationINTEL");
   add(CapabilitySubgroupAvcMotionEstimationIntraINTEL,

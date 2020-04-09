@@ -1,4 +1,4 @@
-//===-- GenXKernelMDOps.h - Kernel information support ----------*- C++ -*-===//
+//===-- GenXMetadata.h - GenX kernels and module metadata----*- C++-*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -14,15 +14,27 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file defines operand numbers to work with kernel metadata.
+// This file defines GenX kernel metadata operand numbers and other module
+// metadata.
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef GENX_KERNEL_MDOPS_H
-#define GENX_KERNEL_MDOPS_H
+#ifndef GENX_METADATA_H
+#define GENX_METADATA_H
 
 namespace llvm {
 namespace genx {
+
+namespace ModuleMD {
+const static char GenXKernels[] = "genx.kernels";
+const static char GenXByteOffset[] = "genx_byte_offset";
+const static char GenXVolatile[] = "genx_volatile";
+const static char CMGenXMain[] = "CMGenxMain";
+const static char CMStackCall[] = "CMStackCall";
+const static char CMFloatControl[] = "CMFloatControl";
+const static char OCLRuntime[] = "oclrt";
+} // namespace ModuleMD
+
 enum KernelMDOp {
   FunctionRef,  // Reference to Function
   Name,         // Kernel name
