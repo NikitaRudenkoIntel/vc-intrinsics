@@ -167,6 +167,7 @@
 #include "llvm/ADT/MapVector.h"
 #include "llvm/Analysis/PostDominators.h"
 #include "llvm/GenXIntrinsics/GenXIntrinsics.h"
+#include "llvm/GenXIntrinsics/GenXMetadata.h"
 #include "llvm/GenXOpts/GenXOpts.h"
 #include "llvm/GenXOpts/Utils/LowerCMSimdCF.h"
 #include "llvm/IR/Constants.h"
@@ -340,7 +341,7 @@ bool CMSimdCFLowering::doInitialization(Module &M)
 #endif
 
   for (auto &G : M.getGlobalList()) {
-    if (!G.hasAttribute("genx_volatile"))
+    if (!G.hasAttribute(genx::ModuleMD::GenXVolatile))
       continue;
     // Transform all load store on volatile globals to vload/vstore to disable
     // optimizations on this global (no PHI will be produced.).
@@ -447,7 +448,7 @@ void CMSimdCFLowering::calculateVisitOrder(Module *M,
         Function *Caller = CI->getParent()->getParent();
         // do not add a recursive call edge to the UnvisitedCallers
         if (Caller == F) {
-          if (F->hasFnAttribute("CMStackCall"))
+          if (F->hasFnAttribute(genx::ModuleMD::CMStackCall))
             DiagnosticInfoSimdCF::emit(CI, "SIMD recursive call", DS_Warning);
           else
             DiagnosticInfoSimdCF::emit(
