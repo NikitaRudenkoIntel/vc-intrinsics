@@ -22,12 +22,20 @@ and approved by Intel in writing.
 
 ======================= end_copyright_notice ==================================*/
 
+/** Originated from llvm source lib/IR/Function.cpp **/
+
+//===- Function.cpp - Implement the Global object classes -----------------===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
 //===----------------------------------------------------------------------===//
 //
 // Implementation of methods declared in llvm/GenXIntrinsics/GenXIntrinsics.h
 //
 //===----------------------------------------------------------------------===//
-
 
 #include "llvm/GenXIntrinsics/GenXIntrinsics.h"
 
