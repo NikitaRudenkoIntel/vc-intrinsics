@@ -1353,7 +1353,6 @@ bool LLVMToSPIRV::transAddressingMode() {
     BM->setAddressingModel(AddressingModelPhysical64);
   // Physical addressing model requires Addresses capability
   BM->addCapability(CapabilityAddresses);
-  BM->setMemoryModel(MemoryModelSimple);
   return true;
 }
 std::vector<SPIRVValue *>
@@ -1746,6 +1745,14 @@ bool LLVMToSPIRV::transCMKernelMetadata() {
   std::vector<std::string> ArgAccessQual;
   if (!KernelMDs)
     return true;
+
+  NamedMDNode *MemoryModelMD = M->getNamedMetadata(kSPIRVMD::MemoryModel);
+  if (MemoryModelMD) {
+    unsigned model = mdconst::dyn_extract<ConstantInt>(
+                         MemoryModelMD->getOperand(0)->getOperand(1))
+                         ->getZExtValue();
+    BM->setMemoryModel(SPIRVMemoryModelKind(model));
+  }
 
   for (unsigned I = 0, E = KernelMDs->getNumOperands(); I < E; ++I) {
     MDNode *KernelMD = KernelMDs->getOperand(I);

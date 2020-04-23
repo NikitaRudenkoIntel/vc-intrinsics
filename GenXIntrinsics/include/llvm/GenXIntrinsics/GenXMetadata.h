@@ -43,7 +43,14 @@ const static char CMGenXMain[] = "CMGenxMain";
 const static char CMStackCall[] = "CMStackCall";
 const static char CMFloatControl[] = "CMFloatControl";
 const static char OCLRuntime[] = "oclrt";
+const static char SPIRVMemoryModel[] = "spirv.MemoryModel";
 } // namespace ModuleMD
+
+namespace SPIRVParams {
+const static unsigned SPIRVMemoryModel = 0;
+const static unsigned SPIRVAddressingModel32 = 1;
+const static unsigned SPIRVAddressingModel64 = 2;
+} // namespace SPIRVMD
 
 enum KernelMDOp {
   FunctionRef,  // Reference to Function

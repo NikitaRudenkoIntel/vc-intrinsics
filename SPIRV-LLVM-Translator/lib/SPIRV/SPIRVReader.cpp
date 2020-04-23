@@ -2502,6 +2502,13 @@ bool SPIRVToLLVM::transCMKernelMetadata() {
   assert(Lang == SourceLanguageCM);
   NamedMDNode *KernelMDs =
       M->getOrInsertNamedMetadata(kCMMetadata::GenXKernels);
+
+  NamedMDNode *MemoryModelMD =
+      M->getOrInsertNamedMetadata(kSPIRVMD::MemoryModel);
+  MemoryModelMD->addOperand(getMDTwoInt(Context,
+                                        (unsigned)BM->getAddressingModel(),
+                                        (unsigned)BM->getMemoryModel()));
+
   for (unsigned I = 0, E = BM->getNumFunctions(); I != E; ++I) {
     SPIRVFunction *BF = BM->getFunction(I);
     Function *F = static_cast<Function *>(getTranslatedValue(BF));
