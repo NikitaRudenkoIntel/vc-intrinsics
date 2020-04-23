@@ -2505,9 +2505,9 @@ bool SPIRVToLLVM::transCMKernelMetadata() {
 
   NamedMDNode *MemoryModelMD =
       M->getOrInsertNamedMetadata(kSPIRVMD::MemoryModel);
-  MemoryModelMD->addOperand(getMDTwoInt(Context,
-                                        (unsigned)BM->getAddressingModel(),
-                                        (unsigned)BM->getMemoryModel()));
+  MemoryModelMD->addOperand(
+      getMDTwoInt(Context, static_cast<unsigned>(BM->getAddressingModel()),
+                  static_cast<unsigned>(BM->getMemoryModel())));
 
   for (unsigned I = 0, E = BM->getNumFunctions(); I != E; ++I) {
     SPIRVFunction *BF = BM->getFunction(I);

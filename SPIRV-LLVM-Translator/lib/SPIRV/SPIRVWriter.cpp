@@ -1751,7 +1751,7 @@ bool LLVMToSPIRV::transCMKernelMetadata() {
     unsigned model = mdconst::dyn_extract<ConstantInt>(
                          MemoryModelMD->getOperand(0)->getOperand(1))
                          ->getZExtValue();
-    BM->setMemoryModel(SPIRVMemoryModelKind(model));
+    BM->setMemoryModel(static_cast<SPIRVMemoryModelKind>(model));
   }
 
   for (unsigned I = 0, E = KernelMDs->getNumOperands(); I < E; ++I) {

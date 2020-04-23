@@ -47,7 +47,7 @@ const static char SPIRVMemoryModel[] = "spirv.MemoryModel";
 } // namespace ModuleMD
 
 namespace SPIRVParams {
-const static unsigned SPIRVMemoryModel = 0;
+const static unsigned SPIRVMemoryModelSimple = 0;
 const static unsigned SPIRVAddressingModel32 = 1;
 const static unsigned SPIRVAddressingModel64 = 2;
 } // namespace SPIRVMD
