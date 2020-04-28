@@ -379,6 +379,8 @@ void GenXIntrinsic::getIntrinsicInfoTableEntries(
     GenXIntrinsic::ID id, SmallVectorImpl<Intrinsic::IITDescriptor> &T) {
   assert(id > GenXIntrinsic::not_genx_intrinsic);
   id = static_cast<GenXIntrinsic::ID>(id - GenXIntrinsic::not_genx_intrinsic);
+  assert(id < sizeof(IIT_Table) / sizeof(*IIT_Table));
+
   // Check to see if the intrinsic's type was expressible by the table.
   unsigned TableVal = IIT_Table[id - 1];
 
