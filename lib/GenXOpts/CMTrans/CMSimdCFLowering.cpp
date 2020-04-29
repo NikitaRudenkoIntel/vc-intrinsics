@@ -393,8 +393,12 @@ bool CMSimdCFLowering::doInitialization(Module &M)
     calculateVisitOrder(&M, &VisitOrder);
     // Process functions in that order.
     CMSimdCFLower CFL(EMVar);
-    for (auto i = VisitOrder.begin(), e = VisitOrder.end(); i != e; ++i)
-      CFL.processFunction(*i);
+    for (auto i = VisitOrder.begin(), e = VisitOrder.end(); i != e; ++i) {
+      Function *Fn = *i;
+      if (Fn->hasFnAttribute("CMGenxNoSIMDPred"))
+        continue;
+      CFL.processFunction(Fn);
+    }
   }
 
   // Any predication calls which remain are not in SIMD CF regions,
@@ -1026,7 +1030,8 @@ void CMSimdCFLower::predicateInst(Instruction *Inst, unsigned SimdWidth) {
       case GenXIntrinsic::not_any_intrinsic:
         // Call to real subroutine.
         // ignore those SIMT entry function.
-        if (!Callee->hasFnAttribute("CMGenxSIMT")) {
+        if (!Callee->hasFnAttribute("CMGenxSIMT") &&
+            !Callee->hasFnAttribute("CMGenxNoSIMDPred")) {
           predicateCall(CI, SimdWidth);
         }
         return;
