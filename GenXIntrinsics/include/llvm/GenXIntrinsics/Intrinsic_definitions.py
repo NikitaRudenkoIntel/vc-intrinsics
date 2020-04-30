@@ -3706,6 +3706,6 @@ Imported_Intrinsics = \
 ##
 ## * Return value: the vector value read
 ##
-    "print_format_index" : ["int",["anyptr"],"None"]
+    "print_format_index" : ["int",["anyptr"],"NoMem"]
 
 }
