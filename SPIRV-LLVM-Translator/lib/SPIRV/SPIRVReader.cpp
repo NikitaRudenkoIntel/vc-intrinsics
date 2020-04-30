@@ -69,8 +69,6 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/FileSystem.h"
 
-#include "llvm/GenXIntrinsics/GenXIntrinsics.h"
-
 #include <algorithm>
 #include <cstdlib>
 #include <fstream>
@@ -1827,31 +1825,8 @@ Function *SPIRVToLLVM::transFunction(SPIRVFunction *BF) {
   auto IsKernel = BM->isEntryPoint(ExecutionModelKernel, BF->getId());
   auto Linkage = IsKernel ? GlobalValue::ExternalLinkage : transLinkageType(BF);
   FunctionType *FT = dyn_cast<FunctionType>(transType(BF->getFunctionType()));
-
   Function *F = cast<Function>(
       mapValue(BF, Function::Create(FT, Linkage, BF->getName(), M)));
-
-  // GENX_BEGIN
-  // Now a function can be an "ordinary" one, llvm intrinsic or cm intrinsic.
-  // If the latter - then at this point SPIRV reader does not know
-  // any CM-specific properties of the function (like intrinsic attributes).
-  // This is because core llvm code does not know anything about CM intrinsics.
-  // Here we try to identify such situations and construct cm-intrisics
-  // in a special way
-  if (StringRef(BF->getName()).startswith(GenXIntrinsic::getGenXIntrinsicPrefix())) {
-    GenXIntrinsic::ID GXID = GenXIntrinsic::lookupGenXIntrinsicID(BF->getName());
-    if (GXID != GenXIntrinsic::not_genx_intrinsic) {
-      if (!GenXIntrinsic::resetGenXAttributes(M, F)) {
-        llvm_unreachable("could not restore cm intrinsic attributes");
-      }
-    } else {
-      // should not happen
-      dbgs() << "could not get GenX equivalent for " << F->getName() << "\n";
-      llvm_unreachable("could not construct a cm intrinsic");
-    }
-  }
-  // GENX_END
-
   mapFunction(BF, F);
   if (IsKernel) {
     F->addFnAttr(kCMMetadata::CMGenXMain);
