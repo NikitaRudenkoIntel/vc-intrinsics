@@ -1209,10 +1209,10 @@ Imported_Intrinsics = \
 ### ``llvm.genx.dpas.<return type>.<vector type>.<vector type>`` : dpas instruction (Dot Product Accumulate Systolic)
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
-### * arg0: first input value, vector integer/float type
-### * arg1: second input value, vector integer/float type (overloaded)
-### * arg2: third input value, vector integer/float type (overloaded)
-### * arg3: fourth input value, integer type
+### * arg0: accumulator, vector integer/float type
+### * arg1: src1 (W), vector integer/float type (overloaded)
+### * arg2: src2 (A), vector integer/float type (overloaded)
+### * arg3: integer, encodes informatioin about the operation type
 ###
 ### * Return value: result, same type as arg0
 ###
