@@ -359,7 +359,7 @@ static Type *DecodeFixedType(ArrayRef<Intrinsic::IITDescriptor> &Infos,
     VectorType *VTy = dyn_cast<VectorType>(Ty);
     if (!VTy)
       llvm_unreachable("Expected an argument of Vector Type");
-    Type *EltTy = VTy->getVectorElementType();
+    Type *EltTy = cast<VectorType>(VTy)->getElementType();
     return PointerType::getUnqual(EltTy);
   }
   case IITDescriptor::VecOfAnyPtrsToElt:
@@ -448,8 +448,8 @@ static std::string getMangledTypeStr(Type* Ty) {
     Result += "f";
   }
   else if (isa<VectorType>(Ty))
-    Result += "v" + utostr(Ty->getVectorNumElements()) +
-      getMangledTypeStr(Ty->getVectorElementType());
+    Result += "v" + utostr(cast<VectorType>(Ty)->getNumElements()) +
+      getMangledTypeStr(cast<VectorType>(Ty)->getElementType());
   else if (Ty)
     Result += EVT::getEVT(Ty).getEVTString();
   return Result;
