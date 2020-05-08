@@ -168,8 +168,8 @@
 #include "llvm/Analysis/PostDominators.h"
 #include "llvm/GenXIntrinsics/GenXIntrinsics.h"
 #include "llvm/GenXIntrinsics/GenXMetadata.h"
-#include "llvm/GenXOpts/GenXOpts.h"
-#include "llvm/GenXOpts/Utils/LowerCMSimdCF.h"
+#include "llvm/GenXIntrinsics/GenXIntrOpts.h"
+#include "llvm/GenXIntrinsics/GenXSimdCFLowering.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DebugInfo.h"
 #include "llvm/IR/DiagnosticInfo.h"
@@ -187,7 +187,30 @@
 #include <algorithm>
 #include <set>
 
-#include "llvmWrapper/IR/InstrTypes.h"
+
+
+// TODO: part of wrapper: decide if it should be applied in this way
+#include <llvm/IR/InstrTypes.h>
+#if LLVM_VERSION_MAJOR >= 8
+#include <llvm/IR/PatternMatch.h>
+#endif
+
+namespace IGCLLVM {
+#if LLVM_VERSION_MAJOR <= 7
+using llvm::BinaryOperator;
+using llvm::TerminatorInst;
+#elif LLVM_VERSION_MAJOR >= 8
+using TerminatorInst = llvm::Instruction;
+
+class BinaryOperator : public llvm::BinaryOperator {
+public:
+  static inline bool isNot(const llvm::Value *V) {
+    return llvm::PatternMatch::match(
+        V, llvm::PatternMatch::m_Not(llvm::PatternMatch::m_Value()));
+  }
+};
+#endif
+} // namespace IGCLLVM
 
 using namespace llvm;
 
