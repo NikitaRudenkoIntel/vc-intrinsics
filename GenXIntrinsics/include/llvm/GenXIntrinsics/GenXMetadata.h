@@ -61,7 +61,11 @@ enum KernelMDOp {
   ArgIOKinds,   // Reference to metadata node containing kernel argument
                 // input/output kinds
   ArgTypeDescs, // Kernel argument type descriptors
+#ifdef __INTEL_EMBARGO__
   NBarrierCnt,  // Named barrier count
+#else // __INTEL_EMBARGO__
+  Reserved_0,
+#endif // __INTEL_EMBARGO__
   BarrierCnt    // Barrier count
 };
 } // namespace genx
