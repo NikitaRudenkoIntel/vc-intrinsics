@@ -191,26 +191,16 @@
 
 // TODO: part of wrapper: decide if it should be applied in this way
 #include <llvm/IR/InstrTypes.h>
-#if LLVM_VERSION_MAJOR >= 8
+#if VC_INTR_LLVM_VERSION_MAJOR >= 8
 #include <llvm/IR/PatternMatch.h>
 #endif
-
-namespace IGCLLVM {
-#if LLVM_VERSION_MAJOR <= 7
-using llvm::BinaryOperator;
+namespace VCINTR {
+#if VC_INTR_LLVM_VERSION_MAJOR <= 7
 using llvm::TerminatorInst;
-#elif LLVM_VERSION_MAJOR >= 8
+#elif VC_INTR_LLVM_VERSION_MAJOR >= 8
 using TerminatorInst = llvm::Instruction;
-
-class BinaryOperator : public llvm::BinaryOperator {
-public:
-  static inline bool isNot(const llvm::Value *V) {
-    return llvm::PatternMatch::match(
-        V, llvm::PatternMatch::m_Not(llvm::PatternMatch::m_Value()));
-  }
-};
 #endif
-} // namespace IGCLLVM
+} // namespace VCINTR
 
 using namespace llvm;
 
@@ -762,7 +752,7 @@ void CMSimdCFLower::findAndSplitJoinPoints()
   }
   for (auto sji = Jumps.begin(), sje = Jumps.end(); sji != sje; ++sji) {
     assert((*sji)->isTerminator() && "Expected terminator inst");
-    auto Br = cast<IGCLLVM::TerminatorInst>(*sji);
+    auto Br = cast<VCINTR::TerminatorInst>(*sji);
     unsigned SimdWidth = SimdBranches[Br->getParent()];
     LLVM_DEBUG(dbgs() << *Br << "\n");
     auto JP = Br->getSuccessor(0);
@@ -818,7 +808,7 @@ void CMSimdCFLower::determineJIPs()
   for (auto NextBB = &F->front(), EndBB = &F->back(); NextBB;) {
     auto BB = NextBB;
     NextBB = BB == EndBB ? nullptr : BB->getNextNode();
-    auto Term = cast<IGCLLVM::TerminatorInst>(BB->getTerminator());
+    auto Term = cast<VCINTR::TerminatorInst>(BB->getTerminator());
     for (unsigned si = 0, se = Term->getNumSuccessors(); si != se; ++si) {
       BasicBlock *Succ = Term->getSuccessor(si);
       if (Succ == NextBB)
@@ -927,7 +917,7 @@ void CMSimdCFLower::determineJIP(BasicBlock *BB,
     if (NeedNextJoin && JoinPoints.count(JP))
       break; // found join point
     // See if JP finishes with a branch to BB or before.
-    auto Term = cast<IGCLLVM::TerminatorInst>(JP->getTerminator());
+    auto Term = cast<VCINTR::TerminatorInst>(JP->getTerminator());
     for (unsigned si = 0, se = Term->getNumSuccessors(); si != se; ++si) {
       auto Succ = Term->getSuccessor(si);
       if ((*Numbers)[Succ] <= BBNum) {
