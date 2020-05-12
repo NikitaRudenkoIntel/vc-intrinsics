@@ -68,6 +68,10 @@ add_llvm_library(SPIRVDLL SHARED
     intrinsics_gen
 )
 
+if(NOT WIN32)
+  target_link_options(SPIRVDLL PRIVATE -Bsymbolic)
+endif()
+
 target_include_directories(LLVMSPIRVLib
   PRIVATE
     ${LLVM_INCLUDE_DIRS}
