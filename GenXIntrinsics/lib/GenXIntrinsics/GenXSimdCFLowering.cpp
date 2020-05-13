@@ -548,7 +548,8 @@ bool CMSimdCFLower::findSimdBranches(unsigned CMWidth)
     if (!Br || !Br->isConditional())
       continue;
     if (auto SimdCondUse = getSimdConditionUse(Br->getCondition())) {
-      unsigned SimdWidth = (*SimdCondUse)->getType()->getVectorNumElements();
+      unsigned SimdWidth =
+          cast<VectorType>((*SimdCondUse)->getType())->getNumElements();
       if (CMWidth && SimdWidth != CMWidth)
         DiagnosticInfoSimdCF::emit(Br, "mismatching SIMD CF width inside SIMD call");
       SimdBranches[BB] = SimdWidth;
@@ -1252,8 +1253,9 @@ void CMSimdCFLower::predicateStore(Instruction *SI, unsigned SimdWidth)
     unsigned IID = GenXIntrinsic::getGenXIntrinsicID(I);
     switch (IID) {
     case GenXIntrinsic::genx_gather4_scaled2: {
-      unsigned AddrElems = I->getArgOperand(4)->getType()->getVectorNumElements();
-      unsigned ResultElems = I->getType()->getVectorNumElements();
+      unsigned AddrElems =
+          cast<VectorType>(I->getArgOperand(4)->getType())->getNumElements();
+      unsigned ResultElems = cast<VectorType>(I->getType())->getNumElements();
       NumChannels = ResultElems / AddrElems;
       break;
     }
@@ -1267,10 +1269,11 @@ void CMSimdCFLower::predicateStore(Instruction *SI, unsigned SimdWidth)
   }
   // Predicate the store by creating a select.
   Instruction *Load = nullptr;
-  if (auto SInst = dyn_cast<StoreInst>(SI))
-    Load = new LoadInst(
-        SInst->getPointerOperand(),
-        SInst->getPointerOperand()->getName() + ".simdcfpred.load", SI);
+  if (auto SInst = dyn_cast<StoreInst>(SI)) {
+    auto *PtrOp = SInst->getPointerOperand();
+    Load = new LoadInst(PtrOp->getType()->getPointerElementType(), PtrOp,
+                        PtrOp->getName() + ".simdcfpred.load", SI);
+  }
   else {
     auto ID = GenXIntrinsic::genx_vload;
     Value *Addr = SI->getOperand(1);
@@ -1302,11 +1305,13 @@ void CMSimdCFLower::predicateSend(CallInst *CI, unsigned IntrinsicID,
     predicateScatterGather(CI, SimdWidth, PredOperandNum);
     return;
   }
+  IRBuilder<> Builder(CI);
+  Builder.SetCurrentDebugLocation(CI->getDebugLoc());
   // Need to convert scalar predicate to vector. We need to get a new intrinsic
   // declaration from an array of overloaded types, and that depends on exactly
   // which send intrinsic we have.
-  auto Pred = ConstantVector::getSplat(SimdWidth,
-      cast<Constant>(CI->getOperand(PredOperandNum)));
+  auto Pred = Builder.CreateVectorSplat(
+      SimdWidth, cast<Constant>(CI->getOperand(PredOperandNum)));
   Function *Decl = nullptr;
   switch (IntrinsicID) {
     case GenXIntrinsic::genx_raw_send: {
@@ -1349,9 +1354,8 @@ void CMSimdCFLower::predicateSend(CallInst *CI, unsigned IntrinsicID,
       Args.push_back(Pred);
     else
       Args.push_back(CI->getOperand(i));
-  auto NewCI = CallInst::Create(Decl, Args, "", CI);
-  NewCI->takeName(CI);
-  NewCI->setDebugLoc(CI->getDebugLoc());
+
+  auto NewCI = Builder.CreateCall(Decl, Args, CI->getName());
   CI->replaceAllUsesWith(NewCI);
   CI->eraseFromParent();
   // Now we can predicate the new send instruction.
@@ -1368,7 +1372,7 @@ void CMSimdCFLower::predicateScatterGather(CallInst *CI, unsigned SimdWidth,
 {
   Value *OldPred = CI->getArgOperand(PredOperandNum);
   assert(OldPred->getType()->getScalarType()->isIntegerTy(1));
-  if (SimdWidth != OldPred->getType()->getVectorNumElements()) {
+  if (SimdWidth != cast<VectorType>(OldPred->getType())->getNumElements()) {
     DiagnosticInfoSimdCF::emit(CI, "mismatching SIMD width of scatter/gather inside SIMD control flow");
     return;
   }
@@ -1446,20 +1450,24 @@ void CMSimdCFLower::predicateCall(CallInst *CI, unsigned SimdWidth)
  */
 void CMSimdCFLower::lowerSimdCF()
 {
+  IRBuilder<> Builder(F->getContext());
   // First lower the simd branches.
   for (auto sbi = SimdBranches.begin(), sbe = SimdBranches.end();
       sbi != sbe; ++sbi) {
     BasicBlock *BB = sbi->first;
+
     auto Br = cast<BranchInst>(BB->getTerminator());
+    Builder.SetInsertPoint(Br);
+
     BasicBlock *UIP = Br->getSuccessor(0);
     BasicBlock *JIP = JIPs[BB];
     LLVM_DEBUG(dbgs() << "lower branch at " << BB->getName() << ", UIP=" << UIP->getName() << ", JIP=" << JIP->getName() << "\n");
     if (!Br->isConditional()) {
       // Unconditional branch.  Turn it into a conditional branch on true,
       // adding a fallthrough on false.
-      auto NewBr = BranchInst::Create(UIP, BB->getNextNode(),
-          Constant::getAllOnesValue(Type::getInt1Ty(BB->getContext())), BB);
-      NewBr->setDebugLoc(Br->getDebugLoc());
+      auto NewBr = Builder.CreateCondBr(
+          Constant::getAllOnesValue(Type::getInt1Ty(BB->getContext())), UIP,
+          BB->getNextNode());
       Br->eraseFromParent();
       Br = NewBr;
     }
@@ -1472,31 +1480,34 @@ void CMSimdCFLower::lowerSimdCF()
       // Branch is currently scalar. Splat to a vector condition.
       unsigned SimdWidth = PredicatedBlocks[BB];
       if (auto C = dyn_cast<Constant>(Cond))
-        Cond = ConstantVector::getSplat(SimdWidth, C);
+        Cond = Builder.CreateVectorSplat(SimdWidth, C);
       else {
         Cond = Br->getCondition();
         Type *VecTy = VectorType::get(Cond->getType(), 1);
         Value *Undef = UndefValue::get(VecTy);
         Type *I32Ty = Type::getInt32Ty(Cond->getContext());
-        auto Insert = InsertElementInst::Create(Undef, Cond,
-            Constant::getNullValue(I32Ty), Cond->getName() + ".splat", Br);
-        Insert->setDebugLoc(DL);
-        auto Splat = new ShuffleVectorInst(Insert, Undef,
+        auto Insert = Builder.CreateInsertElement(Undef, Cond,
+                                                  Constant::getNullValue(I32Ty),
+                                                  Cond->getName() + ".splat");
+        auto Splat = Builder.CreateShuffleVector(
+            Insert, Undef,
             Constant::getNullValue(VectorType::get(I32Ty, SimdWidth)),
-            Insert->getName(), Br);
-        Splat->setDebugLoc(DL);
+            Insert->getName());
         Cond = Splat;
       }
     }
     // Insert {NewEM,NewRM,BranchCond} = llvm.genx.simdcf.goto(OldEM,OldRM,~Cond)
-    unsigned SimdWidth = Cond->getType()->getVectorNumElements();
+     // TODO: rewrite everything below using IRBuilder
+    unsigned SimdWidth = cast<VectorType>(Cond->getType())->getNumElements();
     auto NotCond = BinaryOperator::Create(Instruction::Xor, Cond,
         Constant::getAllOnesValue(Cond->getType()), Cond->getName() + ".not",
         Br);
     Value *RMAddr = getRMAddr(UIP, SimdWidth);
-    Instruction *OldEM = new LoadInst(EMVar, EMVar->getName(), Br);
+    Instruction *OldEM = new LoadInst(EMVar->getType()->getPointerElementType(),
+                                      EMVar, EMVar->getName(), Br);
     OldEM->setDebugLoc(DL);
-    auto OldRM = new LoadInst(RMAddr, RMAddr->getName(), Br);
+    auto OldRM = new LoadInst(RMAddr->getType()->getPointerElementType(),
+                              RMAddr, RMAddr->getName(), Br);
     OldRM->setDebugLoc(DL);
     Type *Tys[] = { OldEM->getType(), OldRM->getType() };
     auto GotoFunc = GenXIntrinsic::getGenXDeclaration(BB->getParent()->getParent(),
@@ -1529,9 +1540,11 @@ void CMSimdCFLower::lowerSimdCF()
     Instruction *InsertBefore = JP->getFirstNonPHI();
     // Insert {NewEM,BranchCond} = llvm.genx.simdcf.join(OldEM,RM)
     Value *RMAddr = getRMAddr(JP, SimdWidth);
-    Instruction *OldEM = new LoadInst(EMVar, EMVar->getName(), InsertBefore);
+    Instruction *OldEM = new LoadInst(EMVar->getType()->getPointerElementType(),
+                                      EMVar, EMVar->getName(), InsertBefore);
     OldEM->setDebugLoc(DL);
-    auto RM = new LoadInst(RMAddr, RMAddr->getName(), InsertBefore);
+    auto RM = new LoadInst(RMAddr->getType()->getPointerElementType(), RMAddr,
+                           RMAddr->getName(), InsertBefore);
     RM->setDebugLoc(DL);
     Type *Tys[] = { OldEM->getType(), RM->getType() };
     auto JoinFunc = GenXIntrinsic::getGenXDeclaration(
@@ -1559,7 +1572,7 @@ void CMSimdCFLower::lowerSimdCF()
       Br->eraseFromParent();
       // Get the JIP's RM, just to ensure that it knows its SIMD width in case
       // nothing else references it.
-      getRMAddr(JIP, RM->getType()->getVectorNumElements());
+      getRMAddr(JIP, cast<VectorType>(RM->getType())->getNumElements());
     }
   }
 }
@@ -1599,7 +1612,9 @@ void CMSimdCFLower::lowerUnmaskOps() {
           MaskEnds.push_back(CIE);
           // put in genx_simdcf_savemask and genx_simdcf_remask
           auto DL = cast<CallInst>(CIB)->getDebugLoc();
-          Instruction *OldEM = new LoadInst(EMVar, EMVar->getName(), CIB);
+          Instruction *OldEM =
+              new LoadInst(EMVar->getType()->getPointerElementType(), EMVar,
+                           EMVar->getName(), CIB);
           OldEM->setDebugLoc(DL);
           Type *Tys[] = {OldEM->getType()};
           auto SavemaskFunc =  GenXIntrinsic::getGenXDeclaration(
@@ -1620,7 +1635,8 @@ void CMSimdCFLower::lowerUnmaskOps() {
           (new StoreInst(Unmask, EMVar, CIB))->setDebugLoc(DL);
           // put in genx_simdcf_remask
           DL = CIE->getDebugLoc();
-          OldEM = new LoadInst(EMVar, EMVar->getName(), CIE);
+          OldEM = new LoadInst(EMVar->getType()->getPointerElementType(), EMVar,
+                               EMVar->getName(), CIE);
           OldEM->setDebugLoc(DL);
           Type *Ty2s[] = {OldEM->getType()};
           auto RemaskFunc = GenXIntrinsic::getGenXDeclaration(
@@ -1675,7 +1691,8 @@ CallInst *CMSimdCFLower::isSimdCFAny(Value *V)
 Instruction *CMSimdCFLower::loadExecutionMask(Instruction *InsertBefore,
     unsigned SimdWidth, unsigned NumChannels)
 {
-  Instruction *EM = new LoadInst(EMVar, EMVar->getName(), InsertBefore);
+  Instruction *EM = new LoadInst(EMVar->getType()->getPointerElementType(),
+                                 EMVar, EMVar->getName(), InsertBefore);
   EM->setDebugLoc(InsertBefore->getDebugLoc());
   // If the simd width is not MAX_SIMD_CF_WIDTH, extract the part of EM we want.
   if (NumChannels == 1 && SimdWidth == MAX_SIMD_CF_WIDTH)
@@ -1727,9 +1744,9 @@ Value *CMSimdCFLower::getRMAddr(BasicBlock *JP, unsigned SimdWidth)
     // Initialize to all zeros.
     new StoreInst(Constant::getNullValue(RMTy), *RMAddr, InsertBefore);
   }
-  assert(!SimdWidth
-      || (*RMAddr)->getType()->getPointerElementType()->getVectorNumElements()
-        == SimdWidth);
+  assert(!SimdWidth ||
+         cast<VectorType>((*RMAddr)->getType()->getPointerElementType())
+                 ->getNumElements() == SimdWidth);
   return *RMAddr;
 }
 
