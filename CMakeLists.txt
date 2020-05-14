@@ -1,3 +1,6 @@
+#__INTEL_EMBARGO_BEGIN__
+#  SPIRV-LLVM-Translator 
+#__INTEL_EMBARGO_END__
 cmake_minimum_required(VERSION 3.3)
 
 set(LLVM_GENX_INTRINSICS_VERSION 1.0)
@@ -6,6 +9,9 @@ set(LLVM_GENX_INTRINSICS_VERSION 1.0)
 if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
   get_filename_component(LLVM_CMAKE_PATH ${LLVM_DIR} ABSOLUTE BASE_DIR ${CMAKE_BINARY_DIR})
   set(BUILD_EXTERNAL YES)
+  if (NOT DEFINED INSTALL_REQUIRED)
+    set(INSTALL_REQUIRED YES)
+  endif()
   project(LLVM_GenXIntrinsics
     VERSION
       ${LLVM_GENX_INTRINSICS_VERSION}
@@ -31,9 +37,12 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
 else(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
   set(BUILD_EXTERNAL NO)
 
+  #__INTEL_EMBARGO_BEGIN__
+  # this is not an open source part
   # we require include_directories because we have dependency in SPIRV from intrinisics
   include_directories(${CMAKE_CURRENT_SOURCE_DIR}/GenXIntrinsics/include)
   include_directories(${CMAKE_CURRENT_BINARY_DIR}/GenXIntrinsics/include)
+  #__INTEL_EMBARGO_END__
 endif(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
 
 include(FindPythonInterp)
@@ -54,12 +63,20 @@ if( __INTEL_EMBARGO__ )
   add_definitions(-D__INTEL_EMBARGO__)
 endif(__INTEL_EMBARGO__)
 
-if(NOT IGNORE_VC_INTRINSICS)
-  add_subdirectory(GenXIntrinsics)
-else()
-  message("Ignoring intrinsics")
-endif()
+if( __INTEL_EMBARGO__ )
+  # this check is not required for opensource version
+  # as there is GenXIntrinsics only
+  if(NOT IGNORE_VC_INTRINSICS)
+    add_subdirectory(GenXIntrinsics)
+  else()
+    message("Ignoring intrinsics")
+  endif()
+else(__INTEL_EMBARGO__)
+add_subdirectory(GenXIntrinsics)
+endif(__INTEL_EMBARGO__)
 
+#__INTEL_EMBARGO_BEGIN__
+# this is not an open source part
 if(NOT IGNORE_SPIRV_TRANSLATOR)
   if(BUILD_SPIRV_TRANSLATOR_V7)
     add_subdirectory(SPIRV-LLVM-Translator-v7)
@@ -69,4 +86,5 @@ if(NOT IGNORE_SPIRV_TRANSLATOR)
 else()
   message("Ignoring SPIRV-Translator")
 endif()
+#__INTEL_EMBARGO_END__
 
