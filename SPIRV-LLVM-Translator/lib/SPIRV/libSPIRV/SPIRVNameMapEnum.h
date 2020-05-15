@@ -352,6 +352,7 @@ template <> inline void SPIRVMap<Decoration, std::string>::init() {
   add(DecorationArgumentTypeINTEL, "ArgumentTypeINTEL");
   add(DecorationArgumentDescINTEL, "ArgumentDescINTEL");
   add(DecorationCMStackCallINTEL, "DecorationCMStackCallINTEL");
+  add(DecorationReferencedIndirectlyINTEL, "ReferencedIndirectlyINTEL");
 }
 SPIRV_DEF_NAMEMAP(Decoration, SPIRVDecorationNameMap)
 
@@ -531,6 +532,8 @@ template <> inline void SPIRVMap<Capability, std::string>::init() {
       "SubgroupAvcMotionEstimationIntraINTEL");
   add(CapabilitySubgroupAvcMotionEstimationChromaINTEL,
       "SubgroupAvcMotionEstimationChromaINTEL");
+  add(CapabilityFunctionPointersINTEL, "FunctionPointersINTEL");
+  add(CapabilityIndirectReferencesINTEL, "IndirectReferencesINTEL");
 }
 SPIRV_DEF_NAMEMAP(Capability, SPIRVCapabilityNameMap)
 
