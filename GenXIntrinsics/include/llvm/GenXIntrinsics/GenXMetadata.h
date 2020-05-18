@@ -44,6 +44,7 @@ const static char CMStackCall[] = "CMStackCall";
 const static char CMFloatControl[] = "CMFloatControl";
 const static char OCLRuntime[] = "oclrt";
 const static char SPIRVMemoryModel[] = "spirv.MemoryModel";
+const static char ReferencedIndirectly[] = "referenced-indirectly";
 } // namespace ModuleMD
 
 namespace SPIRVParams {
