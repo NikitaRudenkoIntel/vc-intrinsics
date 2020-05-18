@@ -1204,8 +1204,8 @@ Imported_Intrinsics = \
 ### * Return value: result, same type
 ###
     "ieee_sqrt" : ["anyfloat",[0],"NoMem"],
-
 # __INTEL_EMBARGO_BEGIN__
+
 ### ``llvm.genx.dpas.<return type>.<vector type>.<vector type>`` : dpas instruction (Dot Product Accumulate Systolic)
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
@@ -1217,6 +1217,8 @@ Imported_Intrinsics = \
 ### * Return value: result, same type as arg0
 ###
     "dpas" : ["anyvector",[0,"anyvector","anyvector","int"],"NoMem"],
+# __INTEL_EMBARGO_END__
+# __INTEL_EMBARGO_BEGIN__
 
 ### ``llvm.genx.dpas.nosrc0.<return type>.<vector type>.<vector type>`` : dpas instruction (Dot Product Accumulate Systolic) with no src0
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1228,6 +1230,8 @@ Imported_Intrinsics = \
 ### * Return value: result
 ###
     "dpas_nosrc0" : ["anyvector",["anyvector","anyvector","int"],"NoMem"],
+# __INTEL_EMBARGO_END__
+# __INTEL_EMBARGO_BEGIN__
 
 ### ``llvm.genx.dpasw.<return type>.<vector type>.<vector type>`` : dpasw instruction (Dot Product Accumulate Systolic)
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1240,6 +1244,8 @@ Imported_Intrinsics = \
 ### * Return value: result, same type as arg0
 ###
     "dpasw" : ["anyvector",[0,"anyvector","anyvector","int"],"NoMem"],
+# __INTEL_EMBARGO_END__
+# __INTEL_EMBARGO_BEGIN__
 
 ### ``llvm.genx.dpasw.nosrc0.<return type>.<vector type>.<vector type>`` : dpasw instruction (Dot Product Accumulate Systolic) with no src0
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1281,6 +1287,7 @@ Imported_Intrinsics = \
     "uudp4a_sat" : ["anyvector",["anyvector","anyvector","anyvector"],"NoMem"],
 
 
+# __INTEL_EMBARGO_BEGIN__
 ### add3
 ### ^^^^
 ###
@@ -1292,6 +1299,8 @@ Imported_Intrinsics = \
 ### * arg1: second input, same type as arg0
 ### * arg2: third input, same type as arg0
     "add3" : ["anyint",["anyint",1,1],"NoMem"],
+# __INTEL_EMBARGO_END__
+# __INTEL_EMBARGO_BEGIN__
 
 ### ``llvm.genx.*add3.sat.<return type>.<any int>`` : add3 instruction with saturation
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1311,6 +1320,8 @@ Imported_Intrinsics = \
     "suadd3_sat" : ["anyint",["anyint",1,1],"NoMem"],
     "usadd3_sat" : ["anyint",["anyint",1,1],"NoMem"],
     "uuadd3_sat" : ["anyint",["anyint",1,1],"NoMem"],
+# __INTEL_EMBARGO_END__
+# __INTEL_EMBARGO_BEGIN__
 
 ### bfn
 ### ^^^
@@ -1324,8 +1335,9 @@ Imported_Intrinsics = \
 ### * arg2: third input, same type as arg0
 ### * arg3: fourth input, byte, constant
     "bfn" : ["anyint",["anyint",1,1,"char"],"NoMem"],
-
+# __INTEL_EMBARGO_END__
 # __INTEL_EMBARGO_BEGIN__
+
 ### bf_cvt
 ### ^^^^^^
 ###
@@ -1338,6 +1350,8 @@ Imported_Intrinsics = \
 ### * Return value: result, must be float if arg0 is half, or half if arg0 is float.
 ###
     "bf_cvt" : ["anyfloat",["anyfloat"],"NoMem"],
+# __INTEL_EMBARGO_END__
+# __INTEL_EMBARGO_BEGIN__
 
 ### qf_cvt
 ### ^^^^^^
@@ -1351,6 +1365,8 @@ Imported_Intrinsics = \
 ### * Return value: result, must be i8 if arg0 is half, or half if arg0 is i8.
 ###
     "qf_cvt" : ["anyvector",["anyvector"],"NoMem"],
+# __INTEL_EMBARGO_END__
+# __INTEL_EMBARGO_BEGIN__
 
 ### ``llvm.genx.lsc.load.*.<return type if not void>.<any type>.<any type>`` : lsc_load instructions
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1428,6 +1444,8 @@ Imported_Intrinsics = \
     "lsc_prefetch_bti" : ["void",["any","char","char","char","short","int","char","char","char","char","any","int"],"None"],
     "lsc_prefetch_stateless" : ["void",["any","char","char","char","short","int","char","char","char","char","any","int"],"None"],
     "lsc_prefetch_bindless" : ["void",["any","char","char","char","short","int","char","char","char","char","any","int"],"None"],
+# __INTEL_EMBARGO_END__
+# __INTEL_EMBARGO_BEGIN__
 
 ### ``llvm.genx.lsc.store.*.<any type>.<any type>.<any vector>`` : lsc_store instructions
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1457,6 +1475,8 @@ Imported_Intrinsics = \
     "lsc_store_stateless" : ["void",["any","char","char","char","short","int","char","char","char","char","any","anyvector","int"],"None"],
     "lsc_store_bindless" : ["void",["any","char","char","char","short","int","char","char","char","char","any","anyvector","int"],"None"],
     "lsc_store_bti" : ["void",["any","char","char","char","short","int","char","char","char","char","any","anyvector","int"],"None"],
+# __INTEL_EMBARGO_END__
+# __INTEL_EMBARGO_BEGIN__
 
 ###
 ### * ``llvm.genx.lsc.load2d.stateless.<return type>.<vector type>`` :
@@ -1483,6 +1503,8 @@ Imported_Intrinsics = \
 ###
     "lsc_load2d_stateless" : ["anyvector",["anyvector","char","char","char","char","char","short","short","char","long","int","int","int","int","int"],"ReadMem"],
     "lsc_prefetch2d_stateless" : ["void",["anyvector","char","char","char","char","char","short","short","char","long","int","int","int","int","int"],"None"],
+# __INTEL_EMBARGO_END__
+# __INTEL_EMBARGO_BEGIN__
 
 ###
 ### * ``llvm.genx.lsc.store2d.stateless.<vector type>.<vector type>`` :
@@ -1508,6 +1530,8 @@ Imported_Intrinsics = \
 ### * Return value: void
 ###
     "lsc_store2d_stateless" : ["void",["anyvector","char","char","char","char","char","short","short","char","long","int","int","int","int","int","anyvector"],"None"],
+# __INTEL_EMBARGO_END__
+# __INTEL_EMBARGO_BEGIN__
 
 ### ``llvm.genx.lsc.atomic.*.<return type>.<any type>.<any vector>`` : lsc_atomic instructions
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1520,6 +1544,9 @@ Imported_Intrinsics = \
     "lsc_atomic_slm" : ["any",["any","char","char","char","short","int","char","char","char","char","int","anyvector",0,0,0],"None"],
     "lsc_atomic_stateless" : ["any",["any","char","char","char","short","int","char","char","char","char","int","anyvector",0,0,0],"None"],
     "lsc_atomic_bindless" : ["any",["any","char","char","char","short","int","char","char","char","char","int","anyvector",0,0,0],"None"],
+# __INTEL_EMBARGO_END__
+# __INTEL_EMBARGO_BEGIN__
+
 ### ``llvm.genx.lsc.fence.<vector type>`` : lsc_fence instruction
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
