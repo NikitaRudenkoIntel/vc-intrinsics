@@ -358,23 +358,63 @@ bool CMSimdCFLowering::doInitialization(Module &M)
       continue;
     // Transform all load store on volatile globals to vload/vstore to disable
     // optimizations on this global (no PHI will be produced.).
+    auto AS0 = G.getAddressSpace();
+    std::vector<User*> WL;
     for (auto UI = G.user_begin(); UI != G.user_end();) {
-      auto Inst = *UI++;
-      if (auto LI = dyn_cast<LoadInst>(Inst)) {
+      auto U = *UI++;
+      WL.push_back(U);
+    }
+
+    while (!WL.empty()) {
+      auto Inst = WL.back();
+      WL.pop_back();
+      if (auto CE = dyn_cast<ConstantExpr>(Inst)) {
+        for (auto UI = CE->user_begin(); UI != CE->user_end();) {
+          auto U = *UI++;
+          WL.push_back(U);
+        }
+      }
+      else if (auto CI = dyn_cast<CastInst>(Inst)) {
+        for (auto UI = CI->user_begin(); UI != CI->user_end();) {
+          auto U = *UI++;
+          WL.push_back(U);
+        }
+      }
+      else if (auto GEP = dyn_cast<GetElementPtrInst>(Inst)) {
+        for (auto UI = GEP->user_begin(); UI != GEP->user_end();) {
+          auto U = *UI++;
+          WL.push_back(U);
+        }
+      }
+      else if (auto LI = dyn_cast<LoadInst>(Inst)) {
         IRBuilder<> Builder(LI);
-        Type *Tys[] = {LI->getType(), LI->getPointerOperandType()};
-        Function *Fn = GenXIntrinsic::getGenXDeclaration(&M, GenXIntrinsic::genx_vload, Tys);
-        Value *VLoad = Builder.CreateCall(Fn, LI->getPointerOperand(), "gload");
+        auto Ptr = LI->getPointerOperand();
+        auto AS1 = LI->getPointerAddressSpace();
+        if (AS1 != AS0) {
+          auto PtrTy = cast<PointerType>(Ptr->getType());
+          PtrTy = PointerType::get(PtrTy->getElementType(), AS0);
+          Ptr = Builder.CreateAddrSpaceCast(Ptr, PtrTy);
+        }
+        Type* Tys[] = { LI->getType(), Ptr->getType() };
+        Function* Fn = GenXIntrinsic::getGenXDeclaration(&M, GenXIntrinsic::genx_vload, Tys);
+        Value* VLoad = Builder.CreateCall(Fn, Ptr, "gload");
         LI->replaceAllUsesWith(VLoad);
         LI->eraseFromParent();
-      } else if (auto SI = dyn_cast<StoreInst>(Inst)) {
+      }
+      else if (auto SI = dyn_cast<StoreInst>(Inst)) {
         if (!SI->getValueOperand()->getType()->isVectorTy())
           continue;
         IRBuilder<> Builder(SI);
-        Type *Tys[] = {SI->getValueOperand()->getType(),
-                       SI->getPointerOperandType()};
-        Value *Args[] = {SI->getValueOperand(), SI->getPointerOperand()};
-        Function *Fn = GenXIntrinsic::getGenXDeclaration(&M, GenXIntrinsic::genx_vstore, Tys);
+        auto Ptr = SI->getPointerOperand();
+        auto AS1 = SI->getPointerAddressSpace();
+        if (AS1 != AS0) {
+          auto PtrTy = cast<PointerType>(Ptr->getType());
+          PtrTy = PointerType::get(PtrTy->getElementType(), AS0);
+          Ptr = Builder.CreateAddrSpaceCast(Ptr, PtrTy);
+        }
+        Type* Tys[] = { SI->getValueOperand()->getType(), Ptr->getType() };
+        Value* Args[] = { SI->getValueOperand(), Ptr };
+        Function* Fn = GenXIntrinsic::getGenXDeclaration(&M, GenXIntrinsic::genx_vstore, Tys);
         Builder.CreateCall(Fn, Args);
         SI->eraseFromParent();
       }
