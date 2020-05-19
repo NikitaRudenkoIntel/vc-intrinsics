@@ -307,10 +307,10 @@ Imported_Intrinsics = \
 ### ``goto`` and ``join`` instructions are represented by ``llvm.genx.simdcf.goto``
 ### and ``llvm.genx.simdcf.join`` intrinsics.
 ### 
-### The BSpec model
+### The Architectural model
 ### ^^^^^^^^^^^^^^^
 ### 
-### The BSpec defines SIMD control flow in terms of each of the 32 channels
+### The Architectural defines SIMD control flow in terms of each of the 32 channels
 ### having a PcIP (per-channel instruction pointer), which determines where a
 ### disabled channel will be re-enabled:
 ### 
@@ -401,7 +401,7 @@ Imported_Intrinsics = \
 ### Note that EM is always 32 bit, but a join's RM may be smaller as it has the same
 ### vector width as the condition on all gotos that update it.
 ### 
-### This model is equivalent to the BSpec model, as long as:
+### This model is equivalent to the Architectural model, as long as:
 ### 
 ### * there is only ever one EM value live at a time with an initial value in a
 ###   function of either all ones or the passed in call mask;
@@ -420,7 +420,7 @@ Imported_Intrinsics = \
 ### 
 ### The  ``llvm.genx.simdcf.goto`` and ``llvm.genx.simdcf.join`` intrinsics can
 ### only be generated to ``goto`` and ``join`` instructions if the GenX backend
-### deems them to be used in a way that is equivalent to the BSpec model. Otherwise,
+### deems them to be used in a way that is equivalent to the Architectural model. Otherwise,
 ### they are lowered to equivalent but slower code that implements the semantics
 ### of the spec of the intrinsics below.
 ### 
