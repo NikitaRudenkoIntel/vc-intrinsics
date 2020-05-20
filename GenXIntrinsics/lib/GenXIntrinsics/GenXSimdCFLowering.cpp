@@ -354,7 +354,7 @@ bool CMSimdCFLowering::doInitialization(Module &M)
 #endif
 
   for (auto &G : M.getGlobalList()) {
-    if (!G.hasAttribute(genx::ModuleMD::GenXVolatile))
+    if (!G.hasAttribute(genx::FunctionMD::GenXVolatile))
       continue;
     // Transform all load store on volatile globals to vload/vstore to disable
     // optimizations on this global (no PHI will be produced.).
@@ -505,7 +505,7 @@ void CMSimdCFLowering::calculateVisitOrder(Module *M,
         Function *Caller = CI->getParent()->getParent();
         // do not add a recursive call edge to the UnvisitedCallers
         if (Caller == F) {
-          if (F->hasFnAttribute(genx::ModuleMD::CMStackCall))
+          if (F->hasFnAttribute(genx::FunctionMD::CMStackCall))
             DiagnosticInfoSimdCF::emit(CI, "SIMD recursive call", DS_Warning);
           else
             DiagnosticInfoSimdCF::emit(
