@@ -37,12 +37,9 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
 else(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
   set(BUILD_EXTERNAL NO)
 
-  #__INTEL_EMBARGO_BEGIN__
-  # this is not an open source part
-  # we require include_directories because we have dependency in SPIRV from intrinisics
+  # we require include_directories because other components may include intrinsics headers.
   include_directories(${CMAKE_CURRENT_SOURCE_DIR}/GenXIntrinsics/include)
   include_directories(${CMAKE_CURRENT_BINARY_DIR}/GenXIntrinsics/include)
-  #__INTEL_EMBARGO_END__
 endif(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
 
 include(FindPythonInterp)
