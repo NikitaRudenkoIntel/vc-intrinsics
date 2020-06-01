@@ -44,14 +44,39 @@ const static char CMStackCall[] = "CMStackCall";
 const static char CMFloatControl[] = "CMFloatControl";
 const static char OCLRuntime[] = "oclrt";
 const static char ReferencedIndirectly[] = "referenced-indirectly";
+#ifdef __INTEL_EMBARGO__
+const static char CMGenxSIMT[] = "CMGenxSIMT";
+#endif // __INTEL_EMBARGO__
 } // namespace FunctionMD
+
+namespace VCModuleMD {
+const static char VCGlobalVariable[] = "VCGlobalVariable";
+const static char VCVolatile[] = "VCVolatile";
+const static char VCByteOffset[] = "VCByteOffset";
+} // namespace VCModuleMD
+
+namespace VCFunctionMD {
+const static char VCFunction[] = "VCFunction";
+const static char VCStackCall[] = "VCStackCall";
+const static char VCArgumentIOKind[] = "VCArgumentIOKind";
+const static char VCFloatControl[] = "VCFloatControl";
+const static char VCSLMSize[] = "VCSLMSize";
+#ifdef __INTEL_EMBARGO__
+const static char VCNamedBarrierCount[] = "VCNamedBarrierCount";
+const static char VCSIMTCall[] = "VCSIMTCall";
+const static char VCArgumentKind[] = "VCArgumentKind";
+const static char VCArgumentDesc[] = "VCArgumentDesc";
+#endif // __INTEL_EMBARGO__
+} // namespace VCFunctionMD
 
 namespace SPIRVParams {
 const static char SPIRVMemoryModel[] = "spirv.MemoryModel";
+const static char SPIRVSIMDSubgroupSize[] = "intel_reqd_sub_group_size";
 const static unsigned SPIRVMemoryModelSimple = 0;
+const static unsigned SPIRVMemoryModelOCL = 2;
 const static unsigned SPIRVAddressingModel32 = 1;
 const static unsigned SPIRVAddressingModel64 = 2;
-} // namespace SPIRVMD
+} // namespace SPIRVParams
 
 enum KernelMDOp {
   FunctionRef,  // Reference to Function
