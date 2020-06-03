@@ -5,6 +5,7 @@
 if(BUILD_EXTERNAL)
   add_library(LLVMGenXIntrinsics 
               GenXIntrinsics.cpp
+              GenXRestoreIntrAttr.cpp
 #__INTEL_EMBARGO_BEGIN__
               GenXSimdCFLowering.cpp
 #__INTEL_EMBARGO_END__
@@ -24,6 +25,7 @@ else()
 
   add_llvm_library(LLVMGenXIntrinsics
     GenXIntrinsics.cpp
+    GenXRestoreIntrAttr.cpp
 #__INTEL_EMBARGO_BEGIN__
     GenXSimdCFLowering.cpp
 #__INTEL_EMBARGO_END__
