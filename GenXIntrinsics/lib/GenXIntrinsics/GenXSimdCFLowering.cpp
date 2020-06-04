@@ -197,8 +197,16 @@
 namespace VCINTR {
 #if VC_INTR_LLVM_VERSION_MAJOR <= 7
 using llvm::TerminatorInst;
+class GlobalVariable : public llvm::GlobalVariable {
+public:
+    unsigned getAddressSpace() const {
+      llvm::PointerType *PtrType = getType();
+      return PtrType->getAddressSpace();
+    }
+};
 #elif VC_INTR_LLVM_VERSION_MAJOR >= 8
 using TerminatorInst = llvm::Instruction;
+using GlobalVariable = llvm::GlobalVariable;
 #endif
 } // namespace VCINTR
 
@@ -353,14 +361,15 @@ bool CMSimdCFLowering::doInitialization(Module &M)
   }
 #endif
 
-  for (auto &G : M.getGlobalList()) {
-    if (!G.hasAttribute(genx::FunctionMD::GenXVolatile))
+  for (auto &Global : M.getGlobalList()) {
+    auto *G = cast<VCINTR::GlobalVariable>(&Global);
+    if (!G->hasAttribute(genx::FunctionMD::GenXVolatile))
       continue;
     // Transform all load store on volatile globals to vload/vstore to disable
     // optimizations on this global (no PHI will be produced.).
-    auto AS0 = G.getAddressSpace();
+    auto AS0 = G->getAddressSpace();
     std::vector<User*> WL;
-    for (auto UI = G.user_begin(); UI != G.user_end();) {
+    for (auto UI = G->user_begin(); UI != G->user_end();) {
       auto U = *UI++;
       WL.push_back(U);
     }
