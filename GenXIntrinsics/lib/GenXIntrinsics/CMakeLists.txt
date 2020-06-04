@@ -1,14 +1,8 @@
-# __INTEL_EMBARGO_BEGIN__
-#   GenXSimdCFLowering.cpp
-# __INTEL_EMBARGO_END__
-
 if(BUILD_EXTERNAL)
   add_library(LLVMGenXIntrinsics 
               GenXIntrinsics.cpp
               GenXRestoreIntrAttr.cpp
-#__INTEL_EMBARGO_BEGIN__
               GenXSimdCFLowering.cpp
-#__INTEL_EMBARGO_END__
              )
   llvm_update_compile_flags(LLVMGenXIntrinsics)
   add_dependencies(LLVMGenXIntrinsics GenXIntrinsicsGen)
@@ -26,9 +20,7 @@ else()
   add_llvm_library(LLVMGenXIntrinsics
     GenXIntrinsics.cpp
     GenXRestoreIntrAttr.cpp
-#__INTEL_EMBARGO_BEGIN__
     GenXSimdCFLowering.cpp
-#__INTEL_EMBARGO_END__
     ADDITIONAL_HEADER_DIRS
     ${GENX_INTRINSICS_MAIN_INCLUDE_DIR}/llvm/GenXIntrinsics
 
