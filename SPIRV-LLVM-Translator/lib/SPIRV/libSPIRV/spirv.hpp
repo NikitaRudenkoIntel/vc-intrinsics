@@ -401,6 +401,7 @@ enum Decoration {
     DecorationPassthroughNV = 5250,
     DecorationViewportRelativeNV = 5252,
     DecorationSecondaryViewportRelativeNV = 5256,
+    DecorationCMSIMTCallINTEL = 5590,
     DecorationSideEffectsINTEL = 5608,
     DecorationUserSemantic = 5635,
     DecorationArgumentTypeINTEL = 5624,

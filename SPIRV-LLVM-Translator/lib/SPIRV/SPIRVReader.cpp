@@ -1840,6 +1840,10 @@ Function *SPIRVToLLVM::transFunction(SPIRVFunction *BF) {
   if (BF->hasDecorate(DecorationCMStackCallINTEL))
     F->addFnAttr(kCMMetadata::CMStackCall);
 
+  SPIRVWord CMSIMTCall = 0;
+  if (BF->hasDecorate(DecorationCMSIMTCallINTEL, 0, &CMSIMTCall))
+    F->addFnAttr("CMGenxSIMT", std::to_string(CMSIMTCall));
+
   for (Function::arg_iterator I = F->arg_begin(), E = F->arg_end(); I != E;
        ++I) {
     auto BA = BF->getArgument(I->getArgNo());

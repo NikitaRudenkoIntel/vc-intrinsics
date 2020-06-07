@@ -496,6 +496,14 @@ SPIRVFunction *LLVMToSPIRV::transFunctionDecl(Function *F) {
   if (Attrs.hasFnAttribute(kCMMetadata::CMStackCall))
     BF->addDecorate(DecorationCMStackCallINTEL);
 
+  if (Attrs.hasFnAttribute("CMGenxSIMT")) {
+    SPIRVWord Mode = 0;
+    Attrs.getAttribute(AttributeList::FunctionIndex, "CMGenxSIMT")
+      .getValueAsString()
+      .getAsInteger(0, Mode);
+    BF->addDecorate(DecorationCMSIMTCallINTEL, Mode);
+  }
+
   for (Function::arg_iterator I = F->arg_begin(), E = F->arg_end(); I != E;
        ++I) {
     auto ArgNo = I->getArgNo();
