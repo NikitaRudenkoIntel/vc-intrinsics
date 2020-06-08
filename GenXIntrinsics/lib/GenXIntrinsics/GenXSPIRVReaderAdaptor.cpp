@@ -168,7 +168,7 @@ bool GenXSPIRVReaderAdaptor::runOnFunction(Function &F) {
 #ifdef __INTEL_EMBARGO__
     if (Attrs.hasAttribute(ArgNo + 1, VCFunctionMD::VCArgumentDesc)) {
       ArgDesc = Attrs.getAttribute(ArgNo + 1, VCFunctionMD::VCArgumentDesc)
-                    .getValueAsString();
+                    .getValueAsString().str();
     }
 #endif // __INTEL_EMBARGO__
     ArgDescs.push_back(llvm::MDString::get(Context, ArgDesc));
