@@ -23,6 +23,7 @@
 
 #include "llvm/GenXIntrinsics/GenXSPIRVWriterAdaptor.h"
 #include "llvm/GenXIntrinsics/GenXMetadata.h"
+#include "llvm/GenXIntrinsics/GenXIntrinsics.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Metadata.h"
@@ -89,6 +90,8 @@ bool GenXSPIRVWriterAdaptor::runOnModule(Module &M) {
 }
 
 bool GenXSPIRVWriterAdaptor::runOnFunction(Function &F) {
+  if (F.isIntrinsic() && !GenXIntrinsic::isGenXIntrinsic(&F))
+    return true;
   F.addFnAttr(VCFunctionMD::VCFunction);
 
   auto Attrs = F.getAttributes();
