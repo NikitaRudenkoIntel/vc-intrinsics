@@ -144,7 +144,6 @@ bool GenXSPIRVWriterAdaptor::runOnFunction(Function &F) {
 
   F.setCallingConv(CallingConv::SPIR_KERNEL);
 
-#ifdef __INTEL_EMBARGO__
   if (KernelMD->getNumOperands() > KernelMDOp::ArgKinds) {
     if (auto *KindsNode =
             dyn_cast<MDNode>(KernelMD->getOperand(KernelMDOp::ArgKinds))) {
@@ -160,7 +159,6 @@ bool GenXSPIRVWriterAdaptor::runOnFunction(Function &F) {
       }
     }
   }
-#endif // __INTEL_EMBARGO__
 
   if (KernelMD->getNumOperands() > KernelMDOp::SLMSize) {
     if (auto *VM = dyn_cast<ValueAsMetadata>(
@@ -189,7 +187,6 @@ bool GenXSPIRVWriterAdaptor::runOnFunction(Function &F) {
     }
   }
 
-#ifdef __INTEL_EMBARGO__
   if (KernelMD->getNumOperands() > KernelMDOp::ArgTypeDescs) {
     if (auto Node =
             dyn_cast<MDNode>(KernelMD->getOperand(KernelMDOp::ArgTypeDescs))) {
@@ -205,6 +202,7 @@ bool GenXSPIRVWriterAdaptor::runOnFunction(Function &F) {
     }
   }
 
+#ifdef __INTEL_EMBARGO__
   if (KernelMD->getNumOperands() > KernelMDOp::NBarrierCnt) {
     if (auto VM = dyn_cast<ValueAsMetadata>(
             KernelMD->getOperand(KernelMDOp::NBarrierCnt)))

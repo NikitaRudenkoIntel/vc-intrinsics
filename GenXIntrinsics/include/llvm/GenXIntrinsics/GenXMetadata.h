@@ -61,11 +61,11 @@ const static char VCStackCall[] = "VCStackCall";
 const static char VCArgumentIOKind[] = "VCArgumentIOKind";
 const static char VCFloatControl[] = "VCFloatControl";
 const static char VCSLMSize[] = "VCSLMSize";
+const static char VCArgumentKind[] = "VCArgumentKind";
+const static char VCArgumentDesc[] = "VCArgumentDesc";
 #ifdef __INTEL_EMBARGO__
 const static char VCNamedBarrierCount[] = "VCNamedBarrierCount";
 const static char VCSIMTCall[] = "VCSIMTCall";
-const static char VCArgumentKind[] = "VCArgumentKind";
-const static char VCArgumentDesc[] = "VCArgumentDesc";
 #endif // __INTEL_EMBARGO__
 } // namespace VCFunctionMD
 

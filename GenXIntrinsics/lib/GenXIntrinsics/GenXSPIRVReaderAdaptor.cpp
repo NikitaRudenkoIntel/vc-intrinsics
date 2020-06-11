@@ -55,7 +55,6 @@ bool GenXSPIRVReaderAdaptor::runOnModule(Module &M) {
       M.setTargetTriple("genx");
   }
 
-  auto &&x = M.getGlobalList();
   for (auto &&GV : M.getGlobalList()) {
     if (!GV.hasAttribute(VCModuleMD::VCGlobalVariable))
       continue;
@@ -121,7 +120,7 @@ bool GenXSPIRVReaderAdaptor::runOnFunction(Function &F) {
   auto KernelName = F.getName();
   auto ArgKinds = llvm::SmallVector<llvm::Metadata *, 8>();
   auto SLMSize = unsigned(0);
-  auto ArgOffset = unsigned(0);
+  auto ArgOffsets = llvm::SmallVector<llvm::Metadata *, 8>();
   auto ArgIOKinds = llvm::SmallVector<llvm::Metadata *, 8>();
   auto ArgDescs = llvm::SmallVector<llvm::Metadata *, 8>();
 #ifdef __INTEL_EMBARGO__
@@ -129,20 +128,6 @@ bool GenXSPIRVReaderAdaptor::runOnFunction(Function &F) {
 #endif // __INTEL_EMBARGO__
 
   llvm::Type *I32Ty = llvm::Type::getInt32Ty(Context);
-
-  for (Function::arg_iterator I = F.arg_begin(), E = F.arg_end(); I != E; ++I) {
-    auto ArgNo = I->getArgNo();
-    auto ArgKind = unsigned(0);
-#ifdef __INTEL_EMBARGO__
-    if (Attrs.hasAttribute(ArgNo + 1, VCFunctionMD::VCArgumentKind)) {
-      Attrs.getAttribute(ArgNo + 1, VCFunctionMD::VCArgumentKind)
-          .getValueAsString()
-          .getAsInteger(0, ArgKind);
-    }
-#endif // __INTEL_EMBARGO__
-    ArgKinds.push_back(
-        llvm::ValueAsMetadata::get(llvm::ConstantInt::get(I32Ty, ArgKind)));
-  }
 
   if (Attrs.hasFnAttribute(VCFunctionMD::VCSLMSize)) {
     Attrs.getAttribute(AttributeList::FunctionIndex, VCFunctionMD::VCSLMSize)
@@ -152,25 +137,31 @@ bool GenXSPIRVReaderAdaptor::runOnFunction(Function &F) {
 
   for (Function::arg_iterator I = F.arg_begin(), E = F.arg_end(); I != E; ++I) {
     auto ArgNo = I->getArgNo();
-    unsigned ArgKind = 0;
-    if (Attrs.hasAttribute(ArgNo + 1, VCFunctionMD::VCArgumentIOKind)) {
-      Attrs.getAttribute(ArgNo + 1, VCFunctionMD::VCArgumentIOKind)
+    auto ArgKind = unsigned(0);
+    auto ArgOffset = unsigned(0);
+    auto ArgIOKind = unsigned(0);
+    auto ArgDesc = std::string();
+    if (Attrs.hasAttribute(ArgNo + 1, VCFunctionMD::VCArgumentKind)) {
+      Attrs.getAttribute(ArgNo + 1, VCFunctionMD::VCArgumentKind)
           .getValueAsString()
           .getAsInteger(0, ArgKind);
     }
-    ArgIOKinds.push_back(
-        llvm::ValueAsMetadata::get(llvm::ConstantInt::get(I32Ty, ArgKind)));
-  }
-
-  for (Function::arg_iterator I = F.arg_begin(), E = F.arg_end(); I != E; ++I) {
-    auto ArgNo = I->getArgNo();
-    auto ArgDesc = std::string();
-#ifdef __INTEL_EMBARGO__
+    if (Attrs.hasAttribute(ArgNo + 1, VCFunctionMD::VCArgumentIOKind)) {
+      Attrs.getAttribute(ArgNo + 1, VCFunctionMD::VCArgumentIOKind)
+          .getValueAsString()
+          .getAsInteger(0, ArgIOKind);
+    }
     if (Attrs.hasAttribute(ArgNo + 1, VCFunctionMD::VCArgumentDesc)) {
       ArgDesc = Attrs.getAttribute(ArgNo + 1, VCFunctionMD::VCArgumentDesc)
-                    .getValueAsString().str();
+                    .getValueAsString()
+                    .str();
     }
-#endif // __INTEL_EMBARGO__
+    ArgKinds.push_back(
+        llvm::ValueAsMetadata::get(llvm::ConstantInt::get(I32Ty, ArgKind)));
+    ArgOffsets.push_back(
+        llvm::ValueAsMetadata::get(llvm::ConstantInt::get(I32Ty, ArgOffset)));
+    ArgIOKinds.push_back(
+        llvm::ValueAsMetadata::get(llvm::ConstantInt::get(I32Ty, ArgIOKind)));
     ArgDescs.push_back(llvm::MDString::get(Context, ArgDesc));
   }
 
@@ -189,8 +180,7 @@ bool GenXSPIRVReaderAdaptor::runOnFunction(Function &F) {
   KernelMD.push_back(llvm::MDString::get(Context, KernelName));
   KernelMD.push_back(llvm::MDNode::get(Context, ArgKinds));
   KernelMD.push_back(ConstantAsMetadata::get(ConstantInt::get(I32Ty, SLMSize)));
-  KernelMD.push_back(
-      llvm::ValueAsMetadata::get(llvm::ConstantInt::get(I32Ty, ArgOffset)));
+  KernelMD.push_back(llvm::MDNode::get(Context, ArgOffsets));
   KernelMD.push_back(llvm::MDNode::get(Context, ArgIOKinds));
   KernelMD.push_back(llvm::MDNode::get(Context, ArgDescs));
 #ifdef __INTEL_EMBARGO__
