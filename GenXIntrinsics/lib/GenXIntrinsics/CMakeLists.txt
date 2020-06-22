@@ -8,8 +8,15 @@ if(BUILD_EXTERNAL)
              )
   llvm_update_compile_flags(LLVMGenXIntrinsics)
   add_dependencies(LLVMGenXIntrinsics GenXIntrinsicsGen)
-  add_dependencies(LLVMGenXIntrinsics LLVMCodeGen)
-  target_link_libraries(LLVMGenXIntrinsics LLVMCodeGen)
+
+  # if LLVM_LINK_LLVM_DYLIB is ON, it means that we use dynamic llvm library
+  # and thus we don't have libLLVMCodeGen.a, thus we don't set the dependency
+  # in this case
+  if(NOT LLVM_LINK_LLVM_DYLIB)
+    add_dependencies(LLVMGenXIntrinsics LLVMCodeGen)
+    target_link_libraries(LLVMGenXIntrinsics LLVMCodeGen)
+  endif()
+
   target_include_directories(LLVMGenXIntrinsics PUBLIC
     $<BUILD_INTERFACE:${GENX_INTRINSICS_MAIN_INCLUDE_DIR}>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/../../include>
