@@ -208,7 +208,7 @@ bool GenXSPIRVWriterAdaptor::runOnFunction(Function &F) {
             KernelMD->getOperand(KernelMDOp::NBarrierCnt)))
       if (auto V = dyn_cast<ConstantInt>(VM->getValue())) {
         auto NBarrierCnt = V->getZExtValue();
-        auto Attr = Attribute::get(Context, VCFunctionMD::VCSLMSize,
+        auto Attr = Attribute::get(Context, VCFunctionMD::VCNamedBarrierCount,
                                    std::to_string(NBarrierCnt));
         F.addAttribute(AttributeList::FunctionIndex, Attr);
       }
