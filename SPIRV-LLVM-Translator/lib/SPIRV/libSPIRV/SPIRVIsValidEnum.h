@@ -410,6 +410,8 @@ inline bool isValid(spv::Decoration V) {
   case DecorationUserSemantic:
   case DecorationVectorComputeFunctionINTEL:
   case DecorationStackCallINTEL:
+  case DecorationFuncParamKindINTEL:
+  case DecorationFuncParamDescINTEL:
   case DecorationVectorComputeVariableINTEL:
   case DecorationGlobalVariableOffsetINTEL:
   case DecorationFuncParamIOKind:

@@ -406,6 +406,8 @@ enum Decoration {
   DecorationStackCallINTEL = 5627,
   DecorationGlobalVariableOffsetINTEL = 5628,
   DecorationUserSemantic = 5635,
+  DecorationFuncParamKindINTEL = 9624,
+  DecorationFuncParamDescINTEL = 9625,
   DecorationMax = 0x7fffffff,
 };
 
