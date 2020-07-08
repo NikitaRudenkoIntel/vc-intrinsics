@@ -100,7 +100,7 @@ private:
 
   // Representation of built-ins, which should be used while translating from
   // SPIR-V to back to LLVM IR
-  BIsRepresentation DesiredRepresentationOfBIs = BIsRepresentation::OpenCL12;
+  BIsRepresentation DesiredRepresentationOfBIs = BIsRepresentation::SPIRVFriendlyIR;
 };
 
 } // namespace SPIRV

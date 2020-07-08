@@ -94,7 +94,7 @@ using namespace OCLUtil;
 namespace SPIRV {
 
 cl::opt<bool> SPIRVAllowUnknownIntrinsics(
-    "spirv-allow-unknown-intrinsics", cl::init(false),
+    "spirv-allow-unknown-intrinsics", cl::init(true),
     cl::desc("Unknown LLVM intrinsics will be translated as external function "
              "calls in SPIR-V"));
 
