@@ -119,22 +119,17 @@ template <> inline void SPIRVMap<ExecutionMode, std::string>::init() {
   add(ExecutionModeOutputTriangleStrip, "OutputTriangleStrip");
   add(ExecutionModeVecTypeHint, "VecTypeHint");
   add(ExecutionModeContractionOff, "ContractionOff");
-  add(ExecutionModeInitializer, "Initializer");
-  add(ExecutionModeFinalizer, "Finalizer");
   add(ExecutionModeSubgroupSize, "SubgroupSize");
-  add(ExecutionModeSubgroupsPerWorkgroup, "SubgroupsPerWorkgroup");
   add(ExecutionModeDenormPreserve, "DenormPreserve");
   add(ExecutionModeDenormFlushToZero, "DenormFlushToZero");
   add(ExecutionModeSignedZeroInfNanPreserve, "SignedZeroInfNanPreserve");
   add(ExecutionModeRoundingModeRTE, "RoundingModeRTE");
   add(ExecutionModeRoundingModeRTZ, "RoundingModeRTZ");
-  add(ExecutionModeSharedLocalMemorySizeINTEL, "SharedLocalMemorySizeINTEL");
-  add(ExecutionModeNamedBarrierCountINTEL, "NamedBarrierCountINTEL");
-  add(ExecutionModeRegularBarrierCountINTEL, "RegularBarrierCountINTEL");
   add(ExecutionModeRoundingModeRTPINTEL, "RoundingModeRTPINTEL");
   add(ExecutionModeRoundingModeRTNINTEL, "RoundingModeRTNINTEL");
-  add(ExecutionModeFloatingPointModeALTINTEL, "FloatALTINTEL");
-  add(ExecutionModeFloatingPointModeIEEEINTEL, "FloatIEEEINTEL");
+  add(ExecutionModeFloatingPointModeALTINTEL, "FloatingPointModeALTINTEL");
+  add(ExecutionModeFloatingPointModeIEEEINTEL, "FloatingPointModeIEEEINTEL");
+  add(ExecutionModeSharedLocalMemorySizeINTEL, "SharedLocalMemorySizeINTEL");
 }
 SPIRV_DEF_NAMEMAP(ExecutionMode, SPIRVExecutionModeNameMap)
 
@@ -349,10 +344,11 @@ template <> inline void SPIRVMap<Decoration, std::string>::init() {
   add(DecorationNoUnsignedWrap, "NoUnsignedWrap");
   add(DecorationSideEffectsINTEL, "SideEffectsINTEL");
   add(DecorationUserSemantic, "UserSemantic");
-  add(DecorationArgumentTypeINTEL, "ArgumentTypeINTEL");
-  add(DecorationArgumentDescINTEL, "ArgumentDescINTEL");
-  add(DecorationCMStackCallINTEL, "DecorationCMStackCallINTEL");
-  add(DecorationReferencedIndirectlyINTEL, "ReferencedIndirectlyINTEL");
+  add(DecorationVectorComputeFunctionINTEL, "VectorComputeFunctionINTEL");
+  add(DecorationStackCallINTEL, "StackCallINTEL");
+  add(DecorationVectorComputeVariableINTEL, "VectorComputeVariableINTEL");
+  add(DecorationGlobalVariableOffsetINTEL, "GlobalVariableOffsetINTEL");
+  add(DecorationFuncParamIOKind, "FuncParamIOKind");
 }
 SPIRV_DEF_NAMEMAP(Decoration, SPIRVDecorationNameMap)
 
@@ -442,6 +438,7 @@ template <> inline void SPIRVMap<Capability, std::string>::init() {
   add(CapabilityImageReadWrite, "ImageReadWrite");
   add(CapabilityImageMipmap, "ImageMipmap");
   add(CapabilityPipes, "Pipes");
+  add(CapabilityPipeStorage, "PipeStorage");
   add(CapabilityGroups, "Groups");
   add(CapabilityDeviceEnqueue, "DeviceEnqueue");
   add(CapabilityLiteralSampler, "LiteralSampler");
@@ -487,53 +484,27 @@ template <> inline void SPIRVMap<Capability, std::string>::init() {
       "StorageImageWriteWithoutFormat");
   add(CapabilityMultiViewport, "MultiViewport");
   add(CapabilitySubgroupDispatch, "SubgroupDispatch");
-  add(CapabilityNamedBarrier, "NamedBarrier");
-  add(CapabilityPipeStorage, "PipeStorage");
-  add(CapabilitySubgroupBallotKHR, "SubgroupBallotKHR");
-  add(CapabilityDrawParameters, "DrawParameters");
-  add(CapabilitySubgroupVoteKHR, "SubgroupVoteKHR");
-  add(CapabilityStorageBuffer16BitAccess, "StorageBuffer16BitAccess");
-  add(CapabilityStorageUniformBufferBlock16,
-      "StorageUniformBufferBlock16");
-  add(CapabilityStorageUniform16, "StorageUniform16");
-  add(CapabilityUniformAndStorageBuffer16BitAccess,
-      "UniformAndStorageBuffer16BitAccess");
-  add(CapabilityStoragePushConstant16, "StoragePushConstant16");
-  add(CapabilityStorageInputOutput16, "StorageInputOutput16");
-  add(CapabilityDeviceGroup, "DeviceGroup");
-  add(CapabilityMultiView, "MultiView");
-  add(CapabilityVariablePointersStorageBuffer,
-      "VariablePointersStorageBuffer");
-  add(CapabilityVariablePointers, "VariablePointers");
   add(CapabilityDenormPreserve, "DenormPreserve");
   add(CapabilityDenormFlushToZero, "DenormFlushToZero");
   add(CapabilitySignedZeroInfNanPreserve, "SignedZeroInfNanPreserve");
   add(CapabilityRoundingModeRTE, "RoundingModeRTE");
   add(CapabilityRoundingModeRTZ, "RoundingModeRTZ");
-  add(CapabilitySampleMaskOverrideCoverageNV,
-      "SampleMaskOverrideCoverageNV");
-  add(CapabilityGeometryShaderPassthroughNV,
-      "GeometryShaderPassthroughNV");
-  add(CapabilityShaderViewportIndexLayerNV,
-      "ShaderViewportIndexLayerNV");
-  add(CapabilityShaderViewportMaskNV, "ShaderViewportMaskNV");
-  add(CapabilityShaderStereoViewNV, "ShaderStereoViewNV");
-  add(CapabilityPerViewAttributesNV, "PerViewAttributesNV");
   add(CapabilitySubgroupShuffleINTEL, "SubgroupShuffleINTEL");
   add(CapabilitySubgroupBufferBlockIOINTEL, "SubgroupBufferBlockIOINTEL");
   add(CapabilitySubgroupImageBlockIOINTEL, "SubgroupImageBlockIOINTEL");
   add(CapabilitySubgroupImageMediaBlockIOINTEL,
       "SubgroupImageMediaBlockIOINTEL");
   add(CapabilityAsmINTEL, "AsmINTEL");
-  add(CapabilityCMKernelINTEL, "CMKernelINTEL");
+  add(CapabilityVectorComputeINTEL, "VectorComputeINTEL");
+  add(CapabilityVectorAnyINTEL, "VectorAnyINTEL");
+  add(CapabilityRoundToInfinityINTEL, "RoundToInfinityINTEL");
+  add(CapabilityFloatingPointModeINTEL, "FloatingPointModeINTEL");
   add(CapabilitySubgroupAvcMotionEstimationINTEL,
       "SubgroupAvcMotionEstimationINTEL");
   add(CapabilitySubgroupAvcMotionEstimationIntraINTEL,
       "SubgroupAvcMotionEstimationIntraINTEL");
   add(CapabilitySubgroupAvcMotionEstimationChromaINTEL,
       "SubgroupAvcMotionEstimationChromaINTEL");
-  add(CapabilityFunctionPointersINTEL, "FunctionPointersINTEL");
-  add(CapabilityIndirectReferencesINTEL, "IndirectReferencesINTEL");
 }
 SPIRV_DEF_NAMEMAP(Capability, SPIRVCapabilityNameMap)
 

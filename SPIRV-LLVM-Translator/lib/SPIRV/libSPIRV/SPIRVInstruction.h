@@ -1382,53 +1382,6 @@ protected:
   SPIRVId FunctionId;
 };
 
-class SPIRVFunctionPointerCallINTEL
-    : public SPIRVFunctionCallGeneric<OpFunctionPointerCallINTEL, 4> {
-public:
-  SPIRVFunctionPointerCallINTEL(SPIRVId TheId, SPIRVValue *TheCalledValue,
-                                SPIRVType *TheReturnType,
-                                const std::vector<SPIRVWord> &TheArgs,
-                                SPIRVBasicBlock *BB);
-  SPIRVFunctionPointerCallINTEL() : CalledValueId(SPIRVID_INVALID) {}
-  SPIRVValue *getCalledValue() const { return get<SPIRVValue>(CalledValueId); }
-  _SPIRV_DEF_ENCDEC4(Type, Id, CalledValueId, Args)
-  void validate() const override;
-  bool isOperandLiteral(unsigned Index) const override { return false; }
-  SPIRVExtSet getRequiredExtensions() const override {
-    return getSet(SPV_INTEL_function_pointers);
-  }
-  SPIRVCapVec getRequiredCapability() const override {
-    return getVec(CapabilityFunctionPointersINTEL);
-  }
-
-protected:
-  SPIRVId CalledValueId;
-};
-
-class SPIRVFunctionPointerINTEL : public SPIRVInstruction {
-  const static Op OC = OpFunctionPointerINTEL;
-  const static SPIRVWord FixedWordCount = 4;
-
-public:
-  SPIRVFunctionPointerINTEL(SPIRVId TheId, SPIRVType *TheType,
-                            SPIRVFunction *TheFunction, SPIRVBasicBlock *BB);
-  SPIRVFunctionPointerINTEL()
-      : SPIRVInstruction(OC), TheFunction(SPIRVID_INVALID) {}
-  SPIRVFunction *getFunction() const { return get<SPIRVFunction>(TheFunction); }
-  _SPIRV_DEF_ENCDEC3(Type, Id, TheFunction)
-  void validate() const override;
-  bool isOperandLiteral(unsigned Index) const override { return false; }
-  SPIRVExtSet getRequiredExtensions() const override {
-    return getSet(SPV_INTEL_function_pointers);
-  }
-  SPIRVCapVec getRequiredCapability() const override {
-    return getVec(CapabilityFunctionPointersINTEL);
-  }
-
-protected:
-  SPIRVId TheFunction;
-};
-
 class SPIRVExtInst : public SPIRVFunctionCallGeneric<OpExtInst, 5> {
 public:
   SPIRVExtInst(SPIRVType *TheType, SPIRVId TheId, SPIRVId TheBuiltinSet,
@@ -1899,9 +1852,6 @@ protected:
       return;
     assert(getValueType(Vector1) == getValueType(Vector2));
     assert(Components.size() == Type->getVectorComponentCount());
-#if 0 // incorrect assert.
-    assert(Components.size() > 1);
-#endif
   }
   SPIRVId Vector1;
   SPIRVId Vector2;
@@ -2284,6 +2234,9 @@ class SPIRVSubgroupImageMediaBlockIOINTELInstBase
 protected:
   SPIRVCapVec getRequiredCapability() const override {
     return getVec(CapabilitySubgroupImageMediaBlockIOINTEL);
+  }
+  SPIRVExtSet getRequiredExtensions() const override {
+    return getSet(SPV_INTEL_media_block_io);
   }
 };
 

@@ -1,13 +1,4 @@
-# __INTEL_EMBARGO_BEGIN__
-#   CMExport.h
-#   CMExport.cpp
-# __INTEL_EMBARGO_END__
-
-SET(SPIRV_SOURCES
-  CMUtil.cpp
-#__INTEL_EMBARGO_BEGIN__
-  CMExport.cpp
-#__INTEL_EMBARGO_END__
+add_llvm_library(LLVMSPIRVLib
   LLVMToSPIRVDbgTran.cpp
   Mangler/FunctionDescriptor.cpp
   Mangler/Mangler.cpp
@@ -17,6 +8,7 @@ SET(SPIRV_SOURCES
   OCL21ToSPIRV.cpp
   OCLTypeToSPIRV.cpp
   OCLUtil.cpp
+  VectorComputeUtil.cpp
   SPIRVLowerBool.cpp
   SPIRVLowerConstExpr.cpp
   SPIRVLowerMemmove.cpp
@@ -42,10 +34,6 @@ SET(SPIRV_SOURCES
   libSPIRV/SPIRVStream.cpp
   libSPIRV/SPIRVType.cpp
   libSPIRV/SPIRVValue.cpp
-)
-
-add_llvm_library(LLVMSPIRVLib 
-  ${SPIRV_SOURCES}
   LINK_COMPONENTS
     Analysis
     BitWriter
@@ -55,33 +43,8 @@ add_llvm_library(LLVMSPIRVLib
   DEPENDS
     intrinsics_gen
 )
-
-add_llvm_library(SPIRVDLL SHARED
-  ${SPIRV_SOURCES}
-  LINK_COMPONENTS
-    Analysis
-    BitWriter
-    Core
-    Support
-    TransformUtils
-  DEPENDS
-    intrinsics_gen
-)
-
-if(NOT WIN32)
-  target_link_options(SPIRVDLL PRIVATE -Bsymbolic)
-endif()
 
 target_include_directories(LLVMSPIRVLib
-  PRIVATE
-    ${LLVM_INCLUDE_DIRS}
-    ${LLVM_SPIRV_INCLUDE_DIRS}
-    ${CMAKE_CURRENT_SOURCE_DIR}
-    ${CMAKE_CURRENT_SOURCE_DIR}/libSPIRV
-    ${CMAKE_CURRENT_SOURCE_DIR}/Mangler
-)
-
-target_include_directories(SPIRVDLL
   PRIVATE
     ${LLVM_INCLUDE_DIRS}
     ${LLVM_SPIRV_INCLUDE_DIRS}

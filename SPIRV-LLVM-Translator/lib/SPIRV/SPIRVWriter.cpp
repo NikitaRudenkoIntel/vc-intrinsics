@@ -53,7 +53,7 @@
 #include "SPIRVType.h"
 #include "SPIRVUtil.h"
 #include "SPIRVValue.h"
-#include "CMUtil.h"
+#include "VectorComputeUtil.h"
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SetVector.h"
@@ -81,6 +81,7 @@
 #include <functional>
 #include <iostream>
 #include <memory>
+#include <queue>
 #include <set>
 #include <vector>
 
@@ -92,8 +93,10 @@ using namespace OCLUtil;
 
 namespace SPIRV {
 
-cl::opt<bool> SPIRVMemToReg("spirv-mem2reg", cl::init(false),
-                            cl::desc("LLVM/SPIR-V translation enable mem2reg"));
+cl::opt<bool> SPIRVAllowUnknownIntrinsics(
+    "spirv-allow-unknown-intrinsics", cl::init(false),
+    cl::desc("Unknown LLVM intrinsics will be translated as external function "
+             "calls in SPIR-V"));
 
 static void foreachKernelArgMD(
     MDNode *MD, SPIRVFunction *BF,
@@ -103,18 +106,6 @@ static void foreachKernelArgMD(
     SPIRVFunctionParameter *BA = BF->getArgument(I);
     Func(getMDOperandAsString(MD, I), BA);
   }
-}
-
-static SPIRVMemoryModelKind getMemoryModel(Module &M) {
-  NamedMDNode *MemoryModelMD = M.getNamedMetadata(kSPIRVMD::MemoryModel);
-  if (MemoryModelMD) {
-    auto model = static_cast<SPIRVMemoryModelKind>(
-        mdconst::dyn_extract<ConstantInt>(
-            MemoryModelMD->getOperand(0)->getOperand(1))
-            ->getZExtValue());
-    return model;
-  }
-  return SPIRVMemoryModelKind::MemoryModelMax;
 }
 
 LLVMToSPIRV::LLVMToSPIRV(SPIRVModule *SMod)
@@ -274,6 +265,7 @@ SPIRVType *LLVMToSPIRV::transType(Type *T) {
   // (non-pointer) image or pipe type.
   if (T->isPointerTy()) {
     auto ET = T->getPointerElementType();
+    assert(!ET->isFunctionTy() && "Function pointer type is not allowed");
     auto ST = dyn_cast<StructType>(ET);
     auto AddrSpc = T->getPointerAddressSpace();
     if (ST && !ST->isSized()) {
@@ -469,14 +461,12 @@ SPIRVFunction *LLVMToSPIRV::transFunctionDecl(Function *F) {
   if (auto BF = getTranslatedValue(F))
     return static_cast<SPIRVFunction *>(BF);
 
-  if (F->isIntrinsic()) {
-    if (!(F->getName().startswith("llvm.genx."))) {
-      // We should not translate LLVM intrinsics as a function
-      assert(none_of(F->user_begin(), F->user_end(),
-                     [this](User *U) { return getTranslatedValue(U); }) &&
-             "LLVM intrinsics shouldn't be called in SPIRV");
-      return nullptr;
-    }
+  if (F->isIntrinsic() && !SPIRVAllowUnknownIntrinsics) {
+    // We should not translate LLVM intrinsics as a function
+    assert(none_of(F->user_begin(), F->user_end(),
+                   [this](User *U) { return getTranslatedValue(U); }) &&
+           "LLVM intrinsics shouldn't be called in SPIRV");
+    return nullptr;
   }
 
   SPIRVTypeFunction *BFT = static_cast<SPIRVTypeFunction *>(
@@ -491,18 +481,6 @@ SPIRVFunction *LLVMToSPIRV::transFunctionDecl(Function *F) {
   else if (F->getLinkage() != GlobalValue::InternalLinkage)
     BF->setLinkageType(transLinkageType(F));
   auto Attrs = F->getAttributes();
-
-  if (Attrs.hasFnAttribute(kCMMetadata::CMStackCall))
-    BF->addDecorate(DecorationCMStackCallINTEL);
-
-  if (Attrs.hasFnAttribute("CMGenxSIMT")) {
-    SPIRVWord Mode = 0;
-    Attrs.getAttribute(AttributeList::FunctionIndex, "CMGenxSIMT")
-      .getValueAsString()
-      .getAsInteger(0, Mode);
-    BF->addDecorate(DecorationCMSIMTCallINTEL, Mode);
-  }
-
   for (Function::arg_iterator I = F->arg_begin(), E = F->arg_end(); I != E;
        ++I) {
     auto ArgNo = I->getArgNo();
@@ -531,14 +509,37 @@ SPIRVFunction *LLVMToSPIRV::transFunctionDecl(Function *F) {
     BF->addDecorate(DecorationFuncParamAttr, FunctionParameterAttributeZext);
   if (Attrs.hasAttribute(AttributeList::ReturnIndex, Attribute::SExt))
     BF->addDecorate(DecorationFuncParamAttr, FunctionParameterAttributeSext);
-  if (Attrs.hasFnAttribute("referenced-indirectly")) {
-    assert(!isKernel(F) &&
-           "kernel function was marked as referenced-indirectly");
-    BF->addDecorate(DecorationReferencedIndirectlyINTEL);
-  }
+
+  transVectorComputeMetadata(F);
+
   SPIRVDBG(dbgs() << "[transFunction] " << *F << " => ";
            spvdbgs() << *BF << '\n';)
   return BF;
+}
+
+void LLVMToSPIRV::transVectorComputeMetadata(Function *F) {
+  auto BF = static_cast<SPIRVFunction *>(getTranslatedValue(F));
+  auto Attrs = F->getAttributes();
+
+  if (Attrs.hasFnAttribute(kVCMetadata::VCStackCall))
+    BF->addDecorate(DecorationStackCallINTEL);
+  if (Attrs.hasFnAttribute(kVCMetadata::VCFunction))
+    BF->addDecorate(DecorationVectorComputeFunctionINTEL);
+  else
+    return;
+
+  for (Function::arg_iterator I = F->arg_begin(), E = F->arg_end(); I != E;
+       ++I) {
+    auto ArgNo = I->getArgNo();
+    SPIRVFunctionParameter *BA = BF->getArgument(ArgNo);
+    if (Attrs.hasAttribute(ArgNo + 1, kVCMetadata::VCArgumentIOKind)) {
+      SPIRVWord Kind;
+      Attrs.getAttribute(ArgNo + 1, kVCMetadata::VCArgumentIOKind)
+          .getValueAsString()
+          .getAsInteger(0, Kind);
+      BA->addDecorate(DecorationFuncParamIOKind, Kind);
+    }
+  }
 }
 
 SPIRVValue *LLVMToSPIRV::transConstant(Value *V) {
@@ -676,7 +677,14 @@ SPIRVInstruction *LLVMToSPIRV::transBinaryInst(BinaryOperator *B,
   SPIRVInstruction *BI = BM->addBinaryInst(
       transBoolOpCode(Op0, OpCodeMap::map(LLVMOC)), transType(B->getType()),
       Op0, transValue(B->getOperand(1), BB), BB);
-  checkFpContract(B, BB);
+
+  if (isUnfusedMulAdd(B)) {
+    Function *F = B->getFunction();
+    SPIRVDBG(dbgs() << "[fp-contract] disabled for " << F->getName()
+                    << ": possible fma candidate " << *B << '\n');
+    joinFPContract(F, FPContract::DISABLED);
+  }
+
   return BI;
 }
 
@@ -691,7 +699,6 @@ SPIRVInstruction *LLVMToSPIRV::transCmpInst(CmpInst *Cmp, SPIRVBasicBlock *BB) {
 SPIRV::SPIRVInstruction *LLVMToSPIRV::transUnaryInst(UnaryInstruction *U,
                                                      SPIRVBasicBlock *BB) {
   Op BOC = OpNop;
-  SPIRVValue *Op = nullptr;
   if (auto Cast = dyn_cast<AddrSpaceCastInst>(U)) {
     if (Cast->getDestTy()->getPointerAddressSpace() == SPIRAS_Generic) {
       assert(Cast->getSrcTy()->getPointerAddressSpace() != SPIRAS_Constant &&
@@ -706,18 +713,9 @@ SPIRV::SPIRVInstruction *LLVMToSPIRV::transUnaryInst(UnaryInstruction *U,
   } else {
     auto OpCode = U->getOpcode();
     BOC = OpCodeMap::map(OpCode);
-
-    if (Function *F = dyn_cast<Function>(U->getOperand(0))) {
-      assert(BOC == OpConvertPtrToU &&
-             "Illegal unary operation on function pointer");
-      Op = BM->addFunctionPointerINTELInst(
-          transType(F->getType()),
-          static_cast<SPIRVFunction *>(transValue(F, BB)), BB);
-    }
   }
 
-  if (!Op)
-    Op = transValue(U->getOperand(0), BB);
+  auto Op = transValue(U->getOperand(0), BB);
   return BM->addUnaryInst(transBoolOpCode(Op, BOC), transType(U->getType()), Op,
                           BB);
 }
@@ -779,30 +777,33 @@ SPIRVValue *LLVMToSPIRV::transValueWithoutDecoration(Value *V,
       BVarInit = transValue(Init, nullptr);
     }
 
-    SPIRVStorageClassKind StorageClass = SPIRSPIRVAddrSpaceMap::map(
-        static_cast<SPIRAddressSpace>(Ty->getAddressSpace()));
-    if (SrcLang == SourceLanguageCM &&
-        getMemoryModel(*M) == SPIRVMemoryModelKind::MemoryModelSimple)
-      StorageClass = StorageClassCrossWorkgroup;
+    SPIRVStorageClassKind StorageClass;
+    auto AddressSpace = static_cast<SPIRAddressSpace>(Ty->getAddressSpace());
+    bool IsVectorCompute = GV->hasAttribute(kVCMetadata::VCGlobalVariable);
+    if (IsVectorCompute)
+      StorageClass =
+          VectorComputeUtil::getVCGlobalVarStorageClass(AddressSpace);
+    else
+      StorageClass = SPIRSPIRVAddrSpaceMap::map(AddressSpace);
+
     auto BVar = static_cast<SPIRVVariable *>(
         BM->addVariable(transType(Ty), GV->isConstant(), transLinkageType(GV),
-                        BVarInit, GV->getName().str(), StorageClass, nullptr));
+                        BVarInit, GV->getName(), StorageClass, nullptr));
 
-    mapValue(V, BVar);
-
-    // Add volatile decorations.
-    if (SrcLang == SourceLanguageCM) {
-      if (GV->hasAttribute(kCMMetadata::GenXByteOffset)) {
+    if (IsVectorCompute) {
+      BVar->addDecorate(DecorationVectorComputeVariableINTEL);
+      if (GV->hasAttribute(kVCMetadata::VCByteOffset)) {
         SPIRVWord Offset;
-        GV->getAttribute(kCMMetadata::GenXByteOffset)
+        GV->getAttribute(kVCMetadata::VCByteOffset)
             .getValueAsString()
             .getAsInteger(0, Offset);
-        BVar->addDecorate(DecorationOffset, Offset);
+        BVar->addDecorate(DecorationGlobalVariableOffsetINTEL, Offset);
       }
-      if (GV->hasAttribute(kCMMetadata::GenXVolatile))
+      if (GV->hasAttribute(kVCMetadata::VCVolatile))
         BVar->addDecorate(DecorationVolatile);
     }
 
+    mapValue(V, BVar);
     spv::BuiltIn Builtin = spv::BuiltInPosition;
     if (!GV->hasName() || !getSPIRVBuiltin(GV->getName().str(), Builtin))
       return BVar;
@@ -838,19 +839,9 @@ SPIRVValue *LLVMToSPIRV::transValueWithoutDecoration(Value *V,
       MemoryAccess[0] |= MemoryAccessNontemporalMask;
     if (MemoryAccess.front() == 0)
       MemoryAccess.clear();
-
-    SPIRVValue *BSV = nullptr;
-    if (Function *F = dyn_cast<Function>(ST->getValueOperand())) {
-      // store of function pointer
-      BSV = BM->addFunctionPointerINTELInst(
-          transType(F->getType()),
-          static_cast<SPIRVFunction *>(transValue(F, BB)), BB);
-    } else {
-      BSV = transValue(ST->getValueOperand(), BB);
-    }
-
     return mapValue(V, BM->addStoreInst(transValue(ST->getPointerOperand(), BB),
-                                        BSV, MemoryAccess, BB));
+                                        transValue(ST->getValueOperand(), BB),
+                                        MemoryAccess, BB));
   }
 
   if (LoadInst *LD = dyn_cast<LoadInst>(V)) {
@@ -974,17 +965,8 @@ SPIRVValue *LLVMToSPIRV::transValueWithoutDecoration(Value *V,
 
   if (auto Phi = dyn_cast<PHINode>(V)) {
     std::vector<SPIRVValue *> IncomingPairs;
-
     for (size_t I = 0, E = Phi->getNumIncomingValues(); I != E; ++I) {
-      SPIRVValue *BV = nullptr;
-      if (Function *F = dyn_cast<Function>(Phi->getIncomingValue(I))) {
-        BV = BM->addFunctionPointerINTELInst(
-            transType(F->getType()),
-            static_cast<SPIRVFunction *>(transValue(F, BB)), BB);
-      } else {
-        BV = transValue(Phi->getIncomingValue(I), BB);
-      }
-      IncomingPairs.push_back(BV);
+      IncomingPairs.push_back(transValue(Phi->getIncomingValue(I), BB));
       IncomingPairs.push_back(transValue(Phi->getIncomingBlock(I), nullptr));
     }
     return mapValue(
@@ -1037,19 +1019,13 @@ SPIRVValue *LLVMToSPIRV::transValueWithoutDecoration(Value *V,
 
   if (auto Ins = dyn_cast<InsertElementInst>(V)) {
     auto Index = Ins->getOperand(2);
-    if (auto Const = dyn_cast<ConstantInt>(Index)) {
-      SPIRVValue *InsVal = nullptr;
-      if (auto *F = dyn_cast<Function>(Ins->getOperand(1))) {
-        InsVal = BM->addFunctionPointerINTELInst(
-            transType(F->getType()),
-            static_cast<SPIRVFunction *>(transValue(F, BB)), BB);
-      } else
-        InsVal = transValue(Ins->getOperand(1), BB);
+    if (auto Const = dyn_cast<ConstantInt>(Index))
       return mapValue(V, BM->addCompositeInsertInst(
-                             InsVal, transValue(Ins->getOperand(0), BB),
+                             transValue(Ins->getOperand(1), BB),
+                             transValue(Ins->getOperand(0), BB),
                              std::vector<SPIRVWord>(1, Const->getZExtValue()),
                              BB));
-    } else
+    else
       return mapValue(
           V, BM->addVectorInsertDynamicInst(transValue(Ins->getOperand(0), BB),
                                             transValue(Ins->getOperand(1), BB),
@@ -1224,7 +1200,6 @@ SPIRVValue *LLVMToSPIRV::transIntrinsicInst(IntrinsicInst *II,
     // For llvm.fmuladd.* fusion is not guaranteed. If a fused multiply-add
     // is required the corresponding llvm.fma.* intrinsic function should be
     // used instead.
-    BB->getParent()->setContractedFMulAddFound();
     SPIRVType *Ty = transType(II->getType());
     SPIRVValue *Mul =
         BM->addBinaryInst(OpFMul, Ty, transValue(II->getArgOperand(0), BB),
@@ -1329,17 +1304,18 @@ SPIRVValue *LLVMToSPIRV::transIntrinsicInst(IntrinsicInst *II,
     return 0;
   }
   default:
-    auto FF = II->getCalledFunction();
-    if (FF && FF->getName().startswith("llvm.genx."))
-      return BM->addCallInst(transFunctionDecl(FF),
-	transArguments(II, BB, SPIRVEntry::createUnique(OpFunctionCall).get()),
-	BB);
+    if (SPIRVAllowUnknownIntrinsics)
+      return BM->addCallInst(
+          transFunctionDecl(II->getCalledFunction()),
+          transArguments(II, BB,
+                         SPIRVEntry::createUnique(OpFunctionCall).get()),
+          BB);
     else
-      // LLVM intrinsic functions shouldn't get to SPIRV, because they
-      // would have no definition there.
+      // Other LLVM intrinsics shouldn't get to SPIRV, because they
+      // can't be represented in SPIRV or aren't implemented yet.
       BM->getErrorLog().checkError(false, SPIRVEC_InvalidFunctionCall,
-				   II->getCalledValue()->getName().str(), "",
-				   __FILE__, __LINE__);
+                                   II->getCalledValue()->getName().str(), "",
+                                   __FILE__, __LINE__);
   }
   return nullptr;
 }
@@ -1349,13 +1325,6 @@ SPIRVValue *LLVMToSPIRV::transCallInst(CallInst *CI, SPIRVBasicBlock *BB) {
   if (isa<InlineAsm>(CI->getCalledOperand()))
     return transAsmCallINTEL(CI, BB);
 
-  if (CI->isIndirectCall())
-    return transIndirectCallInst(CI, BB);
-  return transDirectCallInst(CI, BB);
-}
-
-SPIRVValue *LLVMToSPIRV::transDirectCallInst(CallInst *CI,
-                                             SPIRVBasicBlock *BB) {
   SPIRVExtInstSetKind ExtSetKind = SPIRVEIS_Count;
   SPIRVWord ExtOp = SPIRVWORD_MAX;
   llvm::Function *F = CI->getCalledFunction();
@@ -1381,8 +1350,23 @@ SPIRVValue *LLVMToSPIRV::transDirectCallInst(CallInst *CI,
             BB),
         Dec);
 
+  Function *Callee = CI->getCalledFunction();
+  if (!Callee || Callee->isDeclaration()) {
+    SPIRVDBG(dbgs() << "[fp-contract] disabled for " << F->getName().str()
+                    << ": call to an undefined function " << *CI << '\n');
+    joinFPContract(CI->getFunction(), FPContract::DISABLED);
+  } else {
+    FPContract CalleeFPC = getFPContract(Callee);
+    joinFPContract(CI->getFunction(), CalleeFPC);
+    if (CalleeFPC == FPContract::DISABLED) {
+      SPIRVDBG(dbgs() << "[fp-contract] disabled for " << F->getName().str()
+                      << ": call to a function with disabled contraction: "
+                      << *CI << '\n');
+    }
+  }
+
   return BM->addCallInst(
-      transFunctionDecl(CI->getCalledFunction()),
+      transFunctionDecl(Callee),
       transArguments(CI, BB, SPIRVEntry::createUnique(OpFunctionCall).get()),
       BB);
 }
@@ -1410,14 +1394,6 @@ SPIRVValue *LLVMToSPIRV::transAsmCallINTEL(CallInst *CI, SPIRVBasicBlock *BB) {
   return BM->addAsmCallINTELInst(
       static_cast<SPIRVAsmINTEL *>(transValue(IA, BB, false)),
       transArguments(CI, BB, SPIRVEntry::createUnique(OpAsmCallINTEL).get()),
-      BB);
-}
-
-SPIRVValue *LLVMToSPIRV::transIndirectCallInst(CallInst *CI,
-                                               SPIRVBasicBlock *BB) {
-  return BM->addIndirectCallInst(
-      transValue(CI->getCalledValue(), BB), transType(CI->getType()),
-      transArguments(CI, BB, SPIRVEntry::createUnique(OpFunctionCall).get()),
       BB);
 }
 
@@ -1574,6 +1550,67 @@ void LLVMToSPIRV::mutateFuncArgType(
   }
 }
 
+// Propagate contraction requirement of F up the call graph.
+void LLVMToSPIRV::fpContractUpdateRecursive(Function *F, FPContract FPC) {
+  std::queue<User *> Users;
+  for (User *FU : F->users()) {
+    Users.push(FU);
+  }
+
+  bool EnableLogger = FPC == FPContract::DISABLED && !Users.empty();
+  if (EnableLogger) {
+    SPIRVDBG(dbgs() << "[fp-contract] disabled for users of " << F->getName()
+                    << '\n');
+  }
+
+  while (!Users.empty()) {
+    User *U = Users.front();
+    Users.pop();
+
+    if (EnableLogger) {
+      SPIRVDBG(dbgs() << "[fp-contract]   user: " << *U << '\n');
+    }
+
+    // Move from an Instruction to its Function
+    if (Instruction *I = dyn_cast<Instruction>(U)) {
+      Users.push(I->getFunction());
+      continue;
+    }
+
+    if (Function *F = dyn_cast<Function>(U)) {
+      if (!joinFPContract(F, FPC)) {
+        // FP contract was not updated - no need to propagate
+        // This also terminates a recursion (if any).
+        if (EnableLogger) {
+          SPIRVDBG(dbgs() << "[fp-contract] already disabled " << F->getName()
+                          << '\n');
+        }
+        continue;
+      }
+      if (EnableLogger) {
+        SPIRVDBG(dbgs() << "[fp-contract] disabled for " << F->getName()
+                        << '\n');
+      }
+      for (User *FU : F->users()) {
+        Users.push(FU);
+      }
+      continue;
+    }
+
+    // Unwrap a constant until we reach an Instruction.
+    // This is checked after the Function, because a Function is also a
+    // Constant.
+    if (Constant *C = dyn_cast<Constant>(U)) {
+      for (User *CU : C->users()) {
+        Users.push(CU);
+      }
+      continue;
+    }
+
+    llvm_unreachable("Unexpected use.");
+  }
+}
+
 void LLVMToSPIRV::transFunction(Function *I) {
   SPIRVFunction *BF = transFunctionDecl(I);
   // Creating all basic blocks before creating any instruction.
@@ -1587,13 +1624,15 @@ void LLVMToSPIRV::transFunction(Function *I) {
       transValue(&BI, BB, false);
     }
   }
+  // Enable FP contraction unless proven otherwise
+  joinFPContract(I, FPContract::ENABLED);
+  fpContractUpdateRecursive(I, getFPContract(I));
 
-  if (BF->getModule()->isEntryPoint(spv::ExecutionModelKernel, BF->getId()) &&
-      BF->shouldFPContractBeDisabled()) {
-    BF->addExecutionMode(BF->getModule()->add(
-        new SPIRVExecutionMode(BF, spv::ExecutionModeContractionOff)));
-  }
-  if (BF->getModule()->isEntryPoint(spv::ExecutionModelKernel, BF->getId())) {
+  bool IsKernelEntryPoint =
+      BF->getModule()->isEntryPoint(spv::ExecutionModelKernel, BF->getId()) ||
+      isKernel(I);
+
+  if (IsKernelEntryPoint) {
     collectInputOutputVariables(BF, I);
   }
 }
@@ -1638,17 +1677,8 @@ bool LLVMToSPIRV::translate() {
   for (auto I : Defs)
     transFunction(I);
 
-  SPIRVWord Ver;
-  if (BM->getSourceLanguage(&Ver) == SourceLanguageOpenCL_C ||
-      BM->getSourceLanguage(&Ver) == SourceLanguageOpenCL_CPP) {
-    if (!transOCLKernelMetadata())
-      return false;
-  }
-  else if (BM->getSourceLanguage(&Ver) == SourceLanguageCM) {
-    if (!transCMKernelMetadata())
-      return false;
-    BM->addExtension(SPIRVExtensionKind::SPV_INTEL_cm);
-  }
+  if (!transOCLKernelMetadata())
+    return false;
   if (!transExecutionMode())
     return false;
 
@@ -1733,42 +1763,58 @@ bool LLVMToSPIRV::transExecutionMode() {
         BF->addExecutionMode(new SPIRVExecutionMode(
             BF, static_cast<ExecutionMode>(EMode), SLMSize));
       } break;
-#ifdef __INTEL_EMBARGO__
-      case spv::ExecutionModeNamedBarrierCountINTEL: {
-        unsigned NBarrierCnt;
-        N.get(NBarrierCnt);
-        BF->addExecutionMode(new SPIRVExecutionMode(
-            BF, static_cast<ExecutionMode>(EMode), NBarrierCnt));
-      } break;
 
-      case spv::ExecutionModeRegularBarrierCountINTEL: {
-        unsigned RegularBarrierCnt;
-        N.get(RegularBarrierCnt);
-        BF->addExecutionMode(new SPIRVExecutionMode(
-          BF, static_cast<ExecutionMode>(EMode), RegularBarrierCnt));
-      } break;
-#endif // __INTEL_EMBARGO__
-
-      case spv::ExecutionModeRoundingModeRTPINTEL:
-      case spv::ExecutionModeRoundingModeRTNINTEL:
-      case spv::ExecutionModeFloatingPointModeALTINTEL:
-      case spv::ExecutionModeFloatingPointModeIEEEINTEL:
       case spv::ExecutionModeDenormPreserve:
       case spv::ExecutionModeDenormFlushToZero:
       case spv::ExecutionModeSignedZeroInfNanPreserve:
       case spv::ExecutionModeRoundingModeRTE:
-      case spv::ExecutionModeRoundingModeRTZ:{
-          unsigned TargetWidth;
-          N.get(TargetWidth);
-          BF->addExecutionMode(BM->add(new SPIRVExecutionMode(
-              BF, static_cast<ExecutionMode>(EMode), TargetWidth)));
+      case spv::ExecutionModeRoundingModeRTZ: {
+        unsigned TargetWidth;
+        N.get(TargetWidth);
+        BF->addExecutionMode(BM->add(new SPIRVExecutionMode(
+            BF, static_cast<ExecutionMode>(EMode), TargetWidth)));
+      } break;
+      case spv::ExecutionModeRoundingModeRTPINTEL:
+      case spv::ExecutionModeRoundingModeRTNINTEL:
+      case spv::ExecutionModeFloatingPointModeALTINTEL:
+      case spv::ExecutionModeFloatingPointModeIEEEINTEL: {
+        unsigned TargetWidth;
+        N.get(TargetWidth);
+        BF->addExecutionMode(BM->add(new SPIRVExecutionMode(
+            BF, static_cast<ExecutionMode>(EMode), TargetWidth)));
       } break;
       default:
         llvm_unreachable("invalid execution mode");
       }
     }
   }
+
+  transFPContract();
+
   return true;
+}
+
+void LLVMToSPIRV::transFPContract() {
+  for (Function &F : *M) {
+    SPIRVValue *TranslatedF = getTranslatedValue(&F);
+    if (!TranslatedF) {
+      continue;
+    }
+    SPIRVFunction *BF = static_cast<SPIRVFunction *>(TranslatedF);
+
+    bool IsKernelEntryPoint =
+        BF->getModule()->isEntryPoint(spv::ExecutionModelKernel, BF->getId());
+    if (!IsKernelEntryPoint)
+      continue;
+
+    FPContract FPC = getFPContract(&F);
+    assert(FPC != FPContract::UNDEF);
+
+    if (FPC == FPContract::DISABLED) {
+      BF->addExecutionMode(BF->getModule()->add(
+          new SPIRVExecutionMode(BF, spv::ExecutionModeContractionOff)));
+    }
+  }
 }
 
 bool LLVMToSPIRV::transOCLKernelMetadata() {
@@ -1812,70 +1858,6 @@ bool LLVMToSPIRV::transOCLKernelMetadata() {
           [=](const std::string &Str, SPIRVFunctionParameter *BA) {
             BM->setName(BA, Str);
           });
-    }
-  }
-  return true;
-}
-
-bool LLVMToSPIRV::transCMKernelMetadata() {
-  NamedMDNode *KernelMDs = M->getNamedMetadata(kCMMetadata::GenXKernels);
-  std::vector<std::string> ArgAccessQual;
-  if (!KernelMDs)
-    return true;
-
-  auto MemoryModel = getMemoryModel(*M);
-  if (MemoryModel != SPIRVMemoryModelKind::MemoryModelMax)
-    BM->setMemoryModel(static_cast<SPIRVMemoryModelKind>(MemoryModel));
-
-  for (unsigned I = 0, E = KernelMDs->getNumOperands(); I < E; ++I) {
-    MDNode *KernelMD = KernelMDs->getOperand(I);
-    if (KernelMD->getNumOperands() == 0)
-      continue;
-    Function *Kernel = mdconst::dyn_extract<Function>(
-        KernelMD->getOperand(CMUtil::KernelMDOp::FunctionRef));
-
-    SPIRVFunction *BF =
-        static_cast<SPIRVFunction *>(getTranslatedValue(Kernel));
-    assert(BF && "Kernel function should be translated first");
-    assert(Kernel && isKernel(Kernel) &&
-           "Invalid kernel calling convention or metadata");
-    // add kernel name
-    StringRef KernelName =
-        cast<MDString>(KernelMD->getOperand(CMUtil::KernelMDOp::Name).get())
-            ->getString();
-    BM->setName(BF, KernelName);
-    // get the ArgKind info
-    if (KernelMD->getNumOperands() > CMUtil::KernelMDOp::ArgKinds) {
-      if (auto KindsNode = dyn_cast<MDNode>(
-              KernelMD->getOperand(CMUtil::KernelMDOp::ArgKinds))) {
-        for (unsigned i = 0, e = KindsNode->getNumOperands(); i != e; ++i) {
-          if (auto VM = dyn_cast<ValueAsMetadata>(KindsNode->getOperand(i)))
-            if (auto V = dyn_cast<ConstantInt>(VM->getValue())) {
-              auto ArgKind = V->getZExtValue();
-              SPIRVFunctionParameter *BA = BF->getArgument(i);
-              if (BA) {
-                BA->addDecorate(
-                    new SPIRVDecorate(DecorationArgumentTypeINTEL, BA, ArgKind));
-              }
-            }
-        }
-      }
-    }
-    // get the ArgTypeDescs
-    if (KernelMD->getNumOperands() > CMUtil::KernelMDOp::ArgTypeDescs) {
-      if (auto Node = dyn_cast<MDNode>(
-              KernelMD->getOperand(CMUtil::KernelMDOp::ArgTypeDescs))) {
-        for (unsigned i = 0, e = Node->getNumOperands(); i != e; ++i) {
-          if (auto MS = dyn_cast<MDString>(Node->getOperand(i))) {
-            SPIRVFunctionParameter *BA = BF->getArgument(i);
-            if (BA) {
-              SPIRVString *SS = BM->getString(MS->getString().str());
-              BA->addDecorate(new SPIRVDecorate(
-                  DecorationArgumentDescINTEL, BA, SS->getId()));
-            }
-          }
-        }
-      }
     }
   }
   return true;
@@ -2035,6 +2017,35 @@ LLVMToSPIRV::transLinkageType(const GlobalValue *GV) {
   return SPIRVLinkageTypeKind::LinkageTypeExport;
 }
 
+LLVMToSPIRV::FPContract LLVMToSPIRV::getFPContract(Function *F) {
+  auto It = FPContractMap.find(F);
+  if (It == FPContractMap.end()) {
+    return FPContract::UNDEF;
+  }
+  return It->second;
+}
+
+bool LLVMToSPIRV::joinFPContract(Function *F, FPContract C) {
+  FPContract &Existing = FPContractMap[F];
+  switch (Existing) {
+  case FPContract::UNDEF:
+    if (C != FPContract::UNDEF) {
+      Existing = C;
+      return true;
+    }
+    return false;
+  case FPContract::ENABLED:
+    if (C == FPContract::DISABLED) {
+      Existing = C;
+      return true;
+    }
+    return false;
+  case FPContract::DISABLED:
+    return false;
+  }
+  llvm_unreachable("Unhandled FPContract value.");
+}
+
 } // namespace SPIRV
 
 char LLVMToSPIRV::ID = 0;
@@ -2049,18 +2060,16 @@ ModulePass *llvm::createLLVMToSPIRV(SPIRVModule *SMod) {
   return new LLVMToSPIRV(SMod);
 }
 
-void addPassesForSPIRV(legacy::PassManager &PassMgr, bool OpenCLSource) {
-  if (SPIRVMemToReg)
+void addPassesForSPIRV(legacy::PassManager &PassMgr,
+                       const SPIRV::TranslatorOpts &Opts) {
+  if (Opts.isSPIRVMemToRegEnabled())
     PassMgr.add(createPromoteMemoryToRegisterPass());
   PassMgr.add(createPreprocessMetadata());
-  if (OpenCLSource) {
-    PassMgr.add(createOCL21ToSPIRV());
-    PassMgr.add(createSPIRVLowerOCLBlocks());
-  }
+  PassMgr.add(createOCL21ToSPIRV());
+  PassMgr.add(createSPIRVLowerSPIRBlocks());
   PassMgr.add(createOCLTypeToSPIRV());
   PassMgr.add(createSPIRVLowerOCLBlocks());
-  if (OpenCLSource)
-    PassMgr.add(createOCL20ToSPIRV());
+  PassMgr.add(createOCL20ToSPIRV());
   PassMgr.add(createSPIRVRegularizeLLVM());
   PassMgr.add(createSPIRVLowerConstExpr());
   PassMgr.add(createSPIRVLowerBool());
@@ -2091,8 +2100,7 @@ bool llvm::writeSpirv(Module *M, const SPIRV::TranslatorOpts &Opts,
     return false;
 
   legacy::PassManager PassMgr;
-  bool IsOpenCLSource = OCLUtil::getOCLVersion(M);
-  addPassesForSPIRV(PassMgr, IsOpenCLSource);
+  addPassesForSPIRV(PassMgr, Opts);
   if (hasLoopUnrollMetadata(M))
     PassMgr.add(createLoopSimplifyPass());
   PassMgr.add(createLLVMToSPIRV(BM.get()));
@@ -2105,13 +2113,18 @@ bool llvm::writeSpirv(Module *M, const SPIRV::TranslatorOpts &Opts,
 }
 
 bool llvm::regularizeLlvmForSpirv(Module *M, std::string &ErrMsg) {
+  SPIRV::TranslatorOpts DefaultOpts;
+  return llvm::regularizeLlvmForSpirv(M, ErrMsg, DefaultOpts);
+}
+
+bool llvm::regularizeLlvmForSpirv(Module *M, std::string &ErrMsg,
+                                  const SPIRV::TranslatorOpts &Opts) {
   std::unique_ptr<SPIRVModule> BM(SPIRVModule::createSPIRVModule());
   if (!isValidLLVMModule(M, BM->getErrorLog()))
     return false;
 
   legacy::PassManager PassMgr;
-  bool IsOpenCLSource = OCLUtil::getOCLVersion(M);
-  addPassesForSPIRV(PassMgr, IsOpenCLSource);
+  addPassesForSPIRV(PassMgr, Opts);
   PassMgr.run(*M);
   return true;
 }

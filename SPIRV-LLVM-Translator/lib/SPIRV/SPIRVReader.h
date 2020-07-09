@@ -102,8 +102,9 @@ public:
   Instruction *transWGSizeQueryBI(SPIRVInstruction *BI, BasicBlock *BB);
   Instruction *transSGSizeQueryBI(SPIRVInstruction *BI, BasicBlock *BB);
   bool transFPContractMetadata();
-  bool transKernelMetadata();
-  bool transCMKernelMetadata();
+  bool transMetadata();
+  bool transOCLMetadata(SPIRVFunction *BF);
+  bool transVectorComputeMetadata(SPIRVFunction *BF);
   Value *transAsmINTEL(SPIRVAsmINTEL *BA);
   CallInst *transAsmCallINTEL(SPIRVAsmCallINTEL *BI, Function *F,
                               BasicBlock *BB);
@@ -217,6 +218,7 @@ private:
   // Change this if it is no longer true.
   bool isFuncNoUnwind() const { return true; }
   bool isSPIRVCmpInstTransToLLVMInst(SPIRVInstruction *BI) const;
+  bool isDirectlyTranslatedToOCL(Op OpCode) const;
   bool transOCLBuiltinsFromVariables();
   bool transOCLBuiltinFromVariable(GlobalVariable *GV,
                                    SPIRVBuiltinVariableKind Kind);

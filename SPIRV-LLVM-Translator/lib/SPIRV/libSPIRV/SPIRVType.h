@@ -287,8 +287,12 @@ public:
     SPIRVCapVec V(getComponentType()->getRequiredCapability());
     // Even though the capability name is "Vector16", it describes
     // usage of 8-component or 16-component vectors.
-    if (CompCount >= 8)
+    if (CompCount == 8 || CompCount == 16)
       V.push_back(CapabilityVector16);
+
+    if (CompCount == 1 || (CompCount > 4 && CompCount < 8) ||
+        (CompCount > 8 && CompCount < 16) || CompCount > 16)
+      V.push_back(CapabilityVectorAnyINTEL);
     return V;
   }
 
@@ -301,13 +305,6 @@ protected:
   void validate() const override {
     SPIRVEntry::validate();
     CompType->validate();
-    SPIRVWord Ver = 0;
-    (void)Ver;
-    if (Module->getSourceLanguage(&Ver) == SourceLanguageOpenCL_C ||
-        Module->getSourceLanguage(&Ver) == SourceLanguageOpenCL_CPP) {
-      assert(CompCount == 2 || CompCount == 3 || CompCount == 4 ||
-             CompCount == 8 || CompCount == 16);
-    }
   }
 
 private:

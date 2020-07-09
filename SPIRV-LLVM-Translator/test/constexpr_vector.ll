@@ -1,7 +1,8 @@
 ; RUN: llvm-as < %s | llvm-spirv -s | llvm-dis | FileCheck %s --check-prefix=CHECK-LLVM
 
 ; CHECK-LLVM: define dllexport void @vadd() {
-; CHECK-LLVM:   %Funcs = alloca <16 x i8>, align 16
+; CHECK-LLVM-NEXT: entry:
+; CHECK-LLVM-NEXT:   %Funcs = alloca <16 x i8>, align 16
 ; CHECK-LLVM-NEXT:   %0 = ptrtoint i32 (i32)* @_Z2f1u2CMvb32_j to i64
 ; CHECK-LLVM-NEXT:   %1 = bitcast i64 %0 to <8 x i8>
 ; CHECK-LLVM-NEXT:   %2 = extractelement <8 x i8> %1, i32 0
@@ -39,18 +40,12 @@
 ; CHECK-LLVM-NEXT:   %34 = insertelement <16 x i8> %33, i8 %18, i32 14
 ; CHECK-LLVM-NEXT:   %35 = insertelement <16 x i8> %34, i8 %19, i32 15
 ; CHECK-LLVM-NEXT:   store <16 x i8> %35, <16 x i8>* %Funcs, align 16
-; CHECK-LLVM:        %Funcs1 = alloca <2 x i64>, align 16
-; CHECK-LLVM-NEXT:   %36 = ptrtoint i32 (i32)* @_Z2f1u2CMvb32_j to i64
-; CHECK-LLVM-NEXT:   %37 = ptrtoint i32 (i32)* @_Z2f2u2CMvb32_j to i64
-; CHECK-LLVM-NEXT:   %38 = insertelement <2 x i64> undef, i64 %36, i32 0
-; CHECK-LLVM-NEXT:   %39 = insertelement <2 x i64> %38, i64 %37, i32 1
-; CHECK-LLVM-NEXT:   store <2 x i64> %39, <2 x i64>* %Funcs1, align 16
+; CHECK-LLVM-NEXT:   ret void
+; CHECK-LLVM-NEXT: }
 
 ; RUN: llvm-as < %s | llvm-spirv -spirv-text | FileCheck %s --check-prefix=CHECK-SPIRV
 
-; CHECK-SPIRV-DAG: 4 Name [[Funcs:[0-9]+]] "Funcs"
-; CHECK-SPIRV-DAG: 6 Name [[F1:[0-9+]]] "_Z2f1u2CMvb32_j"
-; CHECK-SPIRV-DAG: 6 Name [[F2:[0-9+]]] "_Z2f2u2CMvb32_j"
+; CHECK-SPIRV: 4 Name [[Funcs:[0-9]+]] "Funcs"
 
 ; CHECK-SPIRV-DAG: 4 TypeInt [[TypeInt8:[0-9]+]] 8 0
 ; CHECK-SPIRV-DAG: 4 TypeInt [[TypeInt32:[0-9]+]] 32 0
@@ -60,8 +55,7 @@
 ; CHECK-SPIRV-DAG: 4 TypePointer [[StorePtr:[0-9]+]] 7 [[TypeVec16]]
 ; CHECK-SPIRV-DAG: 3 Undef [[TypeVec16]] [[TypeUndef:[0-9]+]]
 
-; CHECK-SPIRV: 4 FunctionPointerINTEL [[FuncPtrTy:[0-9]+]] [[F1Ptr:[0-9]+]] [[F1]]
-; CHECK-SPIRV-NEXT: 4 ConvertPtrToU [[TypeInt64]] [[Ptr1:[0-9]+]] [[F1Ptr]]
+; CHECK-SPIRV: 4 ConvertPtrToU [[TypeInt64]] [[Ptr1:[0-9]+]] {{[0-9]+}}
 ; CHECK-SPIRV-NEXT: 4 Bitcast [[TypeVec8]] [[Vec1:[0-9]+]] [[Ptr1]]
 ; CHECK-SPIRV-NEXT: 5 CompositeExtract [[TypeInt8]] [[v00:[0-9]+]] [[Vec1]] 0
 ; CHECK-SPIRV-NEXT: 5 CompositeExtract [[TypeInt8]] [[v01:[0-9]+]] [[Vec1]] 1
@@ -71,8 +65,7 @@
 ; CHECK-SPIRV-NEXT: 5 CompositeExtract [[TypeInt8]] [[v05:[0-9]+]] [[Vec1]] 5
 ; CHECK-SPIRV-NEXT: 5 CompositeExtract [[TypeInt8]] [[v06:[0-9]+]] [[Vec1]] 6
 ; CHECK-SPIRV-NEXT: 5 CompositeExtract [[TypeInt8]] [[v07:[0-9]+]] [[Vec1]] 7
-; CHECK-SPIRV-NEXT: 4 FunctionPointerINTEL [[FuncPtrTy]] [[F2Ptr:[0-9]+]] [[F2]]
-; CHECK-SPIRV-NEXT: 4 ConvertPtrToU [[TypeInt64]] [[Ptr2:[0-9]+]] [[F2Ptr]]
+; CHECK-SPIRV-NEXT: 4 ConvertPtrToU [[TypeInt64]] [[Ptr2:[0-9]+]] {{[0-9]+}}
 ; CHECK-SPIRV-NEXT: 4 Bitcast [[TypeVec8]] [[Vec2:[0-9]+]] [[Ptr2]]
 ; CHECK-SPIRV-NEXT: 5 CompositeExtract [[TypeInt8]] [[v10:[0-9]+]] [[Vec2]] 0
 ; CHECK-SPIRV-NEXT: 5 CompositeExtract [[TypeInt8]] [[v11:[0-9]+]] [[Vec2]] 1
@@ -118,7 +111,5 @@ define dllexport void @vadd() {
 entry:
   %Funcs = alloca <16 x i8>, align 16
   store <16 x i8> <i8 extractelement (<8 x i8> bitcast (i64 ptrtoint (i32 (i32)* @_Z2f1u2CMvb32_j to i64) to <8 x i8>), i32 0), i8 extractelement (<8 x i8> bitcast (i64 ptrtoint (i32 (i32)* @_Z2f1u2CMvb32_j to i64) to <8 x i8>), i32 1), i8 extractelement (<8 x i8> bitcast (i64 ptrtoint (i32 (i32)* @_Z2f1u2CMvb32_j to i64) to <8 x i8>), i32 2), i8 extractelement (<8 x i8> bitcast (i64 ptrtoint (i32 (i32)* @_Z2f1u2CMvb32_j to i64) to <8 x i8>), i32 3), i8 extractelement (<8 x i8> bitcast (i64 ptrtoint (i32 (i32)* @_Z2f1u2CMvb32_j to i64) to <8 x i8>), i32 4), i8 extractelement (<8 x i8> bitcast (i64 ptrtoint (i32 (i32)* @_Z2f1u2CMvb32_j to i64) to <8 x i8>), i32 5), i8 extractelement (<8 x i8> bitcast (i64 ptrtoint (i32 (i32)* @_Z2f1u2CMvb32_j to i64) to <8 x i8>), i32 6), i8 extractelement (<8 x i8> bitcast (i64 ptrtoint (i32 (i32)* @_Z2f1u2CMvb32_j to i64) to <8 x i8>), i32 7), i8 extractelement (<8 x i8> bitcast (i64 ptrtoint (i32 (i32)* @_Z2f2u2CMvb32_j to i64) to <8 x i8>), i32 0), i8 extractelement (<8 x i8> bitcast (i64 ptrtoint (i32 (i32)* @_Z2f2u2CMvb32_j to i64) to <8 x i8>), i32 1), i8 extractelement (<8 x i8> bitcast (i64 ptrtoint (i32 (i32)* @_Z2f2u2CMvb32_j to i64) to <8 x i8>), i32 2), i8 extractelement (<8 x i8> bitcast (i64 ptrtoint (i32 (i32)* @_Z2f2u2CMvb32_j to i64) to <8 x i8>), i32 3), i8 extractelement (<8 x i8> bitcast (i64 ptrtoint (i32 (i32)* @_Z2f2u2CMvb32_j to i64) to <8 x i8>), i32 4), i8 extractelement (<8 x i8> bitcast (i64 ptrtoint (i32 (i32)* @_Z2f2u2CMvb32_j to i64) to <8 x i8>), i32 5), i8 extractelement (<8 x i8> bitcast (i64 ptrtoint (i32 (i32)* @_Z2f2u2CMvb32_j to i64) to <8 x i8>), i32 6), i8 extractelement (<8 x i8> bitcast (i64 ptrtoint (i32 (i32)* @_Z2f2u2CMvb32_j to i64) to <8 x i8>), i32 7)>, <16 x i8>* %Funcs, align 16
-  %Funcs1 = alloca <2 x i64>, align 16
-  store <2 x i64> <i64 ptrtoint (i32 (i32)* @_Z2f1u2CMvb32_j to i64), i64 ptrtoint (i32 (i32)* @_Z2f2u2CMvb32_j to i64)>, <2 x i64>* %Funcs1, align 16
   ret void
 }

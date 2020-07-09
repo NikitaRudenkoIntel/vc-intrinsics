@@ -114,6 +114,7 @@ bool SPIRVLowerConstExpr::runOnModule(Module &Module) {
 
 void SPIRVLowerConstExpr::visit(Module *M) {
   for (auto &I : M->functions()) {
+    std::map<ConstantExpr *, Instruction *> CMap;
     std::list<Instruction *> WorkList;
     for (auto &BI : I) {
       for (auto &II : BI) {
@@ -124,10 +125,7 @@ void SPIRVLowerConstExpr::visit(Module *M) {
     while (!WorkList.empty()) {
       auto II = WorkList.front();
 
-      auto LowerOp = [&II, &FBegin, &I](Value *V) -> Value * {
-        if (isa<Function>(V))
-          return V;
-        auto *CE = cast<ConstantExpr>(V);
+      auto LowerOp = [&II, &FBegin, &I](ConstantExpr *CE) {
         SPIRVDBG(dbgs() << "[lowerConstantExpressions] " << *CE;)
         auto ReplInst = CE->getAsInstruction();
         auto InsPoint = II->getParent() == &*FBegin ? II : &FBegin->back();
@@ -152,30 +150,25 @@ void SPIRVLowerConstExpr::visit(Module *M) {
       for (unsigned OI = 0, OE = II->getNumOperands(); OI != OE; ++OI) {
         auto Op = II->getOperand(OI);
         auto *Vec = dyn_cast<ConstantVector>(Op);
-        if (Vec && std::all_of(Vec->op_begin(), Vec->op_end(), [](Value *V) {
-              return isa<ConstantExpr>(V) || isa<Function>(V);
-            })) {
+        if (Vec && std::all_of(Vec->op_begin(), Vec->op_end(),
+                               [](Value *V) { return isa<ConstantExpr>(V); })) {
           // Expand a vector of constexprs and construct it back with series of
           // insertelement instructions
-          std::list<Value *> OpList;
-          std::transform(Vec->op_begin(), Vec->op_end(),
-                         std::back_inserter(OpList),
-                         [LowerOp](Value *V) { return LowerOp(V); });
+          std::list<Instruction *> ReplList;
+          std::transform(
+              Vec->op_begin(), Vec->op_end(), std::back_inserter(ReplList),
+              [LowerOp](Value *V) { return LowerOp(cast<ConstantExpr>(V)); });
           Value *Repl = nullptr;
           unsigned Idx = 0;
-          std::list<Instruction *> ReplList;
-          for (auto V : OpList) {
-            if (auto *Inst = dyn_cast<Instruction>(V))
-              ReplList.push_back(Inst);
+          for (auto V : ReplList)
             Repl = InsertElementInst::Create(
                 (Repl ? Repl : UndefValue::get(Vec->getType())), V,
                 ConstantInt::get(Type::getInt32Ty(M->getContext()), Idx++), "",
                 II);
-          }
           II->replaceUsesOfWith(Op, Repl);
           WorkList.splice(WorkList.begin(), ReplList);
         } else if (auto CE = dyn_cast<ConstantExpr>(Op))
-          WorkList.push_front(cast<Instruction>(LowerOp(CE)));
+          WorkList.push_front(LowerOp(CE));
       }
     }
   }

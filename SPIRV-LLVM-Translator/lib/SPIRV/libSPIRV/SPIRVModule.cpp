@@ -291,11 +291,6 @@ public:
   SPIRVInstruction *addAsmCallINTELInst(SPIRVAsmINTEL *,
                                         const std::vector<SPIRVWord> &,
                                         SPIRVBasicBlock *) override;
-  SPIRVInstruction *addIndirectCallInst(SPIRVValue *, SPIRVType *,
-                                        const std::vector<SPIRVWord> &,
-                                        SPIRVBasicBlock *) override;
-  SPIRVInstruction *addFunctionPointerINTELInst(SPIRVType *, SPIRVFunction *,
-                                                SPIRVBasicBlock *) override;
   SPIRVInstruction *addCmpInst(Op, SPIRVType *, SPIRVValue *, SPIRVValue *,
                                SPIRVBasicBlock *) override;
   SPIRVInstruction *addLoadInst(SPIRVValue *, const std::vector<SPIRVWord> &,
@@ -563,7 +558,16 @@ void SPIRVModuleImpl::addCapability(SPIRVCapabilityKind Cap) {
   if (hasCapability(Cap))
     return;
 
-  CapMap.insert(std::make_pair(Cap, new SPIRVCapability(this, Cap)));
+  auto *CapObj = new SPIRVCapability(this, Cap);
+  if (AutoAddExtensions) {
+    // While we are reading existing SPIR-V we need to read it as-is and don't
+    // add required extensions for each entry automatically
+    for (auto &E : CapObj->getRequiredExtensions()) {
+      addExtension(E);
+    }
+  }
+
+  CapMap.insert(std::make_pair(Cap, CapObj));
 }
 
 void SPIRVModuleImpl::addCapabilityInternal(SPIRVCapabilityKind Cap) {
@@ -1162,21 +1166,6 @@ SPIRVModuleImpl::addAsmCallINTELInst(SPIRVAsmINTEL *TheAsm,
                                      SPIRVBasicBlock *BB) {
   return addInstruction(
       new SPIRVAsmCallINTEL(getId(), TheAsm, TheArguments, BB), BB);
-}
-
-SPIRVInstruction *SPIRVModuleImpl::addIndirectCallInst(
-    SPIRVValue *TheCalledValue, SPIRVType *TheReturnType,
-    const std::vector<SPIRVWord> &TheArguments, SPIRVBasicBlock *BB) {
-  return addInstruction(
-      new SPIRVFunctionPointerCallINTEL(getId(), TheCalledValue, TheReturnType,
-                                        TheArguments, BB),
-      BB);
-}
-
-SPIRVInstruction *SPIRVModuleImpl::addFunctionPointerINTELInst(
-    SPIRVType *TheType, SPIRVFunction *TheFunction, SPIRVBasicBlock *BB) {
-  return addInstruction(
-      new SPIRVFunctionPointerINTEL(getId(), TheType, TheFunction, BB), BB);
 }
 
 SPIRVInstruction *SPIRVModuleImpl::addBinaryInst(Op TheOpCode, SPIRVType *Type,

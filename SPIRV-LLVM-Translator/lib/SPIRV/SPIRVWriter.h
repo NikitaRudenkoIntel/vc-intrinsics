@@ -97,11 +97,10 @@ public:
   SPIRVValue *transCallInst(CallInst *Call, SPIRVBasicBlock *BB);
   SPIRVValue *transAsmINTEL(InlineAsm *Asm);
   SPIRVValue *transAsmCallINTEL(CallInst *Call, SPIRVBasicBlock *BB);
-  SPIRVValue *transDirectCallInst(CallInst *Call, SPIRVBasicBlock *BB);
-  SPIRVValue *transIndirectCallInst(CallInst *Call, SPIRVBasicBlock *BB);
   bool transDecoration(Value *V, SPIRVValue *BV);
   SPIRVWord transFunctionControlMask(Function *);
   SPIRVFunction *transFunctionDecl(Function *F);
+  void transVectorComputeMetadata(Function *F);
   bool transGlobalVariables();
 
   Op transBoolOpCode(SPIRVValue *Opn, Op OC);
@@ -109,6 +108,7 @@ public:
   // Returns true if succeeds.
   bool translate();
   bool transExecutionMode();
+  void transFPContract();
   SPIRVValue *transConstant(Value *V);
   SPIRVValue *transValue(Value *V, SPIRVBasicBlock *BB,
                          bool CreateForward = true);
@@ -129,6 +129,12 @@ private:
   SPIRVWord SrcLangVer;
   std::unique_ptr<LLVMToSPIRVDbgTran> DbgTran;
   std::unique_ptr<CallGraph> CG;
+
+  enum class FPContract { UNDEF, DISABLED, ENABLED };
+  DenseMap<Function *, FPContract> FPContractMap;
+  FPContract getFPContract(Function *F);
+  bool joinFPContract(Function *F, FPContract C);
+  void fpContractUpdateRecursive(Function *F, FPContract FPC);
 
   SPIRVType *mapType(Type *T, SPIRVType *BT);
   SPIRVValue *mapValue(Value *V, SPIRVValue *BV);
@@ -161,7 +167,6 @@ private:
                                SmallVectorImpl<std::string> *Dec = nullptr);
   bool isKernel(Function *F);
   bool transOCLKernelMetadata();
-  bool transCMKernelMetadata();
   SPIRVInstruction *transBuiltinToInst(const std::string &DemangledName,
                                        const std::string &MangledName,
                                        CallInst *CI, SPIRVBasicBlock *BB);

@@ -106,6 +106,16 @@ static cl::opt<bool> SPIRVGenKernelArgNameMD(
     cl::desc("Enable generating OpenCL kernel argument name "
              "metadata"));
 
+static cl::opt<SPIRV::BIsRepresentation> BIsRepresentation(
+    "spirv-target-env",
+    cl::desc("Specify a representation of different SPIR-V Instructions which "
+             "is used when translating from SPIR-V to LLVM IR"),
+    cl::values(
+        clEnumValN(SPIRV::BIsRepresentation::OpenCL12, "CL1.2", "OpenCL C 1.2"),
+        clEnumValN(SPIRV::BIsRepresentation::OpenCL20, "CL2.0", "OpenCL C 2.0"),
+        clEnumValN(SPIRV::BIsRepresentation::SPIRVFriendlyIR, "SPV-IR",
+                   "SPIR-V Friendly IR")),
+    cl::init(SPIRV::BIsRepresentation::OpenCL12));
 
 #ifdef _SPIRV_SUPPORT_TEXT_FMT
 namespace SPIRV {
@@ -121,6 +131,10 @@ static cl::opt<bool> ToBinary(
     "to-binary",
     cl::desc("Convert input SPIR-V in internal textual format to binary"));
 #endif
+
+static cl::opt<bool>
+    SPIRVMemToReg("spirv-mem2reg", cl::init(false),
+                  cl::desc("LLVM/SPIR-V translation enable mem2reg"));
 
 static std::string removeExt(const std::string &FileName) {
   size_t Pos = FileName.find_last_of(".");
@@ -231,14 +245,14 @@ static int convertSPIRV() {
     return 0;
   };
   if (OutputFile != "-") {
-    std::ofstream OFS(OutputFile, std::ios::binary);
+    std::ofstream OFS(OutputFile);
     return Action(OFS);
   } else
     return Action(std::cout);
 }
 #endif
 
-static int regularizeLLVM() {
+static int regularizeLLVM(SPIRV::TranslatorOpts &Opts) {
   LLVMContext Context;
 
   std::unique_ptr<MemoryBuffer> MB =
@@ -256,7 +270,7 @@ static int regularizeLLVM() {
   }
 
   std::string Err;
-  if (!regularizeLlvmForSpirv(M.get(), Err)) {
+  if (!regularizeLlvmForSpirv(M.get(), Err, Opts)) {
     errs() << "Fails to save LLVM as SPIR-V: " << Err << '\n';
     return -1;
   }
@@ -280,7 +294,20 @@ int main(int Ac, char **Av) {
 
   cl::ParseCommandLineOptions(Ac, Av, "LLVM/SPIR-V translator");
 
-  SPIRV::TranslatorOpts Opts(MaxSPIRVVersion, SPIRVGenKernelArgNameMD);
+  SPIRV::TranslatorOpts Opts(MaxSPIRVVersion);
+  if (BIsRepresentation.getNumOccurrences() != 0) {
+    if (!IsReverse) {
+      errs() << "Note: --spirv-ocl-builtins-version option ignored as it only "
+                "affects translation from SPIR-V to LLVM IR";
+    } else {
+      Opts.setDesiredBIsRepresentation(BIsRepresentation);
+    }
+  }
+
+  if (SPIRVMemToReg)
+    Opts.setMemToRegEnabled(SPIRVMemToReg);
+  if (SPIRVGenKernelArgNameMD)
+    Opts.setGenKernelArgNameMDEnabled(SPIRVGenKernelArgNameMD);
 
 #ifdef _SPIRV_SUPPORT_TEXT_FMT
   if (ToText && (ToBinary || IsReverse || IsRegularization)) {
@@ -308,7 +335,7 @@ int main(int Ac, char **Av) {
     return convertSPIRVToLLVM(Opts);
 
   if (IsRegularization)
-    return regularizeLLVM();
+    return regularizeLLVM(Opts);
 
   return 0;
 }

@@ -420,17 +420,14 @@ bool isKernelQueryBI(const StringRef MangledName);
 /// Check that the type is the sampler_t
 bool isSamplerTy(Type *Ty);
 
-// Checks if clang did not generate llvm.fmuladd for fp multiply-add operations.
-// If so, it applies ContractionOff ExecutionMode to the kernel.
-void checkFpContract(BinaryOperator *B, SPIRVBasicBlock *BB);
+// Checks if the binary operator is an unfused fmul + fadd instruction.
+bool isUnfusedMulAdd(BinaryOperator *B);
 
-template <typename T> std::string toString(const T *Object) {
-  std::string S;
-  llvm::raw_string_ostream RSOS(S);
-  Object->print(RSOS);
-  RSOS.flush();
-  return S;
-}
+// Get data and vector size postfix for sugroup_block_{read|write} builtins
+// as specified by cl_intel_subgroups* extensions.
+// Scalar data assumed to be represented as vector of one element.
+std::string getIntelSubgroupBlockDataPostfix(unsigned ElementBitSize,
+                                             unsigned VectorNumElements);
 } // namespace OCLUtil
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -742,6 +739,10 @@ template <> inline void SPIRVMap<std::string, Op, SPIRVInstruction>::init() {
   _SPIRV_OP(intel_sub_group_shuffle_down, SubgroupShuffleDownINTEL)
   _SPIRV_OP(intel_sub_group_shuffle_up, SubgroupShuffleUpINTEL)
   _SPIRV_OP(intel_sub_group_shuffle_xor, SubgroupShuffleXorINTEL)
+  // Intel media_block_io builtins
+  _SPIRV_OP(intel_sub_group_media_block_read, SubgroupImageMediaBlockReadINTEL)
+  _SPIRV_OP(intel_sub_group_media_block_write,
+            SubgroupImageMediaBlockWriteINTEL)
 #undef _SPIRV_OP
 }
 
@@ -755,6 +756,8 @@ template <> inline void SPIRVMap<std::string, Op, OCL12Builtin>::init() {
   _SPIRV_OP(dec, AtomicIDecrement)
   _SPIRV_OP(min, AtomicSMin)
   _SPIRV_OP(max, AtomicSMax)
+  _SPIRV_OP(umin, AtomicUMin)
+  _SPIRV_OP(umax, AtomicUMax)
   _SPIRV_OP(and, AtomicAnd)
   _SPIRV_OP(or, AtomicOr)
   _SPIRV_OP(xor, AtomicXor)

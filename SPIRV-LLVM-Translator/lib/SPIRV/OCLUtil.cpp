@@ -601,8 +601,10 @@ public:
       addSamplerArg(1);
     } else if (UnmangledName.find(kOCLSubgroupsAVCIntel::Prefix) !=
                std::string::npos) {
-      if (UnmangledName.find("evaluate_with_single_reference") !=
-          std::string::npos)
+      if (UnmangledName.find("evaluate_ipe") != std::string::npos)
+        addSamplerArg(1);
+      else if (UnmangledName.find("evaluate_with_single_reference") !=
+               std::string::npos)
         addSamplerArg(2);
       else if (UnmangledName.find("evaluate_with_multi_reference") !=
                std::string::npos) {
@@ -626,11 +628,19 @@ public:
       else if (UnmangledName.find("set_inter_base_multi_reference_penalty") !=
                    std::string::npos ||
                UnmangledName.find("set_inter_shape_penalty") !=
+                   std::string::npos ||
+               UnmangledName.find("set_inter_direction_penalty") !=
                    std::string::npos)
         addUnsignedArg(0);
       else if (UnmangledName.find("set_motion_vector_cost_function") !=
                std::string::npos)
         addUnsignedArgs(0, 2);
+      else if (UnmangledName.find("interlaced_field_polarity") !=
+               std::string::npos)
+        addUnsignedArg(0);
+      else if (UnmangledName.find("interlaced_field_polarities") !=
+               std::string::npos)
+        addUnsignedArgs(0, 1);
       else if (UnmangledName.find(kOCLSubgroupsAVCIntel::MCEPrefix) !=
                std::string::npos) {
         if (UnmangledName.find("get_default") != std::string::npos)
@@ -642,15 +652,38 @@ public:
         else if (UnmangledName.find("set_single_reference") !=
                  std::string::npos)
           addUnsignedArg(1);
+        else if (UnmangledName.find("set_dual_reference") != std::string::npos)
+          addUnsignedArg(2);
+        else if (UnmangledName.find("set_weighted_sad") != std::string::npos ||
+                 UnmangledName.find("set_early_search_termination_threshold") !=
+                     std::string::npos)
+          addUnsignedArg(0);
         else if (UnmangledName.find("adjust_ref_offset") != std::string::npos)
           addUnsignedArgs(1, 3);
         else if (UnmangledName.find("set_max_motion_vector_count") !=
                      std::string::npos ||
                  UnmangledName.find("get_border_reached") != std::string::npos)
           addUnsignedArg(0);
+        else if (UnmangledName.find("shape_distortions") != std::string::npos ||
+                 UnmangledName.find("shape_motion_vectors") !=
+                     std::string::npos ||
+                 UnmangledName.find("shape_reference_ids") !=
+                     std::string::npos) {
+          if (UnmangledName.find("single_reference") != std::string::npos) {
+            addUnsignedArg(1);
+            EraseSubstring(UnmangledName, "_single_reference");
+          } else if (UnmangledName.find("dual_reference") !=
+                     std::string::npos) {
+            addUnsignedArgs(1, 2);
+            EraseSubstring(UnmangledName, "_dual_reference");
+          }
+        } else if (UnmangledName.find("ref_window_size") != std::string::npos)
+          addUnsignedArg(0);
       } else if (UnmangledName.find(kOCLSubgroupsAVCIntel::SICPrefix) !=
                  std::string::npos) {
-        if (UnmangledName.find("initialize") != std::string::npos)
+        if (UnmangledName.find("initialize") != std::string::npos ||
+            UnmangledName.find("set_intra_luma_shape_penalty") !=
+                std::string::npos)
           addUnsignedArg(0);
         else if (UnmangledName.find("configure_ipe") != std::string::npos) {
           if (UnmangledName.find("_luma") != std::string::npos) {
@@ -661,7 +694,23 @@ public:
             addUnsignedArgs(7, 9);
             EraseSubstring(UnmangledName, "_chroma");
           }
-        }
+        } else if (UnmangledName.find("configure_skc") != std::string::npos)
+          addUnsignedArgs(0, 4);
+        else if (UnmangledName.find("set_skc") != std::string::npos) {
+          if (UnmangledName.find("forward_transform_enable"))
+            addUnsignedArg(0);
+        } else if (UnmangledName.find("set_block") != std::string::npos) {
+          if (UnmangledName.find("based_raw_skip_sad") != std::string::npos)
+            addUnsignedArg(0);
+        } else if (UnmangledName.find("get_motion_vector_mask") !=
+                   std::string::npos) {
+          addUnsignedArgs(0, 1);
+        } else if (UnmangledName.find("luma_mode_cost_function") !=
+                   std::string::npos)
+          addUnsignedArgs(0, 2);
+        else if (UnmangledName.find("chroma_mode_cost_function") !=
+                 std::string::npos)
+          addUnsignedArg(0);
       }
     } else if (UnmangledName == "intel_sub_group_shuffle_down" ||
                UnmangledName == "intel_sub_group_shuffle_up") {
@@ -691,11 +740,14 @@ public:
         setArgAttr(0, SPIR::ATTR_CONST);
         addUnsignedArg(0);
       }
+    } else if (UnmangledName.find("intel_sub_group_media_block_write") !=
+               std::string::npos) {
+      addUnsignedArg(3);
     }
   }
   // Auxiliarry information, it is expected that it is relevant at the moment
   // the init method is called.
-  Function *F; // SPIRV decorated function
+  Function *F;                  // SPIRV decorated function
   std::vector<Type *> ArgTypes; // Arguments of OCL builtin
 };
 
@@ -803,31 +855,96 @@ bool isKernelQueryBI(const StringRef MangledName) {
          MangledName == "__get_kernel_preferred_work_group_size_multiple_impl";
 }
 
-// Checks if we have the following (most common for fp contranction) pattern
-// in LLVM IR:
-// %mul = fmul float %a, %b
-// %add = fadd float %mul, %c
+// isUnfusedMulAdd checks if we have the following (most common for fp
+// contranction) pattern in LLVM IR:
+//
+//   %mul = fmul float %a, %b
+//   %add = fadd float %mul, %c
+//
 // This pattern indicates that fp contraction could have been disabled by
-// // #pragma OPENCL FP_CONTRACT OFF. Otherwise the current version of clang
-// would generate:
-// %0 = call float @llvm.fmuladd.f32(float %a, float %b, float %c)
-// TODO We need a more reliable mechanism to expres the FP_CONTRACT pragma
-// in LLVM IR. Fox example adding the 'contract' attribute to fp operations
-// by default (according the OpenCL spec fp contraction is enabled by default).
-void checkFpContract(BinaryOperator *B, SPIRVBasicBlock *BB) {
+// #pragma OPENCL FP_CONTRACT OFF. When contraction is enabled (by a pragma or
+// by clang's -ffp-contract=fast), clang would generate:
+//
+//   %0 = call float @llvm.fmuladd.f32(float %a, float %b, float %c)
+//
+// or
+//
+//   %mul = fmul contract float %a, %b
+//   %add = fadd contract float %mul, %c
+//
+// Note that optimizations may form an unfused fmuladd from fadd+load or
+// fadd+call, so this check is quite restrictive (see the comment below).
+//
+bool isUnfusedMulAdd(BinaryOperator *B) {
   if (B->getOpcode() != Instruction::FAdd &&
       B->getOpcode() != Instruction::FSub)
-    return;
-  // Ok, this is fadd or fsub. Now check its operands.
-  for (auto *Op : B->operand_values()) {
-    if (auto *I = dyn_cast<Instruction>(Op)) {
-      if (I->getOpcode() == Instruction::FMul) {
-        SPIRVFunction *BF = BB->getParent();
-        BF->setUncontractedFMulAddFound();
-        break;
-      }
-    }
+    return false;
+
+  if (B->hasAllowContract()) {
+    // If this fadd or fsub itself has a contract flag, the operation can be
+    // contracted regardless of the operands.
+    return false;
   }
+
+  // Otherwise, we cannot easily tell if the operation can be a candidate for
+  // contraction or not. Consider the following cases:
+  //
+  //   %mul = alloca float
+  //   %t1 = fmul float %a, %b
+  //   store float* %mul, float %t
+  //   %t2 = load %mul
+  //   %r = fadd float %t2, %c
+  //
+  // LLVM IR does not allow %r to be contracted. However, after an optimization
+  // it becomes a candidate for contraction if ContractionOFF is not set in
+  // SPIR-V:
+  //
+  //   %t1 = fmul float %a, %b
+  //   %r = fadd float %t1, %c
+  //
+  // To be on a safe side, we disallow everything that is even remotely similar
+  // to fmul + fadd.
+  return true;
+}
+
+std::string getIntelSubgroupBlockDataPostfix(unsigned ElementBitSize,
+                                             unsigned VectorNumElements) {
+  std::ostringstream OSS;
+  switch (ElementBitSize) {
+  case 8:
+    OSS << "_uc";
+    break;
+  case 16:
+    OSS << "_us";
+    break;
+  case 32:
+    // Intentionally does nothing since _ui variant is only an alias.
+    break;
+  case 64:
+    OSS << "_ul";
+    break;
+  default:
+    llvm_unreachable(
+        "Incorrect data bitsize for intel_subgroup_block builtins");
+  }
+  switch (VectorNumElements) {
+  case 1:
+    break;
+  case 2:
+  case 4:
+  case 8:
+    OSS << VectorNumElements;
+    break;
+  case 16:
+    assert(ElementBitSize == 8 &&
+           "16 elements vector allowed only for char builtins");
+    OSS << VectorNumElements;
+    break;
+  default:
+    llvm_unreachable(
+        "Incorrect vector length for intel_subgroup_block builtins");
+  }
+  return OSS.str();
 }
 } // namespace OCLUtil
 

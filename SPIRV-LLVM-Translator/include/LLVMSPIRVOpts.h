@@ -55,13 +55,14 @@ enum class VersionNumber : uint32_t {
   MaximumVersion = SPIRV_1_1
 };
 
+enum class BIsRepresentation : uint32_t { OpenCL12, OpenCL20, SPIRVFriendlyIR };
+
 /// \brief Helper class to manage SPIR-V translation
 class TranslatorOpts {
 public:
   TranslatorOpts() = default;
 
-  TranslatorOpts(VersionNumber Max, bool ArgNameMD = false)
-      : MaxVersion(Max), GenKernelArgNameMD(ArgNameMD) {}
+  TranslatorOpts(VersionNumber Max) : MaxVersion(Max) {}
 
   bool isAllowedToUseVersion(VersionNumber RequestedVersion) const {
     return RequestedVersion <= MaxVersion;
@@ -71,13 +72,35 @@ public:
 
   bool isGenArgNameMDEnabled() const { return GenKernelArgNameMD; }
 
+  bool isSPIRVMemToRegEnabled() const { return SPIRVMemToReg; }
+
+  void setMemToRegEnabled(bool Mem2Reg) { SPIRVMemToReg = Mem2Reg; }
+
+  void setGenKernelArgNameMDEnabled(bool ArgNameMD) {
+    GenKernelArgNameMD = ArgNameMD;
+  }
+
   void enableGenArgNameMD() { GenKernelArgNameMD = true; }
+
+  void setDesiredBIsRepresentation(BIsRepresentation Value) {
+    DesiredRepresentationOfBIs = Value;
+  }
+
+  BIsRepresentation getDesiredBIsRepresentation() const {
+    return DesiredRepresentationOfBIs;
+  }
 
 private:
   // Common translation options
   VersionNumber MaxVersion = VersionNumber::MaximumVersion;
+  // SPIRVMemToReg option affects LLVM IR regularization phase
+  bool SPIRVMemToReg = false;
   // SPIR-V to LLVM translation options
   bool GenKernelArgNameMD;
+
+  // Representation of built-ins, which should be used while translating from
+  // SPIR-V to back to LLVM IR
+  BIsRepresentation DesiredRepresentationOfBIs = BIsRepresentation::OpenCL12;
 };
 
 } // namespace SPIRV

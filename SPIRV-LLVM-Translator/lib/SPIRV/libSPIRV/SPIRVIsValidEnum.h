@@ -140,6 +140,16 @@ inline bool isValid(spv::ExecutionMode V) {
   case ExecutionModeFinalizer:
   case ExecutionModeSubgroupSize:
   case ExecutionModeSubgroupsPerWorkgroup:
+  case ExecutionModeDenormPreserve:
+  case ExecutionModeDenormFlushToZero:
+  case ExecutionModeSignedZeroInfNanPreserve:
+  case ExecutionModeRoundingModeRTE:
+  case ExecutionModeRoundingModeRTZ:
+  case ExecutionModeRoundingModeRTPINTEL:
+  case ExecutionModeRoundingModeRTNINTEL:
+  case ExecutionModeFloatingPointModeALTINTEL:
+  case ExecutionModeFloatingPointModeIEEEINTEL:
+  case ExecutionModeSharedLocalMemorySizeINTEL:
     return true;
   default:
     return false;
@@ -398,7 +408,11 @@ inline bool isValid(spv::Decoration V) {
   case DecorationAlignment:
   case DecorationMaxByteOffset:
   case DecorationUserSemantic:
-  case DecorationReferencedIndirectlyINTEL:
+  case DecorationVectorComputeFunctionINTEL:
+  case DecorationStackCallINTEL:
+  case DecorationVectorComputeVariableINTEL:
+  case DecorationGlobalVariableOffsetINTEL:
+  case DecorationFuncParamIOKind:
     return true;
   default:
     return false;
@@ -550,6 +564,15 @@ inline bool isValid(spv::Capability V) {
   case CapabilitySubgroupDispatch:
   case CapabilityNamedBarrier:
   case CapabilityPipeStorage:
+  case CapabilityDenormPreserve:
+  case CapabilityDenormFlushToZero:
+  case CapabilitySignedZeroInfNanPreserve:
+  case CapabilityRoundingModeRTE:
+  case CapabilityRoundingModeRTZ:
+  case CapabilityRoundToInfinityINTEL:
+  case CapabilityFloatingPointModeINTEL:
+  case CapabilityVectorComputeINTEL:
+  case CapabilityVectorAnyINTEL:
     return true;
   default:
     return false;
