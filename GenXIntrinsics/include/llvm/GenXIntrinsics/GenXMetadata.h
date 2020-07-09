@@ -63,9 +63,9 @@ const static char VCFloatControl[] = "VCFloatControl";
 const static char VCSLMSize[] = "VCSLMSize";
 const static char VCArgumentKind[] = "VCArgumentKind";
 const static char VCArgumentDesc[] = "VCArgumentDesc";
+const static char VCSIMTCall[] = "VCSIMTCall";
 #ifdef __INTEL_EMBARGO__
 const static char VCNamedBarrierCount[] = "VCNamedBarrierCount";
-const static char VCSIMTCall[] = "VCSIMTCall";
 #endif // __INTEL_EMBARGO__
 } // namespace VCFunctionMD
 

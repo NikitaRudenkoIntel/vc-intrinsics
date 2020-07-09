@@ -98,10 +98,14 @@ bool GenXSPIRVWriterAdaptor::runOnFunction(Function &F) {
   if (Attrs.hasFnAttribute(FunctionMD::CMStackCall)) {
     F.addFnAttr(VCFunctionMD::VCStackCall);
   }
-#ifdef __INTEL_EMBARGO__
-  if (Attrs.hasFnAttribute(FunctionMD::CMGenxSIMT))
-    F.addFnAttr(VCFunctionMD::VCSIMTCall);
-#endif // __INTEL_EMBARGO__
+
+  if (Attrs.hasFnAttribute(FunctionMD::CMGenxSIMT)) {
+    auto SIMTMode = StringRef{};
+    SIMTMode =
+        Attrs.getAttribute(AttributeList::FunctionIndex, FunctionMD::CMGenxSIMT)
+            .getValueAsString();
+    F.addFnAttr(VCFunctionMD::VCSIMTCall, SIMTMode);
+  }
 
   auto &&Context = F.getContext();
   if (Attrs.hasFnAttribute(FunctionMD::CMFloatControl)) {
