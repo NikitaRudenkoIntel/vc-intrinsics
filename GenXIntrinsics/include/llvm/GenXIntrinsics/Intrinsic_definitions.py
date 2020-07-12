@@ -1288,6 +1288,29 @@ Imported_Intrinsics = \
 
 
 # __INTEL_EMBARGO_BEGIN__
+
+### addc
+### ^^^^
+###
+### ``llvm.genx.addc.<{carry, add}>.<any int>`` : add with carry
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### * ``llvm.genx.addc`` :
+###
+### * arg0: first input, i32 scalar/vector integer type
+### * arg1: second input, same type as arg0
+    "addc" : [["anyint", "anyint"], [0, 0], "NoMem"],
+
+### subb
+### ^^^^
+###
+### ``llvm.genx.subb.<{borrow, sub}>.<any int>`` : sub with borrow
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### * ``llvm.genx.subb`` :
+###
+### * arg0: first input, i32 scalar/vector integer type
+### * arg1: second input, same type as arg0
+    "subb" : [["anyint", "anyint"], [0, 0], "NoMem"],
+
 ### add3
 ### ^^^^
 ###
