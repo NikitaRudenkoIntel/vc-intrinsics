@@ -1501,9 +1501,11 @@ Imported_Intrinsics = \
 # __INTEL_EMBARGO_END__
 # __INTEL_EMBARGO_BEGIN__
 
+### ``llvm.genx.lsc.*2d.stateless.[return type].<vector type>.<address type>`` : 2d stateless load/prefecth instructions
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
-### * ``llvm.genx.lsc.load2d.stateless.<return type>.<vector type>`` :
-### * ``llvm.genx.lsc.prefetch2d.stateless.<vector type>`` :
+### * ``llvm.genx.lsc.load2d.stateless.<return type>.<vector type>.<address type>`` :
+### * ``llvm.genx.lsc.prefetch2d.stateless.<vector type>.<address type>`` :
 ###
 ### * Exec_size ignored unless operation is transposed (DataOrder == Tranpose)
 ### * arg0: {1,32}Xi1 predicate (overloaded)
@@ -1515,7 +1517,7 @@ Imported_Intrinsics = \
 ### * arg6: i32 BlockWidth, [MBC]
 ### * arg7: i32 BlockHeight, [MBC]
 ### * arg8: i8 VNNI. This performs a VNNI transform during the access.
-### * arg9: i64 surface base address for this operation.
+### * arg9: i32/i64 surface base address for this operation.
 ### * arg10: i32 surface width minus 1.
 ### * arg11: i32 surface height minus 1.
 ### * arg12: i32 surface pitch minus 1.
@@ -1524,13 +1526,13 @@ Imported_Intrinsics = \
 ###
 ### * Return value: the value read or void for prefetch
 ###
-    "lsc_load2d_stateless" : ["anyvector",["anyvector","char","char","char","char","char","short","short","char","long","int","int","int","int","int"],"ReadMem"],
-    "lsc_prefetch2d_stateless" : ["void",["anyvector","char","char","char","char","char","short","short","char","long","int","int","int","int","int"],"None"],
+    "lsc_load2d_stateless" : ["anyvector",["anyvector","char","char","char","char","char","short","short","char","anyint","int","int","int","int","int"],"ReadMem"],
+    "lsc_prefetch2d_stateless" : ["void",["anyvector","char","char","char","char","char","short","short","char","anyint","int","int","int","int","int"],"None"],
 # __INTEL_EMBARGO_END__
 # __INTEL_EMBARGO_BEGIN__
 
-###
-### * ``llvm.genx.lsc.store2d.stateless.<vector type>.<vector type>`` :
+## ``llvm.genx.lsc.store2d.stateless.<vector type>.<address type>.<vector type>`` : 2d stateless store
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * Exec_size ignored unless operation is transposed (DataOrder == Tranpose)
 ### * arg0: {1,32}Xi1 predicate (overloaded)
@@ -1542,7 +1544,7 @@ Imported_Intrinsics = \
 ### * arg7: i32 BlockWidth, [MBC]
 ### * arg6: i32 BlockHeight, [MBC]
 ### * arg8: i8 VNNI. This performs a VNNI transform during the access.
-### * arg9: i64 surface base address for this operation.
+### * arg9: i32/i64 surface base address for this operation.
 ### * arg10: i32 surface width minus 1.
 ### * arg11: i32 surface height minus 1.
 ### * arg12: i32 surface pitch minus 1.
@@ -1552,7 +1554,7 @@ Imported_Intrinsics = \
 ###
 ### * Return value: void
 ###
-    "lsc_store2d_stateless" : ["void",["anyvector","char","char","char","char","char","short","short","char","long","int","int","int","int","int","anyvector"],"None"],
+    "lsc_store2d_stateless" : ["void",["anyvector","char","char","char","char","char","short","short","char","anyint","int","int","int","int","int","anyvector"],"None"],
 # __INTEL_EMBARGO_END__
 # __INTEL_EMBARGO_BEGIN__
 
@@ -2499,34 +2501,35 @@ Imported_Intrinsics = \
 ###
     "untyped_atomic_cmpxchg" : ["anyvector",["anyvector","int","int",0,0,0,0],"None"],
 
-### ``llvm.genx.svm.block.ld*.<return type>`` : vISA SVM BLOCK_LD instruction
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ``llvm.genx.svm.block.ld*.<return type>.<address type>`` : vISA SVM BLOCK_LD instruction
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+###
 ### * ``llvm.genx.svm.block.ld`` : vISA SVM BLOCK_LD instruction with oword alignment
 ### * ``llvm.genx.svm.block.ld.unaligned`` : vISA SVM BLOCK_LD instruction with
 ###   dword alignment
 ###
 ### * (log2 number of oword inferred from data type)
-### * arg0: i64 address
+### * arg0: i32/i64 address
 ###
 ### * Return value: data read
 ###
 ### The data read must have a size that is a power of two from 16 to 128
 ### bytes.
 ###
-    "svm_block_ld" : ["anyvector",["long"],"ReadMem"],
-    "svm_block_ld_unaligned" : ["anyvector",["long"],"ReadMem"],
+    "svm_block_ld" : ["anyvector",["anyint"],"ReadMem"],
+    "svm_block_ld_unaligned" : ["anyvector",["anyint"],"ReadMem"],
 
-### ``llvm.genx.svm.block.st.<vector type>`` : vISA SVM BLOCK_ST instruction
-### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### ``llvm.genx.svm.block.st.<address type><vector type>`` : vISA SVM BLOCK_ST instruction
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * (log2 number of oword inferred from data type)
-### * arg0: i64 address
+### * arg0: i32/i64 address
 ### * arg1: data to write (overloaded)
 ###
 ### The data to write must have a size that is a power of two from 16 to 128
 ### bytes.
 ###
-    "svm_block_st" : ["void",["long","anyvector"],"None"],
+    "svm_block_st" : ["void",["anyint","anyvector"],"None"],
 
 ### ``llvm.genx.svm.gather.<return type>.<vector type>.<any int>`` : vISA SVM GATHER instruction
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -3742,7 +3745,7 @@ Imported_Intrinsics = \
 ## ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ## ``llvm.genx.print.buffer`` : read implicit arg print buffer ptr
 ##
-## * return value:  i32 the value read
+## * return value: i64 address of print buffer
 ##
 ## this is generated by clang codegen and lowered by cmimpparam.
 ##
