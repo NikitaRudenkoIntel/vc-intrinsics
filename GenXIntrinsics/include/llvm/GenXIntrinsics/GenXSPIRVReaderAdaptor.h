@@ -21,30 +21,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/ADT/StringRef.h"
-#include "llvm/Pass.h"
-
 namespace llvm {
-namespace genx {
-class GenXSPIRVReaderAdaptor final : public ModulePass {
+class ModulePass;
+class PassRegistry;
 
-public:
-  static char ID;
-  explicit GenXSPIRVReaderAdaptor() : ModulePass(ID) {}
-  llvm::StringRef getPassName() const override {
-    return "GenX SPIRVReader Adaptor";
-  }
-  void getAnalysisUsage(AnalysisUsage &AU) const override;
-  bool runOnModule(Module &M) override;
-
-private:
-  bool runOnFunction(Function &F);
-};
-
-} // namespace genx
-} // namespace llvm
-
-namespace llvm {
 void initializeGenXSPIRVReaderAdaptorPass(PassRegistry &);
 ModulePass *createGenXSPIRVReaderAdaptorPass();
 } // namespace llvm
