@@ -132,6 +132,7 @@ enum ExecutionMode {
     ExecutionModeRoundingModeRTE = 4462,
     ExecutionModeRoundingModeRTZ = 4463,
     ExecutionModeSharedLocalMemorySizeINTEL = 5618,
+    ExecutionModeNamedBarrierCountINTEL = 5619,
     ExecutionModeRoundingModeRTPINTEL = 5620,
     ExecutionModeRoundingModeRTNINTEL = 5621,
     ExecutionModeFloatingPointModeALTINTEL = 5622,

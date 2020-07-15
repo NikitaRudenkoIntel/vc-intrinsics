@@ -1809,6 +1809,12 @@ bool LLVMToSPIRV::transExecutionMode() {
         BF->addExecutionMode(new SPIRVExecutionMode(
             BF, static_cast<ExecutionMode>(EMode), SLMSize));
       } break;
+      case spv::ExecutionModeNamedBarrierCountINTEL: {
+        unsigned NBarrierCnt;
+        N.get(NBarrierCnt);
+        BF->addExecutionMode(new SPIRVExecutionMode(
+            BF, static_cast<ExecutionMode>(EMode), NBarrierCnt));
+      } break;
 
       case spv::ExecutionModeDenormPreserve:
       case spv::ExecutionModeDenormFlushToZero:
