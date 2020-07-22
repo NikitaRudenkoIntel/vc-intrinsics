@@ -1,3 +1,8 @@
+set(LLVM_LIBS
+  LLVMCodeGen
+  LLVMSupport
+  )
+
 if(BUILD_EXTERNAL)
   add_library(LLVMGenXIntrinsics 
               GenXIntrinsics.cpp
@@ -9,13 +14,8 @@ if(BUILD_EXTERNAL)
   llvm_update_compile_flags(LLVMGenXIntrinsics)
   add_dependencies(LLVMGenXIntrinsics GenXIntrinsicsGen)
 
-  # if LLVM_LINK_LLVM_DYLIB is ON, it means that we use dynamic llvm library
-  # and thus we don't have libLLVMCodeGen.a, thus we don't set the dependency
-  # in this case
-  if(NOT LLVM_LINK_LLVM_DYLIB)
-    add_dependencies(LLVMGenXIntrinsics LLVMCodeGen)
-    target_link_libraries(LLVMGenXIntrinsics LLVMCodeGen)
-  endif()
+  vc_get_llvm_targets(LLVM_LIBS ${LLVM_LIBS})
+  target_link_libraries(LLVMGenXIntrinsics ${LLVM_LIBS})
 
   target_include_directories(LLVMGenXIntrinsics PUBLIC
     $<BUILD_INTERFACE:${GENX_INTRINSICS_MAIN_INCLUDE_DIR}>
@@ -36,8 +36,7 @@ else()
     ${GENX_INTRINSICS_MAIN_INCLUDE_DIR}/llvm/GenXIntrinsics
 
     LINK_LIBS
-      LLVMCodeGen
-      LLVMSupport
+      ${LLVM_LIBS}
 
     DEPENDS
       GenXIntrinsicsGen
