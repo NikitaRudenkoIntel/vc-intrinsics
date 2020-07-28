@@ -40,7 +40,6 @@ and approved by Intel in writing.
 #include "llvm/GenXIntrinsics/GenXIntrinsics.h"
 
 #include "llvm/IR/Constants.h"
-#include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Intrinsics.h"
 #include "llvm/IR/Instructions.h"
@@ -50,6 +49,8 @@ and approved by Intel in writing.
 #include <llvm/ADT/StringExtras.h>
 #include <llvm/ADT/StringMap.h>
 #include <llvm/CodeGen/ValueTypes.h>
+
+#include "llvmVCWrapper/IR/DerivedTypes.h"
 
 #include <cstring>
 
@@ -311,7 +312,7 @@ static Type *DecodeFixedType(ArrayRef<Intrinsic::IITDescriptor> &Infos,
   case IITDescriptor::Integer:
     return IntegerType::get(Context, D.Integer_Width);
   case IITDescriptor::Vector:
-    return VectorType::get(DecodeFixedType(Infos, Tys, Context),D.Vector_Width);
+    return VCINTR::getVectorType(DecodeFixedType(Infos, Tys, Context),D.Vector_Width);
   case IITDescriptor::Pointer:
     return PointerType::get(DecodeFixedType(Infos, Tys, Context),
                             D.Pointer_AddressSpace);
@@ -346,7 +347,7 @@ static Type *DecodeFixedType(ArrayRef<Intrinsic::IITDescriptor> &Infos,
     Type *EltTy = DecodeFixedType(Infos, Tys, Context);
     Type *Ty = Tys[D.getArgumentNumber()];
     if (VectorType *VTy = dyn_cast<VectorType>(Ty)) {
-      return VectorType::get(EltTy, VTy->getNumElements());
+      return VCINTR::getVectorType(EltTy, VTy->getNumElements());
     }
     llvm_unreachable("unhandled");
   }
