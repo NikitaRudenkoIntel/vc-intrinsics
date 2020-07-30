@@ -1,4 +1,4 @@
-//===-- GenXSPIRVWriterAdaptor.cpp - converts metadata -----*- C++ -*-===//
+/*===================== begin_copyright_notice ==================================
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -12,18 +12,15 @@
 // or reproduced in whole or in part without explicit written authorization
 // from the company.
 //
-//===----------------------------------------------------------------------===//
-//
+======================= end_copyright_notice ==================================*/
+///
 /// GenXSPIRVWriterAdaptor
 /// ---------------------------
 /// This pass converts metadata to SPIRV format from whichever used in frontend
-/// Mostly, spirv format is the same as OCL format
-//
-//===----------------------------------------------------------------------===//
 
 #include "llvm/GenXIntrinsics/GenXSPIRVWriterAdaptor.h"
-#include "llvm/GenXIntrinsics/GenXMetadata.h"
 #include "llvm/GenXIntrinsics/GenXIntrinsics.h"
+#include "llvm/GenXIntrinsics/GenXMetadata.h"
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/IR/Constants.h"
@@ -124,7 +121,7 @@ bool GenXSPIRVWriterAdaptor::runOnFunction(Function &F) {
   }
 
   if (Attrs.hasFnAttribute(FunctionMD::CMGenxSIMT)) {
-    auto SIMTMode = StringRef{};
+    auto SIMTMode = StringRef();
     SIMTMode =
         Attrs.getAttribute(AttributeList::FunctionIndex, FunctionMD::CMGenxSIMT)
             .getValueAsString();
@@ -133,7 +130,7 @@ bool GenXSPIRVWriterAdaptor::runOnFunction(Function &F) {
 
   auto &&Context = F.getContext();
   if (Attrs.hasFnAttribute(FunctionMD::CMFloatControl)) {
-    unsigned FloatControl = 0;
+    auto FloatControl = unsigned(0);
     Attrs.getAttribute(AttributeList::FunctionIndex, FunctionMD::CMFloatControl)
         .getValueAsString()
         .getAsInteger(0, FloatControl);
@@ -148,7 +145,7 @@ bool GenXSPIRVWriterAdaptor::runOnFunction(Function &F) {
     return true;
 
   if (Attrs.hasFnAttribute(FunctionMD::OCLRuntime)) {
-    unsigned SIMDSize = 0;
+    auto SIMDSize = unsigned(0);
     Attrs.getAttribute(AttributeList::FunctionIndex, FunctionMD::OCLRuntime)
         .getValueAsString()
         .getAsInteger(0, SIMDSize);

@@ -1,4 +1,4 @@
-//===-- GenXSPIRVReaderAdaptor.cpp - converts metadata -----*- C++ -*-===//
+/*===================== begin_copyright_notice ==================================
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -12,14 +12,11 @@
 // or reproduced in whole or in part without explicit written authorization
 // from the company.
 //
-//===----------------------------------------------------------------------===//
-//
+======================= end_copyright_notice ==================================*/
+///
 /// GenXSPIRVReaderAdaptor
 /// ---------------------------
 /// This pass converts metadata from SPIRV format to whichever used in backend
-/// Mostly, spirv format is the same as OCL format
-//
-//===----------------------------------------------------------------------===//
 
 #include "llvm/GenXIntrinsics/GenXSPIRVReaderAdaptor.h"
 #include "llvm/GenXIntrinsics/GenXMetadata.h"
@@ -97,7 +94,7 @@ bool GenXSPIRVReaderAdaptor::runOnFunction(Function &F) {
   }
 
   if (Attrs.hasFnAttribute(VCFunctionMD::VCSIMTCall)) {
-    auto SIMTMode = StringRef{};
+    auto SIMTMode = StringRef();
     SIMTMode = Attrs
                    .getAttribute(AttributeList::FunctionIndex,
                                  VCFunctionMD::VCSIMTCall)
@@ -107,7 +104,7 @@ bool GenXSPIRVReaderAdaptor::runOnFunction(Function &F) {
 
   auto &&Context = F.getContext();
   if (Attrs.hasFnAttribute(VCFunctionMD::VCFloatControl)) {
-    unsigned FloatControl = 0;
+    auto FloatControl = unsigned(0);
     Attrs
         .getAttribute(AttributeList::FunctionIndex,
                       VCFunctionMD::VCFloatControl)

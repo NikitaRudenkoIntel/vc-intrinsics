@@ -1,4 +1,4 @@
-//===-- GenXSPIRVReaderAdaptor.h - converts metadata -----*- C++ -*-===//
+/*===================== begin_copyright_notice ==================================
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -12,14 +12,11 @@
 // or reproduced in whole or in part without explicit written authorization
 // from the company.
 //
-//===----------------------------------------------------------------------===//
-//
+======================= end_copyright_notice ==================================*/
+///
 /// GenXSPIRVReaderAdaptor
 /// ---------------------------
 /// This pass converts metadata from SPIRV format to whichever used in backend
-/// Mostly, spirv format is the same as OCL format
-//
-//===----------------------------------------------------------------------===//
 
 namespace llvm {
 class ModulePass;
