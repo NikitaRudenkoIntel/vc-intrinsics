@@ -28,6 +28,13 @@ and approved by Intel in writing.
 #include <llvm/IR/DerivedTypes.h>
 
 namespace VCINTR {
+#if VC_INTR_LLVM_VERSION_MAJOR >= 9
+  static inline llvm::VectorType *getVectorType(llvm::Type *ElementType,
+                                                llvm::ElementCount EC) {
+    return llvm::VectorType::get(ElementType, EC);
+  }
+#endif
+
   static inline llvm::VectorType *getVectorType(llvm::Type *ElementType,
                                                 unsigned NumElements) {
 #if VC_INTR_LLVM_VERSION_MAJOR >= 11
