@@ -62,8 +62,8 @@ namespace GenXResult {
     IdxSubb_Borrow = 0
   };
 }
-#endif // __INTEL_EMBARGO__
 
+#endif // __INTEL_EMBARGO__
 namespace GenXRegion {
 enum {
   // Operands in both rdregion and wrregion:
