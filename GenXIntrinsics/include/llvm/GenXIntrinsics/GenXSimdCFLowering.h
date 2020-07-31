@@ -32,6 +32,7 @@
 #ifndef CMSIMDCF_LOWER_H
 #define CMSIMDCF_LOWER_H
 
+#include "llvm/PassRegistry.h"
 #include "llvm/ADT/MapVector.h"
 #include "llvm/IR/GlobalVariable.h"
 #include "llvm/IR/Instructions.h"
@@ -40,6 +41,8 @@
 #include <set>
 
 namespace llvm {
+
+void initializeCMSimdCFLoweringPass(PassRegistry &);
 
 // The worker class for lowering CM SIMD CF
 class CMSimdCFLower {
@@ -66,6 +69,7 @@ class CMSimdCFLower {
   std::set<AssertingVH<Value>> AlreadyPredicated;
   // Mask for shufflevector to extract part of EM.
   SmallVector<Constant *, 32> ShuffleMask;
+
 public:
   static const unsigned MAX_SIMD_CF_WIDTH = 32;
 
@@ -98,6 +102,7 @@ private:
 
   void lowerSimdCF();
   void lowerUnmaskOps();
+  unsigned deduceNumChannels(Instruction *SI);
   Instruction *loadExecutionMask(Instruction *InsertBefore, unsigned SimdWidth, unsigned NumChannels = 1);
   Value *getRMAddr(BasicBlock *JP, unsigned SimdWidth);
 };

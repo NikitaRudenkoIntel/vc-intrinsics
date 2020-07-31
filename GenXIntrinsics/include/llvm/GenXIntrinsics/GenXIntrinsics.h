@@ -62,6 +62,22 @@ namespace GenXResult {
   };
 }
 
+#ifdef __INTEL_EMBARGO__
+// The number of elements to load per address (vector size)
+// NOTE: taken from cmc/support
+enum class LSCVectorSize : uint8_t {
+  N0 = 0,
+  N1 = 1,  // 1 element
+  N2 = 2,  // 2 element
+  N3 = 3,  // 3 element
+  N4 = 4,  // 4 element
+  N8 = 5,  // 8 element
+  N16 = 6, // 16 element
+  N32 = 7, // 32 element
+  N64 = 8  // 64 element
+};
+#endif // __INTEL_EMBARGO__
+
 namespace GenXRegion {
 enum {
   // Operands in both rdregion and wrregion:
@@ -376,6 +392,31 @@ static inline bool isVLoadStore(const Function *F) {
 static inline bool isVLoadStore(const Value *V) {
   return isVLoadStore(getGenXIntrinsicID(V));
 }
+
+#ifdef __INTEL_EMBARGO__
+static inline unsigned getLSCNumVectorElements(LSCVectorSize VS) {
+    switch (VS) {
+    default:
+        llvm_unreachable("Unknown vector size");
+    case LSCVectorSize::N1:
+        return 1;
+    case LSCVectorSize::N2:
+        return 2;
+    case LSCVectorSize::N3:
+        return 3;
+    case LSCVectorSize::N4:
+        return 4;
+    case LSCVectorSize::N8:
+        return 8;
+    case LSCVectorSize::N16:
+        return 16;
+    case LSCVectorSize::N32:
+        return 32;
+    case LSCVectorSize::N64:
+        return 64;
+    }
+}
+#endif // __INTEL_EMBARGO__
 
 } // namespace GenXIntrinsic
 
