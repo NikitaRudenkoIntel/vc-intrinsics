@@ -67,15 +67,6 @@ const static char VCNamedBarrierCount[] = "VCNamedBarrierCount";
 #endif // __INTEL_EMBARGO__
 } // namespace VCFunctionMD
 
-namespace SPIRVParams {
-const static char SPIRVMemoryModel[] = "spirv.MemoryModel";
-const static char SPIRVSIMDSubgroupSize[] = "intel_reqd_sub_group_size";
-const static unsigned SPIRVMemoryModelSimple = 0;
-const static unsigned SPIRVMemoryModelOCL = 2;
-const static unsigned SPIRVAddressingModel32 = 1;
-const static unsigned SPIRVAddressingModel64 = 2;
-} // namespace SPIRVParams
-
 enum KernelMDOp {
   FunctionRef,  // Reference to Function
   Name,         // Kernel name
