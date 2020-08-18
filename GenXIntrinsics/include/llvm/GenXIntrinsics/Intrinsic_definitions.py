@@ -1286,9 +1286,6 @@ Imported_Intrinsics = \
     "usdp4a_sat" : ["anyvector",["anyvector","anyvector","anyvector"],"NoMem"],
     "uudp4a_sat" : ["anyvector",["anyvector","anyvector","anyvector"],"NoMem"],
 
-
-# __INTEL_EMBARGO_BEGIN__
-
 ### addc
 ### ^^^^
 ###
@@ -1310,6 +1307,8 @@ Imported_Intrinsics = \
 ### * arg0: first input, i32 scalar/vector integer type
 ### * arg1: second input, same type as arg0
     "subb" : [["anyint", "anyint"], [0, 0], "NoMem"],
+
+# __INTEL_EMBARGO_BEGIN__
 
 ### add3
 ### ^^^^

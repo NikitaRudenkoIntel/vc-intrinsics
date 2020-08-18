@@ -53,7 +53,6 @@ enum ID : unsigned {
   not_any_intrinsic
 };
 
-#ifdef __INTEL_EMBARGO__
 namespace GenXResult {
   enum ResultIndexes {
     IdxAddc_Add    = 1,
@@ -63,7 +62,6 @@ namespace GenXResult {
   };
 }
 
-#endif // __INTEL_EMBARGO__
 namespace GenXRegion {
 enum {
   // Operands in both rdregion and wrregion:
