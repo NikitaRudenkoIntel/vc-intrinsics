@@ -610,11 +610,6 @@ Imported_Intrinsics = \
     "usadd_sat" : ["anyint",["anyint",1],"NoMem"],
     "uuadd_sat" : ["anyint",["anyint",1],"NoMem"],
 
-### addc
-### ^^^^
-### No intrinsic for addc as it has two results.
-###
-
 ### asr
 ### ^^^
 ### asr intrinsic is not needed. Because asr cannot overflow, an asr that
@@ -1619,11 +1614,6 @@ Imported_Intrinsics = \
 ###
     "lsc_fence" : ["void",["anyvector","char","char","char"],"None"],
 # __INTEL_EMBARGO_END__
-
-### subb
-### ^^^^
-### No intrinsic for subb as it has two results.
-###
 
 ### xor
 ### ^^^
