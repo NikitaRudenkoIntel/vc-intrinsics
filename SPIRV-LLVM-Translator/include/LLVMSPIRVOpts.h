@@ -117,11 +117,11 @@ private:
 
   // Representation of built-ins, which should be used while translating from
   // SPIR-V to back to LLVM IR
-  BIsRepresentation DesiredRepresentationOfBIs = BIsRepresentation::SPIRVFriendlyIR;
+  BIsRepresentation DesiredRepresentationOfBIs = BIsRepresentation::OpenCL12;
 
   // Unknown LLVM intrinsics will be translated as external function calls in
   // SPIR-V
-  bool SPIRVAllowUnknownIntrinsics = true;
+  bool SPIRVAllowUnknownIntrinsics = false;
 
   DebugInfoEIS DebugInfoVersion = DebugInfoEIS::SPIRV_Debug;
 };
