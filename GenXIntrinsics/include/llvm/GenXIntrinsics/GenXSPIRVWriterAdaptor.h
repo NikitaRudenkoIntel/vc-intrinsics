@@ -31,11 +31,5 @@ class ModulePass;
 class PassRegistry;
 
 void initializeGenXSPIRVWriterAdaptorPass(PassRegistry &);
-
-// Create spirv writer adaptor pass.
-// RewriteTypes -- whether plain types with decorations should be
-// rewritten with native SPIRV types. Defaults to false for
-// compatibility reasons until backend will be able to handle new
-// types.
-ModulePass *createGenXSPIRVWriterAdaptorPass(bool RewriteTypes = false);
+ModulePass *createGenXSPIRVWriterAdaptorPass();
 } // namespace llvm
