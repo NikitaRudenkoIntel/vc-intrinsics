@@ -1367,6 +1367,20 @@ Imported_Intrinsics = \
 # __INTEL_EMBARGO_END__
 # __INTEL_EMBARGO_BEGIN__
 
+### srnd
+### ^^^
+###
+### ``llvm.genx.srnd.<return type>.<any float>.<any float>`` : srnd instruction
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### * ``llvm.genx.srnd`` :
+###
+### * arg0: first input, any vector f32/hf16 type
+### * arg1: second input, same type as arg0
+### * Return value: result, must be half if arg0 is f32, or ub if arg0 is half.
+    "srnd" : ["anyvector",["anyvector", "anyvector"],"NoMem"],
+# __INTEL_EMBARGO_END__
+# __INTEL_EMBARGO_BEGIN__
+
 ### bf_cvt
 ### ^^^^^^
 ###
@@ -1379,6 +1393,21 @@ Imported_Intrinsics = \
 ### * Return value: result, must be float if arg0 is half, or half if arg0 is float.
 ###
     "bf_cvt" : ["anyfloat",["anyfloat"],"NoMem"],
+# __INTEL_EMBARGO_END__
+# __INTEL_EMBARGO_BEGIN__
+
+### tf32_cvt
+### ^^^^^^
+###
+### ``llvm.genx.tf32.cvt.<return type>.<any float>`` : tf32_cvt instruction
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### * ``llvm.genx.tf32.cvt`` :
+###
+### * arg0: first input, vector float type fp32/hf16
+###
+### * Return value: result, must be ud( Unsigned Doubleword)
+###
+    "tf32_cvt" : ["anyvector",["anyvector"],"NoMem"],
 # __INTEL_EMBARGO_END__
 # __INTEL_EMBARGO_BEGIN__
 
