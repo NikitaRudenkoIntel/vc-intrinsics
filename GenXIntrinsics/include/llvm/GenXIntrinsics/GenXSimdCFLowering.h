@@ -46,7 +46,7 @@ void initializeCMSimdCFLoweringPass(PassRegistry &);
 
 // The worker class for lowering CM SIMD CF
 class CMSimdCFLower {
-  Function *F;
+  Function *F = {};
   // A map giving the basic blocks ending with a simd branch, and the simd
   // width of each one.
   MapVector<BasicBlock *, unsigned> SimdBranches;
