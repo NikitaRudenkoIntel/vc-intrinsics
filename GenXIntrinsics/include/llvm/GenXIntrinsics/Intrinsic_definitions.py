@@ -1227,6 +1227,19 @@ Imported_Intrinsics = \
 # __INTEL_EMBARGO_END__
 # __INTEL_EMBARGO_BEGIN__
 
+### ``llvm.genx.dpas2.<return type>.<vector type>.<vector type>.<vector type>`` : dpas instruction (Dot Product Accumulate Systolic)
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+###
+### * arg0: second input value, vector integer/float type
+### * arg1: third input value, vector integer/float type
+### * arg2: fourth input value, integer type
+###
+### * Return value: result
+###
+    "dpas2" : ["anyvector",["anyvector","anyvector","anyvector","int"],"NoMem"],
+# __INTEL_EMBARGO_END__
+# __INTEL_EMBARGO_BEGIN__
+
 ### ``llvm.genx.dpas.nosrc0.<return type>.<vector type>.<vector type>`` : dpas instruction (Dot Product Accumulate Systolic) with no src0
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
