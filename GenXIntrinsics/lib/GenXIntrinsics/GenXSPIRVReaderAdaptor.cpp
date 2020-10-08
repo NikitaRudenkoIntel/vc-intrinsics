@@ -437,6 +437,10 @@ bool GenXSPIRVReaderAdaptor::runOnFunction(Function &F) {
     F.addFnAttr(Attribute::NoInline);
   }
 
+  if (Attrs.hasFnAttribute(VCFunctionMD::VCCallable)){
+    F.addFnAttr(FunctionMD::CMCallable);
+  }
+
   if (Attrs.hasFnAttribute(VCFunctionMD::VCSIMTCall)) {
     auto SIMTMode = StringRef();
     SIMTMode = Attrs
