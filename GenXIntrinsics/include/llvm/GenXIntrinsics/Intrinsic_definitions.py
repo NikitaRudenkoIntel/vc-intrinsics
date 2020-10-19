@@ -1619,6 +1619,22 @@ Imported_Intrinsics = \
 ### * ``llvm.genx.lsc.atomic.slm`` :
 ### * ``llvm.genx.lsc.atomic.slateless`` :
 ###
+### * arg0: {1,32}Xi1 predicate (overloaded)
+### * arg1: i8 Subopcode, [MBZ]
+### * arg2: i8 Caching behavior for L1, [MBC]
+### * arg3: i8 Caching behavior for L3, [MBC]
+### * arg4: i16 Address scale, [MBC]
+### * arg5: {1,32}Xi32 Immediate offset added to each address, [MBC]
+### * arg6: i8 The dataum size, [MBC]
+### * arg7: i8 Indicates if the data is transposed during the transfer, [MBC]
+### * arg8: i8 Number of elements to load per address (vector size), [MBC]
+### * arg9: i8 Channel mask, currently ignored, [MBC].
+### * arg10: i32/i64 surface base address for this operation.
+### * arg11: {1,32}Xi{16,32,64} The vector register holding addresses. (overloaded)
+### * arg12: i32 {1,32}Xi32 Src0 or undef (same vector size as predicate)
+### * arg13: i32 {1,32}Xi32 Src1 or undef (same vector size as predicate)
+### * arg14: i32 {1,32}Xi32 Old value of destination (same vector size as predicate), now always undef
+###
     "lsc_atomic_bti" : ["any",["any","char","char","char","short","int","char","char","char","char","int","anyvector",0,0,0],"None"],
     "lsc_atomic_slm" : ["any",["any","char","char","char","short","int","char","char","char","char","int","anyvector",0,0,0],"None"],
     "lsc_atomic_stateless" : ["any",["any","char","char","char","short","int","char","char","char","char","int","anyvector",0,0,0],"None"],
