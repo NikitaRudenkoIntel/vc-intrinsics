@@ -134,7 +134,7 @@ Imported_Intrinsics = \
 ### * ``llvm.genx.wrregioni.<return type>.<any int>.<any int>.<any int>`` : integer element type (not i1)
 ### * ``llvm.genx.wrregionf.<return type>.<any float>.<any int>.<any int>`` : fp element type
 ###
-### * arg0: vector to write region in to 
+### * arg0: vector to write region in to
 ### * arg1: subvector or scalar to write into the region (overloaded)
 ### * arg2: i32 vstride in elements, constant
 ### * arg3: i32 width in elements, constant
@@ -315,46 +315,46 @@ Imported_Intrinsics = \
 ## ----------------------------
 ### SIMD control flow intrinsics
 ### ----------------------------
-### 
+###
 ### ``goto`` and ``join`` instructions are represented by ``llvm.genx.simdcf.goto``
 ### and ``llvm.genx.simdcf.join`` intrinsics.
-### 
+###
 ### The Architectural model
 ### ^^^^^^^^^^^^^^^
-### 
+###
 ### The Architectural defines SIMD control flow in terms of each of the 32 channels
 ### having a PcIP (per-channel instruction pointer), which determines where a
 ### disabled channel will be re-enabled:
-### 
+###
 ### * A goto has two targets, UIP (update IP) and JIP (join IP).
-###   
+###
 ###   - A (forward) goto evaluates its vector condition, and, for each channel
 ###     that is enabled and the condition is true, it sets the channel's PcIP to
 ###     UIP, to mark that the channel is disabled until execution reaches the
 ###     join instruction at UIP. If, after disabling channels in this way, no
 ###     channels are left enabled, then execution jumps to JIP.
-### 
+###
 ###     UIP and JIP may be different, as there may be channels already disabled
 ###     from an earlier goto with their PcIPs set to an earlier point than the
 ###     present goto's UIP. So JIP needs to be set to the earliest point that
 ###     a channel could have its PcIP pointing at.
-### 
+###
 ###   - There is also a backward goto variant for use in a conditional loop
 ###     back edge (end of a do..while loop). It works the same as a forward goto
 ###     over an unconditional jump back to the top of the loop.
-### 
+###
 ### * A join has one target, JIP. It reenables all channels that have PcIP set
 ###   to this join. If there are still no channels enabled, it jumps to JIP.
-### 
+###
 ### * Each instruction's register write-back is gated by which channels are
 ###   enabled, unless the instruction has a nomask bit set. This is in addition
 ###   to optionally being gated by a predicate.
-### 
+###
 ### * The action of the channel enable mask (and predicate) in a send depends
 ###   on the shared function. Some (e.g. gather and scatter) have the expected
 ###   semantics where disabled channels do not participate in the memory read/write,
 ###   and (in the case of a read) do not update that channel's result.
-### 
+###
 ### This scheme allows arbitrarily unstructured SIMD control flow. For it to work
 ### and guarantee convergence, it is sufficient (not sure if it is necessary)
 ### for there to be a linear chain of join points, and each goto/join's UIP and
@@ -362,41 +362,41 @@ Imported_Intrinsics = \
 ### for execution to "miss out" a join point where a channel should have been
 ### enabled. (As above, a backward goto is handled in this
 ### model by being considered a forward goto over a backward unconditional jump.)
-### 
+###
 ### In Gen code, this linear chain of join points does not actually have to be in
 ### program order, as long as the join point order with forward UIP and JIP is
 ### derivable.
-### 
+###
 ### In vISA, the linear chain of join points does have to be in program order.
 ### vISA does not encode the JIP of a goto/join; instead it derives it itself.
 ### Also, vISA uses whether a goto's target is before or after to encode whether
 ### it is a conditional loop backedge branch.
-### 
+###
 ### The LLVM IR model
 ### ^^^^^^^^^^^^^^^^^
-### 
+###
 ### The model we use in LLVM IR is very similar to the above.
-### 
+###
 ### The PcIP (per-channel instruction pointer) is replaced by:
-### 
+###
 ### * a global (in the function) EM (execution mask), with each channel having a
 ###   bit that is 1 when the channel is enabled;
-### 
+###
 ### * each join point has a RM (resume mask), with each channel having a bit
 ###   that is 1 if the channel is disabled and due to be re-enabled when execution
 ###   reaches that join point.
-### 
+###
 ### A goto is represented by the ``llvm.genx.simdcf.goto`` intrinsic. Its
 ### inputs are the current EM value, the current RM value for its UIP, and the
 ### vector condition. Its results are the updated EM value, the updated RM
 ### value for its UIP, and a scalar bool that says whether all channels are now
 ### disabled and execution should branch to the JIP. This last result is then
 ### (usually) used in a standard LLVM conditional ``br`` instruction.
-### 
+###
 ### A goto is implicitly attached to its UIP join by the input and output RM
 ### values being part of a web of RM values connected by goto and phi nodes
 ### and used in that join.
-### 
+###
 ### A join is represented by the ``llvm.genx.simdcf.join`` intrinsic. Its
 ### inputs are the current EM value and the current RM value for this join.
 ### Its results are the updated EM value (this join's RM value is now effectively
@@ -404,42 +404,42 @@ Imported_Intrinsics = \
 ### all channels are still disabled and execution should branch to the JIP.
 ### This last result is then (optionally) used in a standard LLVM conditional
 ### ``br`` instruction.
-### 
+###
 ### An instruction's register write-back being gated by which channels are enabled
 ### is modeled by the current EM value (or the appropriate size left slice of it)
 ### being used as the predicate in a select or wrregion or shared function
 ### intrinsic.
-### 
+###
 ### Note that EM is always 32 bit, but a join's RM may be smaller as it has the same
 ### vector width as the condition on all gotos that update it.
-### 
+###
 ### This model is equivalent to the Architectural model, as long as:
-### 
+###
 ### * there is only ever one EM value live at a time with an initial value in a
 ###   function of either all ones or the passed in call mask;
-### 
+###
 ### * for each join point, there is only ever one RM value live at a time with an
 ###   initial value in a function of all zeros, and a value after the join point of
 ###   all zeros;
-### 
+###
 ### * it is possible to re-order the code such that the "false" target of a
 ###   conditional branch that a goto or join is attached to is fall-through, and
 ###   all JIPs and UIPs are forward.
-### 
+###
 ### Like any other variable with multiple values transformed to SSA, different
 ### EM values may be joined with a phi node. Similarly, for a particular join point's
 ### RM, different RM values may be joined with a phi node.
-### 
+###
 ### The  ``llvm.genx.simdcf.goto`` and ``llvm.genx.simdcf.join`` intrinsics can
 ### only be generated to ``goto`` and ``join`` instructions if the GenX backend
 ### deems them to be used in a way that is equivalent to the Architectural model. Otherwise,
 ### they are lowered to equivalent but slower code that implements the semantics
 ### of the spec of the intrinsics below.
-### 
+###
 ### There are more detailed requirements on the use of these intrinsics to be able
 ### to generate them to ``goto`` and ``join`` instructions documented in the
 ### GenXSimdCFConformance pass.
-### 
+###
 ### ``llvm.genx.simdcf.goto.<return type>.<vector type>.<vector type>`` : goto instruction
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
@@ -458,35 +458,35 @@ Imported_Intrinsics = \
 ### * NewEM = OldEM & (SimdCond one extended to v16i1)
 ### * NewRM = OldRM | (OldEM & ~(SimdCond & (OldEM truncated to size of SimdCond)))
 ### * BranchCond = !any(NewEM truncated to size of SimdCond)
-### 
+###
 ### ``llvm.genx.simdcf.goto`` represents a Gen goto instruction, taking a
 ### vector condition, modifying the global EM and the UIP's RM, and
 ### resulting in a scalar condition to be used in a conditional branch whose
 ### "true" successor is the goto's JIP.
-### 
+###
 ### If the BranchCond result is not used, then the goto's JIP is set to the
 ### join immediately after.
-### 
+###
 ### If the BranchCond result is used in a conditional branch, and JIP is
 ### later than the earliest join point
 ### where a channel would be re-enabled, then it is undefined whether the
 ### resulting goto instruction's JIP is as specified here, or an earlier join
 ### point. (This rule is to allow for the vISA finalizer re-deriving the JIPs.)
-### 
+###
 ### If the goto intrinsic's conditional branch simply branches over an empty block
 ### with an unconditional branch, then the GenX backend takes the intrinsic and
 ### the two branches to be a do..while back edge, giving a Gen ``goto``
 ### instruction with BranchCtrl=1, UIP set to the successor of the unconditional
 ### branch (the top of the do..while loop), and JIP set to the following join
 ### instruction.
-### 
+###
 ### Channels already disabled in EM remain disabled. For enabled channels,
 ### any channel whose element in SimdCond is true becomes disabled in EM, and
 ### the corresponding bit in RM is set such that the channel becomes re-enabled
 ### upon reaching the RM's join point. If all channels in EM are then disabled,
 ### then BranchCond is true and the conditional branch in which it is used
 ### branches to the next join point in sequence.
-### 
+###
 ### Note that SimdCond has the same sense as in the Gen goto instruction, but
 ### the opposite sense to that in a vISA forward goto instruction.
 ###
@@ -515,37 +515,37 @@ Imported_Intrinsics = \
 ### point's RM, modifying the global EM, and resulting in a scalar condition to
 ### be used (optionally) in a conditional branch whose "true" successor is
 ### the join's JIP.
-### 
+###
 ### If the BranchCond result is not used, then the join's JIP is undefined; this
 ### case is used when it is known that at least one channel is enabled after
 ### the join so JIP will never be used.
-### 
+###
 ### If the BranchCond result is used in a conditional branch, and JIP is
 ### later than the earliest join point
 ### where a channel would be re-enabled, then it is undefined whether the
 ### resulting goto instruction's JIP is as specified here, or an earlier join
 ### point. (This rule is to allow for the vISA finalizer re-deriving the JIPs.)
-### 
+###
 ### Note that vISA does not have a join instruction; the vISA finalizer
 ### recovers the join points from the goto instructions assuming a linear order.
-### 
+###
 ### Channels with a set bit in RM become enabled in EM. If all channels in EM are
 ### still disabled, then BranchCond is true and the conditional branch in which it
 ### is used branches to the next join point in sequence.
-### 
+###
     "simdcf_join" : [["anyvector","bool"],[0,"anyvector"],"None"],
 
 ### ``llvm.genx.simdcf.savemask.<any vector>`` :
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0: OldEM (old execution mask): v32i1 (overloaded)
-### * ret:  temp i32 for saving the oldEM 
+### * ret:  temp i32 for saving the oldEM
     "simdcf_savemask" : ["int",["anyvector"],"WriteMem,SideEffects"],
 
 ### ``llvm.genx.simdcf.unmask.<return type>`` :
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
-### * arg0: temp i32 from savemask 
+### * arg0: temp i32 from savemask
 ### * arg1: i32 constant, should be all-one
 ### * ret:  NewEM (updated execution mask, all-one): v32i1
     "simdcf_unmask" : ["anyvector",["int","int"],"WriteMem,SideEffects"],
@@ -1094,10 +1094,10 @@ Imported_Intrinsics = \
 
 ### ``llvm.genx.*sad2add.<return type>.<any int>`` : two-wide sum of absolute differences and add
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-### * ``llvm.genx.sssad2add`` : signed result and args 
-### * ``llvm.genx.uusad2add`` : unsigned result and args 
-### * ``llvm.genx.ussad2add`` : unsigned result and signed args 
-### * ``llvm.genx.susad2add`` : signed result and unsigned args 
+### * ``llvm.genx.sssad2add`` : signed result and args
+### * ``llvm.genx.uusad2add`` : unsigned result and args
+### * ``llvm.genx.ussad2add`` : unsigned result and signed args
+### * ``llvm.genx.susad2add`` : signed result and unsigned args
 ###
 ### * arg0: first input, vector of i8, multiple of 2 wide (overloaded)
 ### * arg1: second input, same type
@@ -1112,10 +1112,10 @@ Imported_Intrinsics = \
 
 ### ``llvm.genx.*sad2add.sat.<return type>.<any int>`` : two-wide sum of absolute differences and add, saturated
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-### * ``llvm.genx.sssad2add.sat`` : signed result and args 
-### * ``llvm.genx.uusad2add.sat`` : unsigned result and args 
-### * ``llvm.genx.ussad2add.sat`` : unsigned result and signed args 
-### * ``llvm.genx.susad2add.sat`` : signed result and unsigned args 
+### * ``llvm.genx.sssad2add.sat`` : signed result and args
+### * ``llvm.genx.uusad2add.sat`` : unsigned result and args
+### * ``llvm.genx.ussad2add.sat`` : unsigned result and signed args
+### * ``llvm.genx.susad2add.sat`` : signed result and unsigned args
 ###
 ### * arg0: first input, vector of i8, multiple of 2 wide (overloaded)
 ### * arg1: second input, same type
@@ -1454,7 +1454,7 @@ Imported_Intrinsics = \
 ### * ``llvm.genx.lsc.prefetch.bti`` :
 ### * ``llvm.genx.lsc.prefetch.stateless`` :
 ###
-### * Exec_size ignored unless operation is transposed (DataOrder == Tranpose) 
+### * Exec_size ignored unless operation is transposed (DataOrder == Tranpose)
 ### * arg0: {1,32}Xi1 predicate (overloaded)
 ### * arg1: i8 Subopcode, [MBZ]
 ### * arg2: i8 Caching behavior for L1, [MBC]
@@ -1464,9 +1464,11 @@ Imported_Intrinsics = \
 ### * arg6: i8 The dataum size, [MBC]
 ### * arg7: i8 Number of elements to load per address (vector size), [MBC]
 ### * arg8: i8 Indicates if the data is transposed during the transfer, [MBC]
-### * arg9: i8 Channel mask, currently ignored, [MBC].
-### * arg10: {1,32}Xi{16,32,64} The vector register holding addresses. (overloaded)
-### * arg11: i32 surface to use for this operation. This can be an immediate or a register.
+### * arg9: i8 Channel mask, currently ignored, [MBC]
+### * arg10: {1,32}Xi{16,32,64} The vector register holding offsets (overloaded)
+###          for flat version Base Address + Offset[i] goes here
+### * arg11: i32 surface to use for this operation. This can be an immediate or a register
+###          for flat and bindless version pass zero here
 ###
 ### * Return value: the value read or void for prefetch
 ###
@@ -1499,7 +1501,7 @@ Imported_Intrinsics = \
 ### | .st     | .uc | streaming L1 / bypass L3                                              |
 ### +---------+-----+-----------------------------------------------------------------------+
 ### | .st     | .wb | streaming L1 / writeback L3                                           |
-### +---------+-----+-----------------------------------------------------------------------+ 
+### +---------+-----+-----------------------------------------------------------------------+
 ###
 ### Immediate offset. The compiler may be able to fuse this add into the message, otherwise
 ### additional instructions are generated to honor the semantics.
@@ -1518,6 +1520,7 @@ Imported_Intrinsics = \
     "lsc_load_stateless" : ["anyvector",["any","char","char","char","short","int","char","char","char","char","any","int"],"ReadMem"],
     "lsc_load_bindless" : ["anyvector",["any","char","char","char","short","int","char","char","char","char","any","int"],"ReadMem"],
     "lsc_load_bti" : ["anyvector",["any","char","char","char","short","int","char","char","char","char","any","int"],"ReadMem"],
+    "lsc_prefetch_slm" : ["void",["any","char","char","char","short","int","char","char","char","char","any","int"],"None"],
     "lsc_prefetch_bti" : ["void",["any","char","char","char","short","int","char","char","char","char","any","int"],"None"],
     "lsc_prefetch_stateless" : ["void",["any","char","char","char","short","int","char","char","char","char","any","int"],"None"],
     "lsc_prefetch_bindless" : ["void",["any","char","char","char","short","int","char","char","char","char","any","int"],"None"],
@@ -1542,9 +1545,11 @@ Imported_Intrinsics = \
 ### * arg7: i8 Number of elements to load per address (vector size), [MBC]
 ### * arg8: i8 Indicates if the data is transposed during the transfer, [MBC]
 ### * arg9: i8 Channel mask, currently ignored, [MBC].
-### * arg10: {1,32}Xi{16,32,64} The vector register holding addresses. (overloaded)
-### * arg11: VXi{16,32,64} The data to write. (overloaded)
-### * arg12: i32 surface to use for this operation. This can be an immediate or a register.
+### * arg10: {1,32}Xi{16,32,64} The vector register holding offsets (overloaded)
+###          for flat version Base Address + Offset[i] goes here
+### * arg11: VXi{16,32,64} The data to write (overloaded)
+### * arg12: i32 surface to use for this operation. This can be an immediate or a register
+###          for flat and bindless version pass zero here
 ###
 ### * Return value: void
 ###
@@ -1615,6 +1620,8 @@ Imported_Intrinsics = \
 ### ``llvm.genx.lsc.atomic.*.<return type>.<any type>.<any vector>`` : lsc_atomic instructions
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
+### !!! Those are legacy ones! Use xatomic version instead !!!
+###
 ### * ``llvm.genx.lsc.atomic.bti`` :
 ### * ``llvm.genx.lsc.atomic.slm`` :
 ### * ``llvm.genx.lsc.atomic.slateless`` :
@@ -1639,6 +1646,37 @@ Imported_Intrinsics = \
     "lsc_atomic_slm" : ["any",["any","char","char","char","short","int","char","char","char","char","int","anyvector",0,0,0],"None"],
     "lsc_atomic_stateless" : ["any",["any","char","char","char","short","int","char","char","char","char","int","anyvector",0,0,0],"None"],
     "lsc_atomic_bindless" : ["any",["any","char","char","char","short","int","char","char","char","char","int","anyvector",0,0,0],"None"],
+
+### ``llvm.genx.lsc.xatomic.*.<return type>.<any type>.<any vector>`` : lsc_atomic instructions
+### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+###
+### * ``llvm.genx.lsc.xatomic.bti`` :
+### * ``llvm.genx.lsc.xatomic.slm`` :
+### * ``llvm.genx.lsc.xatomic.slateless`` :
+### * ``llvm.genx.lsc.xatomic.bindless`` :
+###
+### * arg0: {1,32}Xi1 predicate (overloaded)
+### * arg1: i8 Subopcode, [MBZ]
+### * arg2: i8 Caching behavior for L1, [MBC]
+### * arg3: i8 Caching behavior for L3, [MBC]
+### * arg4: i16 Address scale, [MBC]
+### * arg5: {1,32}Xi32 Immediate offset added to each address, [MBC]
+### * arg6: i8 Data size, [MBC]
+### * arg7: i8 Number of elements to load per address (vector size), [MBC]
+### * arg8: i8 Indicates if the data is transposed during the transfer, [MBC]
+### * arg9: i8 Channel mask, currently ignored, [MBC]
+### * arg10: {1,32}Xi{16,32,64} The vector register holding offsets (overloaded)
+###          for flat version Base Address + Offset[i] goes here
+### * arg11: i32 {1,32}Xi32 Src0 or undef (same vector size as predicate)
+### * arg12: i32 {1,32}Xi32 Src1 or undef (same vector size as predicate)
+### * arg13: i32 surface to use for this operation. This can be an immediate or a register
+###          for flat and bindless version pass zero here
+### * arg14: i32 {1,32}Xi32 Old value of destination (same vector size as predicate), now always undef
+###
+    "lsc_xatomic_bti" : ["any",["any","char","char","char","short","int","char","char","char","char","anyvector",0,0,"int",0],"None"],
+    "lsc_xatomic_slm" : ["any",["any","char","char","char","short","int","char","char","char","char","anyvector",0,0,"int",0],"None"],
+    "lsc_xatomic_stateless" : ["any",["any","char","char","char","short","int","char","char","char","char","anyvector",0,0,"int",0],"None"],
+    "lsc_xatomic_bindless" : ["any",["any","char","char","char","short","int","char","char","char","char","anyvector",0,0,"int",0],"None"],
 # __INTEL_EMBARGO_END__
 # __INTEL_EMBARGO_BEGIN__
 
@@ -1777,7 +1815,7 @@ Imported_Intrinsics = \
 ### arg0: length of pause 10 bits (0-4 must be 0)
 ###
 ### Return Value: none
-### 
+###
 ###
 ### Set the pause value - this pauses instruction issue until the value has been
 ### decremented to 0 (decrements every 32 clocks)
@@ -1792,7 +1830,7 @@ Imported_Intrinsics = \
 ### arg0: a value that we want to mov to v0 (usually to trigger a scoreboard dependency)
 ###
 ### Return Value: none
-### 
+###
 ###
 ### This is primarily used to set up scoreboard dependencies. If a value is mov'ed to v0 then it
 ### will trigger a scoreboard dependency check.
@@ -2161,12 +2199,12 @@ Imported_Intrinsics = \
 ###
     "typed_atomic_fcmpwr" : ["anyvector",["anyvector","int",0,0,"anyint",2,2,2],"None"],
 
-### ``llvm.genx.gather.private.<return type>.<vector type>.<any int>`` : CMC internal, no VISA 
+### ``llvm.genx.gather.private.<return type>.<vector type>.<any int>`` : CMC internal, no VISA
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0: v-by-i1 predicate (overloaded)
 ### * (Num_elts inferred from data type)
-### * arg1: base pointer 
+### * arg1: base pointer
 ### * arg2: vXi32 element offset in elements (overloaded)
 ### * arg3: old value of the data read
 ###
@@ -2383,7 +2421,7 @@ Imported_Intrinsics = \
 ###
     "oword_st" : ["void",["int","int","anyvector"],"None"],
 
-### ``llvm.genx.scatter.private.<vector type>.<ptr type>.<any int>.<vector type>`` : CM internal, no VISA 
+### ``llvm.genx.scatter.private.<vector type>.<ptr type>.<any int>.<vector type>`` : CM internal, no VISA
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
 ### * arg0: v-by-i1 predicate (overloaded)
@@ -2600,7 +2638,7 @@ Imported_Intrinsics = \
 ### * arg1: i32 log2 num blocks, constant (0/1/2/3 for num blocks 1/2/4/8)
 ### * arg2: vXi64 address (X = 8 or 16) (overloaded)
 ### * arg3: old value of the data read
-### 
+###
 ### * Return value: data read
 ###
 ### The return value element type is i8 for block size 1, i32/float for
@@ -2640,9 +2678,9 @@ Imported_Intrinsics = \
 ### ``llvm.genx.svm.scatter.<vector type>.<any int>.<vector type>`` : vISA SVM SCATTER instruction
 ### ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ###
-### * (exec size inferred from address vector width) 
+### * (exec size inferred from address vector width)
 ### * arg0: vXi1 predicate (Num_elts inferred from element offset type) (overloaded)
-### * (block size inferred from data element type) 
+### * (block size inferred from data element type)
 ### * arg1: i32 log2 num blocks, constant (0/1/2/3 for num blocks 1/2/4/8)
 ### * arg2: vXi64 address (X = 8 or 16) (overloaded)
 ### * arg3: data to write (overloaded)
@@ -3514,18 +3552,18 @@ Imported_Intrinsics = \
 ###
     "simdcf_any" : ["bool",["anyvector"],"None"],
 
-### ``llvm.genx.unmask.begin`` : simd-unmask region begin  
+### ``llvm.genx.unmask.begin`` : simd-unmask region begin
 ###
-### * Return value:  i32 old execution mask 
+### * Return value:  i32 old execution mask
 ###
-### This intrinsic is used by front-end to mark the beginning of 
-### an unmask region, sets execution mask to all-active, and return 
+### This intrinsic is used by front-end to mark the beginning of
+### an unmask region, sets execution mask to all-active, and return
 ### the old mask in a temp.
 ### this intrinsic will be replaced by genx.simdcf.unmask by SimdCFLowering
 ###
     "unmask_begin" : ["int",[],"WriteMem,SideEffects"],
 
-### ``llvm.genx.unmask.end`` : simd-unmask region end 
+### ``llvm.genx.unmask.end`` : simd-unmask region end
 ###
 ### arg0: temp to restore the execution-mask (1 dword)
 ###
